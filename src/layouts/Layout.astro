@@ -1,0 +1,30 @@
+---
+import "../styles/global.css";
+interface Props { title?: string; description?: string }
+const {
+  title = "Plainvoice — invoicing that's actually free",
+  description = "Unlimited invoices, clients and estimates — free, forever, no caps. AI is the only thing you ever pay for, and only when you want it.",
+} = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#1E5B41" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+    {import.meta.env.PROD && (
+      <script is:inline>
+        if ("serviceWorker" in navigator) {
+          addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+        }
+      </script>
+    )}
+  </body>
+</html>

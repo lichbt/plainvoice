@@ -1,0 +1,150 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Logo from "../components/Logo.astro";
+---
+<Layout>
+  <nav class="site" id="nav">
+    <div class="nav-in">
+      <Logo />
+      <div class="nav-links">
+        <a href="#promise">Promise</a>
+        <a href="#switch">Switch</a>
+        <a href="#ai">AI</a>
+        <a class="btn btn-primary btn-sm" href="/new">Try the editor</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow reveal in">Free forever · no caps · no surprises</div>
+        <h1 class="head reveal in">Invoicing that's<br><em>actually</em> free.</h1>
+        <p class="sub reveal in">Unlimited invoices and clients, real PDF export, get-paid links — none of it behind a wall. AI is the only thing you ever pay for, and only when you want it.</p>
+        <div class="hero-cta reveal in">
+          <a class="btn btn-primary" href="/new">Create an invoice — no signup</a>
+          <a class="btn btn-ghost" href="#switch">See how switching works</a>
+        </div>
+        <div class="hero-note reveal in">↳ The average freelancer is set up in under 60 seconds.</div>
+      </div>
+      <div class="float-card reveal in">
+        <div class="stamp pill pill-accent">● Paid</div>
+        <div class="inv-card">
+          <div class="ic-top">
+            <div>
+              <div class="ic-co">Maple &amp; Co.</div>
+              <div style="font-size:.74rem;color:var(--ink-faint)">Invoice #0042</div>
+            </div>
+            <div class="ic-meta">Issued Jun 1<br>Due Jun 15<br>USD</div>
+          </div>
+          <div class="inv-row"><span>Brand identity design</span><span class="mono">$1,800.00</span></div>
+          <div class="inv-row"><span>Web mockups · 6h</span><span class="mono">$720.00</span></div>
+          <div class="inv-row"><span>Revisions</span><span class="mono">$240.00</span></div>
+          <div class="inv-total">
+            <span class="lbl">Total due</span>
+            <span class="amt mono">$2,760.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="why">
+    <div class="wrap">
+      <div class="sec-eyebrow reveal">Why we exist</div>
+      <h2 class="sec reveal">You didn't churn. You were pushed.</h2>
+      <p class="sec-lead reveal">The popular invoice apps trained millions of small businesses to expect the rug-pull. We read their one-star reviews so you don't have to live them.</p>
+      <div class="vs">
+        <div class="vs-col vs-them reveal">
+          <h3>😤 The apps you're leaving</h3>
+          <div class="vs-item"><span class="mk">✕</span><div>Capped to 3 invoices a month, then a paywall<div class="vs-quote">"3 invoices a month was all I was allowed to create."</div></div></div>
+          <div class="vs-item"><span class="mk">✕</span><div>Surprise price hikes — $59 → $199 a year<div class="vs-quote">"forcing you to a $199 yearly subscription."</div></div></div>
+          <div class="vs-item"><span class="mk">✕</span><div>Features you had, removed and re-sold<div class="vs-quote">"minimizing the features… pay even more for a higher tier."</div></div></div>
+          <div class="vs-item"><span class="mk">✕</span><div>Quietly turned on payment skimming<div class="vs-quote">"enable a link to take payments… without the owner's permission."</div></div></div>
+        </div>
+        <div class="vs-col vs-you reveal">
+          <h3>🌿 Plainvoice</h3>
+          <div class="vs-item"><span class="mk">✓</span><div>Unlimited invoices, clients &amp; estimates. We never count.</div></div>
+          <div class="vs-item"><span class="mk">✓</span><div>One honest price for AI. Existing users are grandfathered, always.</div></div>
+          <div class="vs-item"><span class="mk">✓</span><div>Every core feature stays free. We never take one back.</div></div>
+          <div class="vs-item"><span class="mk">✓</span><div>We never touch the money your clients pay you. 0% fee.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="promise">
+    <div class="wrap">
+      <div class="promise reveal">
+        <div class="sec-eyebrow">The Pricing Promise</div>
+        <h2 class="sec" style="margin-bottom:1.2rem">In writing. Permanently.</h2>
+        <ul class="promise-list">
+          <li><span class="ck">✓</span> Unlimited invoices, clients and estimates — free, forever, no counting.</li>
+          <li><span class="ck">✓</span> Your data is yours. One-click export, any time. No hostages.</li>
+          <li><span class="ck">✓</span> AI is the only paid feature. You always know what's free before you sign up.</li>
+          <li><span class="ck">✓</span> Change a price? Existing users keep theirs, and we tell you first.</li>
+          <li><span class="ck">✓</span> We never remove a feature you already have.</li>
+          <li><span class="ck">✓</span> We never enable payment collection without you turning it on.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="switch" style="background:var(--paper-2); border-top:1px solid var(--line); border-bottom:1px solid var(--line)">
+    <div class="wrap feature-split">
+      <div class="reveal">
+        <div class="sec-eyebrow">Switching</div>
+        <h2 class="sec">Bring your old invoices in one photo.</h2>
+        <p class="sec-lead">Snap a picture of a printed invoice — yours or the app you're leaving — and we rebuild it as an editable draft. Reads right on your device, costs nothing, no account needed.</p>
+        <a class="btn btn-primary" href="/new?photo=1">Try photo import →</a>
+      </div>
+      <div class="mini-shot reveal">
+        <div class="snap">
+          <div class="ph">🧾</div>
+          <div class="arrow">→</div>
+          <div style="flex:1">
+            <div style="font-weight:600; font-size:.9rem">Editable invoice draft</div>
+            <div style="font-size:.78rem; color:var(--ink-faint)">client · line items · totals, filled in</div>
+          </div>
+        </div>
+        <div style="font-size:.78rem; color:var(--ink-faint); margin-top:.9rem; display:flex; gap:.4rem; align-items:center">
+          <span class="pill pill-accent">on-device</span> Printed invoices are read free, right on your phone.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ai">
+    <div class="wrap feature-split">
+      <div class="chase reveal">
+        <span class="tag">Smart Collections · Pro</span>
+        <div style="font-weight:600; margin:.5rem 0 .2rem">Invoice #0039 · 21 days overdue</div>
+        <div class="bubble">Hi Jordan — just a friendly nudge that invoice #0039 for $1,240 was due on May 11. Could you let me know when I can expect payment? Happy to resend the link. Thanks!</div>
+        <div style="font-size:.74rem; color:var(--ink-faint); margin-top:.6rem">Drafted for you · you approve before anything sends</div>
+      </div>
+      <div class="reveal">
+        <div class="sec-eyebrow">The only thing we charge for</div>
+        <h2 class="sec">AI that gets you paid — not a wall.</h2>
+        <p class="sec-lead">Chase overdue invoices with a tone-perfect reminder, dictate an invoice in a sentence, or snap a messy receipt. Pay per use with credits, or go unlimited with Pro. Never a charge to do the basics.</p>
+        <a class="btn btn-ghost" href="/new">See it in the editor →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site">
+    <div class="wrap foot-in">
+      <Logo size={26} />
+      <div class="foot-note">Unlimited free core · your data stays on your device</div>
+    </div>
+  </footer>
+
+  <script>
+    const io = new IntersectionObserver(
+      (es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }),
+      { threshold: 0.16 },
+    );
+    document.querySelectorAll(".reveal:not(.in)").forEach((el) => io.observe(el));
+    const nav = document.getElementById("nav");
+    addEventListener("scroll", () => nav?.classList.toggle("scrolled", scrollY > 10));
+  </script>
+</Layout>

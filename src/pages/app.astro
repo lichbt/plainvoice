@@ -1,0 +1,7 @@
+---
+import Layout from "../layouts/Layout.astro";
+import InvoiceList from "../components/InvoiceList.tsx";
+---
+<Layout title="Invoices — Plainvoice">
+  <InvoiceList client:only="react" />
+</Layout>
