@@ -12,7 +12,7 @@
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=plainvoice"
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=plainvoice --branch=production"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.7",
