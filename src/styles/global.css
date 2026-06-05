@@ -217,6 +217,8 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .li .save:hover{color:var(--accent); background:var(--accent-wash)}
 .li .del:hover{color:var(--red); background:var(--red-wash)}
 .add-li{font-size:.85rem; font-weight:600; color:var(--accent); display:inline-flex; gap:.4rem; align-items:center; margin-top:.3rem; padding:.4rem 0; background:none; border:none}
+.add-saved{font-size:.85rem; font-weight:600; color:var(--accent); background:none; border:1px solid var(--line-strong); border-radius:999px; padding:.35rem .7rem; cursor:pointer}
+.add-saved:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
 .totals{margin-top:1.1rem; padding-top:1rem; border-top:1px solid var(--line)}
 .tot-row{display:flex; justify-content:space-between; font-size:.9rem; padding:.28rem 0; color:var(--ink-soft)}
 .tot-row.grand{margin-top:.5rem; padding-top:.7rem; border-top:1px solid var(--line-strong); color:var(--ink)}
@@ -236,6 +238,7 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .accent-dot:hover{transform:scale(1.08)}
 .accent-dot.on{box-shadow:0 0 0 2px var(--paper-2), 0 0 0 4px var(--ink)}
 .accent-dot.accent-default{background:var(--paper-3); color:var(--ink-faint); font-size:.7rem; font-weight:700; font-family:var(--mono)}
+.accent-dot.accent-white{background:#FFFFFF; border-color:var(--line-strong)}
 
 /* live preview */
 .preview-wrap{position:sticky; top:90px}

@@ -11,9 +11,9 @@ export function ItemsModal({ currency, onClose }: { currency: string; onClose: (
   const [rate, setRate] = useState("");
 
   async function add() {
+    if (!name.trim()) return;
     const r = parseFloat(rate);
-    if (!name.trim() || !Number.isFinite(r)) return;
-    await itemRepo.upsertByName(name, r);
+    await itemRepo.upsertByName(name, Number.isFinite(r) ? r : 0); // rate optional, defaults to 0
     setName(""); setRate("");
   }
 
@@ -39,7 +39,7 @@ export function ItemsModal({ currency, onClose }: { currency: string; onClose: (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 90px auto", gap: ".5rem", alignItems: "end" }}>
           <div className="fld" style={{ margin: 0 }}><label>Item or service</label><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Strategy session" /></div>
           <div className="fld" style={{ margin: 0 }}><label>Rate</label><input type="number" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="0" /></div>
-          <button className="btn btn-primary btn-sm" onClick={add} disabled={!name.trim() || rate === ""}>Add</button>
+          <button className="btn btn-primary btn-sm" onClick={add} disabled={!name.trim()}>Add</button>
         </div>
       </div>
     </div>

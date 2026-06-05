@@ -14,7 +14,7 @@ import { SendModal } from "./SendModal";
 import { ItemsModal } from "./ItemsModal";
 import type { OcrLine } from "../lib/ocr";
 import { exportInvoicePdf } from "../lib/pdf";
-import { TEMPLATES, ACCENTS, DEFAULT_TEMPLATE } from "../lib/templates";
+import { ACCENTS, DEFAULT_TEMPLATE } from "../lib/templates";
 
 interface LineState { id: string; description: string; qty: string; rate: string }
 const blankLine = (): LineState => ({ id: crypto.randomUUID(), description: "", qty: "1", rate: "0" });
@@ -124,7 +124,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       template, accentColor: accentColor || undefined,
       lines: lines.map((l) => ({ id: l.id, description: l.description, qty: num(l.qty), rate: num(l.rate), taxRate: taxNum })),
     });
-    if (!id) { setId(invoice.id); window.history.replaceState(null, "", `/invoice?id=${invoice.id}`); }
+    if (!id) { setId(invoice.id); window.history.replaceState(null, "", `/${docType === "estimate" ? "estimate" : "invoice"}?id=${invoice.id}`); }
     return invoice.id;
   }, [id, clientId, number, docType, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
 
@@ -173,6 +173,18 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     if (!l.description.trim()) return;
     await items.upsertByName(l.description, num(l.rate));
     flash(`✓ "${l.description.trim()}" saved to your items`);
+  }
+
+  // Insert a saved item as a line. Fills the last blank line, else appends one.
+  function insertSavedItem(itemId: string) {
+    const it = itemList.find((x) => x.id === itemId);
+    if (!it) return;
+    const line: LineState = { id: crypto.randomUUID(), description: it.name, qty: "1", rate: String(it.defaultRate) };
+    setLines((ls) => {
+      const last = ls[ls.length - 1];
+      const lastBlank = last && !last.description.trim() && num(last.rate) === 0;
+      return lastBlank ? [...ls.slice(0, -1), { ...line, id: last.id }] : [...ls, line];
+    });
   }
 
   function onPhotoResult(ocr: OcrLine[]) {
@@ -287,27 +299,20 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           </div>
 
           <div className="panel" style={{ marginTop: "1.2rem" }}>
-            <h3>Template</h3>
-            <div className="tpl-grid">
-              {TEMPLATES.map((t) => (
-                <button key={t.id} type="button" className={`tpl-card${template === t.id ? " on" : ""}`}
-                  onClick={() => { setTemplate(t.id); setAccentColor(""); }}>
-                  <span className="tpl-swatch" style={{ background: t.accent }} />
-                  <span className="tpl-name">{t.label}</span>
-                  <span className="tpl-blurb">{t.blurb}</span>
-                </button>
-              ))}
-            </div>
-            <div className="fld" style={{ marginTop: "1rem", marginBottom: 0 }}>
-              <label>Accent color</label>
+            <div className="fld" style={{ margin: 0 }}>
+              <label>Color</label>
               <div className="accent-row">
-                <button type="button" title="Template default"
-                  className={`accent-dot accent-default${accentColor === "" ? " on" : ""}`}
-                  onClick={() => setAccentColor("")}>A</button>
-                {ACCENTS.map((c) => (
-                  <button key={c} type="button" title={c} className={`accent-dot${accentColor === c ? " on" : ""}`}
-                    style={{ background: c }} onClick={() => setAccentColor(c)} />
-                ))}
+                {/* white = clean classic (plain header); a color = colored header band */}
+                <button type="button" title="Classic (no color)"
+                  className={`accent-dot accent-white${template === "classic" ? " on" : ""}`}
+                  onClick={() => { setTemplate("classic"); setAccentColor(""); }} />
+                {ACCENTS.map((c) => {
+                  const active = template !== "classic" && accentColor === c;
+                  return (
+                    <button key={c} type="button" title={c} className={`accent-dot${active ? " on" : ""}`}
+                      style={{ background: c }} onClick={() => { setTemplate("trades"); setAccentColor(c); }} />
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -317,13 +322,10 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               <span>Line items <span style={{ fontSize: ".74rem", fontWeight: 400, color: "var(--ink-faint)" }}>qty × rate</span></span>
               <button className="add-li" style={{ margin: 0 }} onClick={() => setShowItems(true)}>Saved items{itemList.length ? ` (${itemList.length})` : ""}</button>
             </h3>
-            <datalist id="item-catalog">
-              {itemList.map((it) => <option key={it.id} value={it.name} />)}
-            </datalist>
             <div className="li-head"><span>Description</span><span>Qty</span><span>Rate</span><span style={{ textAlign: "right" }}>Amount</span><span></span></div>
             {lines.map((l, i) => (
               <div className="li" key={l.id}>
-                <input value={l.description} placeholder="Item or service" aria-label="Description" list="item-catalog" onChange={(e) => changeDescription(i, e.target.value)} />
+                <input value={l.description} placeholder="Item or service" aria-label="Description" onChange={(e) => changeDescription(i, e.target.value)} />
                 <input type="number" value={l.qty} aria-label="Quantity" placeholder="Qty" onChange={(e) => setLine(i, { qty: e.target.value })} />
                 <input type="number" value={l.rate} aria-label="Rate" placeholder="Rate" onChange={(e) => setLine(i, { rate: e.target.value })} />
                 <span className="amt">{totals.lineAmounts[i] !== undefined ? new Intl.NumberFormat(undefined, { style: "currency", currency }).format(totals.lineAmounts[i]) : ""}</span>
@@ -333,7 +335,16 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
                 </div>
               </div>
             ))}
-            <button className="add-li" onClick={() => setLines((ls) => [...ls, blankLine()])}>＋ Add line item</button>
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+              <button className="add-li" onClick={() => setLines((ls) => [...ls, blankLine()])}>＋ Add line item</button>
+              {itemList.length > 0 && (
+                <select className="add-saved" value="" aria-label="Insert a saved item"
+                  onChange={(e) => { if (e.target.value) { insertSavedItem(e.target.value); e.target.value = ""; } }}>
+                  <option value="">+ Insert saved item ▾</option>
+                  {itemList.map((it) => <option key={it.id} value={it.id}>{it.name} · {fmt(it.defaultRate, currency)}</option>)}
+                </select>
+              )}
+            </div>
 
             <div className="row2" style={{ marginTop: "1.1rem" }}>
               <div className="fld"><label>Tax %</label><input type="number" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} /></div>

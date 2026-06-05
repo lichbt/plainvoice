@@ -1,0 +1,9 @@
+---
+import Layout from "../layouts/Layout.astro";
+import InvoiceEditor from "../components/InvoiceEditor.tsx";
+---
+<Layout title="Edit estimate — Plainvoice">
+  {/* Same editor as /invoice; doc type comes from the saved record. Separate
+      route only so the URL reads /estimate?id= for estimates (clearer). */}
+  <InvoiceEditor client:only="react" />
+</Layout>

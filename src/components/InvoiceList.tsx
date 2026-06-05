@@ -105,7 +105,7 @@ export default function InvoiceList() {
             </thead>
             <tbody>
               {rows.map(({ inv, displayStatus }) => (
-                <tr key={inv.id} onClick={() => { window.location.href = `/invoice?id=${inv.id}`; }}>
+                <tr key={inv.id} onClick={() => { window.location.href = `/${(inv.docType ?? "invoice") === "estimate" ? "estimate" : "invoice"}?id=${inv.id}`; }}>
                   <td className="mono">{inv.number}</td>
                   <td>{clientName(inv.clientId)}</td>
                   <td className="mono" style={{ color: "var(--ink-faint)" }}>{inv.issueDate}</td>
