@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { ensureSettings } from "../db/db";
-import { businesses, clients, invoices, payments, today } from "../db/repos";
-import type { Business, Client, InvoiceStatus, Payment, PaymentMethod } from "../db/types";
+import { businesses, clients, invoices, items, payments, today } from "../db/repos";
+import type { Business, Client, Item, InvoiceStatus, Payment, PaymentMethod } from "../db/types";
 import { computeTotals, isOverdue, balanceDue as calcBalance } from "../lib/totals";
 import { CURRENCIES } from "../lib/currencies";
 import { InvoicePreview, type PreviewData } from "./InvoicePreview";
@@ -11,6 +11,7 @@ import { ClientModal } from "./ClientModal";
 import { PhotoImportModal } from "./PhotoImportModal";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { SendModal } from "./SendModal";
+import { ItemsModal } from "./ItemsModal";
 import type { OcrLine } from "../lib/ocr";
 import { exportInvoicePdf } from "../lib/pdf";
 import { TEMPLATES, ACCENTS, DEFAULT_TEMPLATE } from "../lib/templates";
@@ -46,10 +47,12 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [showPhoto, setShowPhoto] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showSend, setShowSend] = useState(false);
+  const [showItems, setShowItems] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const pendingPdf = useRef(false);
 
   const clientList = useLiveQuery(() => clients.all(), [], [] as Client[]);
+  const itemList = useLiveQuery(() => items.all(), [], [] as Item[]);
   const business = useLiveQuery(async () => {
     const s = await ensureSettings();
     const list = await businesses.all();
@@ -144,6 +147,23 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   };
 
   const setLine = (i: number, patch: Partial<LineState>) => setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
+
+  // Typing/picking a description that matches a saved item auto-fills its rate
+  // (only when the rate hasn't been set yet, so we never clobber a manual edit).
+  function changeDescription(i: number, value: string) {
+    setLines((ls) => ls.map((l, idx) => {
+      if (idx !== i) return l;
+      const match = itemList.find((it) => it.name.toLowerCase() === value.trim().toLowerCase());
+      const rate = match && (l.rate === "" || num(l.rate) === 0) ? String(match.defaultRate) : l.rate;
+      return { ...l, description: value, rate };
+    }));
+  }
+
+  async function saveLineToCatalog(l: LineState) {
+    if (!l.description.trim()) return;
+    await items.upsertByName(l.description, num(l.rate));
+    flash(`✓ "${l.description.trim()}" saved to your items`);
+  }
 
   function onPhotoResult(ocr: OcrLine[]) {
     const mapped: LineState[] = ocr.map((o) => ({ id: crypto.randomUUID(), description: o.description, qty: String(o.qty), rate: String(o.rate) }));
@@ -274,15 +294,24 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           </div>
 
           <div className="panel" style={{ marginTop: "1.2rem" }}>
-            <h3>Line items <span style={{ fontSize: ".74rem", fontWeight: 400, color: "var(--ink-faint)" }}>qty × rate</span></h3>
+            <h3>
+              <span>Line items <span style={{ fontSize: ".74rem", fontWeight: 400, color: "var(--ink-faint)" }}>qty × rate</span></span>
+              <button className="add-li" style={{ margin: 0 }} onClick={() => setShowItems(true)}>Saved items{itemList.length ? ` (${itemList.length})` : ""}</button>
+            </h3>
+            <datalist id="item-catalog">
+              {itemList.map((it) => <option key={it.id} value={it.name} />)}
+            </datalist>
             <div className="li-head"><span>Description</span><span>Qty</span><span>Rate</span><span style={{ textAlign: "right" }}>Amount</span><span></span></div>
             {lines.map((l, i) => (
               <div className="li" key={l.id}>
-                <input value={l.description} placeholder="Item or service" aria-label="Description" onChange={(e) => setLine(i, { description: e.target.value })} />
+                <input value={l.description} placeholder="Item or service" aria-label="Description" list="item-catalog" onChange={(e) => changeDescription(i, e.target.value)} />
                 <input type="number" value={l.qty} aria-label="Quantity" placeholder="Qty" onChange={(e) => setLine(i, { qty: e.target.value })} />
                 <input type="number" value={l.rate} aria-label="Rate" placeholder="Rate" onChange={(e) => setLine(i, { rate: e.target.value })} />
                 <span className="amt">{totals.lineAmounts[i] !== undefined ? new Intl.NumberFormat(undefined, { style: "currency", currency }).format(totals.lineAmounts[i]) : ""}</span>
-                <button className="del" aria-label="Remove line" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : ls))}>×</button>
+                <div className="li-actions">
+                  <button className="save" title="Save to your items" aria-label="Save to your items" disabled={!l.description.trim()} onClick={() => saveLineToCatalog(l)}>＋</button>
+                  <button className="del" aria-label="Remove line" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : ls))}>×</button>
+                </div>
               </div>
             ))}
             <button className="add-li" onClick={() => setLines((ls) => [...ls, blankLine()])}>＋ Add line item</button>
@@ -326,6 +355,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           onClose={() => { pendingPdf.current = false; setShowProfile(false); }}
           onSaved={onProfileSaved} />
       )}
+      {showItems && <ItemsModal currency={currency} onClose={() => setShowItems(false)} />}
       {showPhoto && <PhotoImportModal onClose={() => setShowPhoto(false)} onResult={onPhotoResult} />}
       {showPayment && <RecordPaymentModal currency={currency} balanceDue={balance} onClose={() => setShowPayment(false)} onSave={recordPayment} />}
       {showSend && (

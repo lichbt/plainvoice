@@ -46,6 +46,14 @@ export const items = {
     await db.items.put(rec);
     return rec;
   },
+  /** Add to the catalog, or update the rate of an existing item with the same name. */
+  upsertByName: async (name: string, defaultRate: number, unit?: string): Promise<Item> => {
+    const trimmed = name.trim();
+    const existing = (await db.items.toArray()).find((x) => x.name.toLowerCase() === trimmed.toLowerCase());
+    const rec: Item = { id: existing?.id ?? newId(), name: trimmed, defaultRate, unit: unit ?? existing?.unit, taxRate: existing?.taxRate };
+    await db.items.put(rec);
+    return rec;
+  },
   remove: (id: string) => db.items.delete(id),
 };
 
