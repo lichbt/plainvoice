@@ -13,6 +13,7 @@ export function buildPreviewData(
 ): PreviewData {
   const status = today && isOverdue(invoice, today) ? "overdue" : invoice.status;
   return {
+    docType: invoice.docType ?? "invoice",
     business: business
       ? { name: business.name, logoDataUrl: business.logoDataUrl, address: business.address, email: business.email, taxId: business.taxId }
       : undefined,

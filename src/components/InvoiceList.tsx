@@ -1,17 +1,19 @@
 import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { invoices, clients, today } from "../db/repos";
-import type { Invoice, Client, InvoiceStatus } from "../db/types";
+import type { Invoice, Client, InvoiceStatus, DocType } from "../db/types";
 import { formatMoney, isOverdue } from "../lib/totals";
 import Logo from "./LogoReact";
 import { ImportCsvModal } from "./ImportCsvModal";
 import { exportInvoicesCsv, exportClientsCsv, exportAllInvoicesPdf } from "../lib/export";
 
-const FILTERS: Array<InvoiceStatus | "all"> = ["all", "draft", "sent", "viewed", "paid", "overdue"];
+const INVOICE_FILTERS: Array<InvoiceStatus | "all"> = ["all", "draft", "sent", "viewed", "paid", "overdue"];
+const ESTIMATE_FILTERS: Array<InvoiceStatus | "all"> = ["all", "draft", "sent", "accepted", "declined"];
 
 export default function InvoiceList() {
   const list = useLiveQuery(() => invoices.list(), [], undefined as Invoice[] | undefined);
   const clientList = useLiveQuery(() => clients.all(), [], [] as Client[]);
+  const [tab, setTab] = useState<DocType>("invoice");
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<InvoiceStatus | "all">("all");
   const [showImport, setShowImport] = useState(false);
@@ -27,16 +29,24 @@ export default function InvoiceList() {
   }
   const clientName = (id?: string) => clientList.find((c) => c.id === id)?.name ?? "—";
 
+  const isEstimate = tab === "estimate";
+  const counts = useMemo(() => {
+    const c = { invoice: 0, estimate: 0 };
+    (list ?? []).forEach((inv) => { c[(inv.docType ?? "invoice") as DocType]++; });
+    return c;
+  }, [list]);
+
   const rows = useMemo(() => {
     if (!list) return [];
     return list
-      .map((inv) => ({ inv, displayStatus: isOverdue(inv, td) ? ("overdue" as InvoiceStatus) : inv.status }))
+      .filter((inv) => (inv.docType ?? "invoice") === tab)
+      .map((inv) => ({ inv, displayStatus: !isEstimate && isOverdue(inv, td) ? ("overdue" as InvoiceStatus) : inv.status }))
       .filter(({ inv, displayStatus }) => {
         if (filter !== "all" && displayStatus !== filter) return false;
         if (!q.trim()) return true;
         return `${inv.number} ${clientName(inv.clientId)}`.toLowerCase().includes(q.toLowerCase());
       });
-  }, [list, q, filter, clientList, td]);
+  }, [list, q, filter, clientList, td, tab, isEstimate]);
 
   if (!list) return <div style={{ padding: "3rem", color: "var(--ink-faint)" }}>Loading…</div>;
 
@@ -57,30 +67,34 @@ export default function InvoiceList() {
                 </div>
               )}
             </div>
-            <a className="btn btn-primary btn-sm" href="/new">＋ New invoice</a>
+            <a className="btn btn-primary btn-sm" href={isEstimate ? "/new?type=estimate" : "/new"}>＋ New {isEstimate ? "estimate" : "invoice"}</a>
           </div>
         </div>
       </div>
 
       <div className="list-wrap">
+        <div className="doc-tabs">
+          <button className={`doc-tab${!isEstimate ? " on" : ""}`} onClick={() => { setTab("invoice"); setFilter("all"); }}>Invoices{counts.invoice ? ` (${counts.invoice})` : ""}</button>
+          <button className={`doc-tab${isEstimate ? " on" : ""}`} onClick={() => { setTab("estimate"); setFilter("all"); }}>Estimates{counts.estimate ? ` (${counts.estimate})` : ""}</button>
+        </div>
         <div className="list-head">
-          <h1>Invoices</h1>
+          <h1>{isEstimate ? "Estimates" : "Invoices"}</h1>
           <div className="list-controls">
             <input placeholder="Search number or client…" value={q} onChange={(e) => setQ(e.target.value)} />
             <select value={filter} onChange={(e) => setFilter(e.target.value as InvoiceStatus | "all")}>
-              {FILTERS.map((f) => <option key={f} value={f}>{f === "all" ? "All statuses" : f[0].toUpperCase() + f.slice(1)}</option>)}
+              {(isEstimate ? ESTIMATE_FILTERS : INVOICE_FILTERS).map((f) => <option key={f} value={f}>{f === "all" ? "All statuses" : f[0].toUpperCase() + f.slice(1)}</option>)}
             </select>
           </div>
         </div>
 
         {rows.length === 0 ? (
           <div className="empty">
-            {list.length === 0 ? (
+            {counts[tab] === 0 ? (
               <>
-                <p style={{ marginBottom: "1rem" }}>No invoices yet.</p>
-                <a className="btn btn-primary" href="/new">Create your first invoice</a>
+                <p style={{ marginBottom: "1rem" }}>No {isEstimate ? "estimates" : "invoices"} yet.</p>
+                <a className="btn btn-primary" href={isEstimate ? "/new?type=estimate" : "/new"}>Create your first {isEstimate ? "estimate" : "invoice"}</a>
               </>
-            ) : "No invoices match your filter."}
+            ) : `No ${isEstimate ? "estimates" : "invoices"} match your filter.`}
           </div>
         ) : (
           <table className="inv-table">

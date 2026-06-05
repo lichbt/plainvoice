@@ -1,7 +1,9 @@
 // Data model — mirrors Build Spec §10. Local-first; lives in IndexedDB via Dexie.
 // publicToken / viewedAt / paidAt exist now but stay null in Phase 1 (no server).
 
-export type InvoiceStatus = "draft" | "sent" | "viewed" | "paid" | "overdue";
+// invoice statuses + estimate statuses (accepted/declined). "overdue" is derived.
+export type InvoiceStatus = "draft" | "sent" | "viewed" | "paid" | "overdue" | "accepted" | "declined";
+export type DocType = "invoice" | "estimate";
 export type PaymentMethod = "stripe" | "paypal" | "bank" | "cash" | "other";
 export type Plan = "free" | "pro";
 
@@ -49,6 +51,7 @@ export interface Invoice {
   id: string;
   clientId?: string;
   number: string;
+  docType?: DocType; // undefined = invoice (back-compat); "estimate" for quotes
   status: InvoiceStatus;
   issueDate: string; // ISO date (YYYY-MM-DD)
   dueDate?: string;

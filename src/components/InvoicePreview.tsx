@@ -27,6 +27,7 @@ export interface PreviewData {
   business?: Pick<Business, "name" | "logoDataUrl" | "address" | "email" | "taxId">;
   client?: Pick<Client, "name" | "email" | "address">;
   number: string;
+  docType?: "invoice" | "estimate";
   status: string;
   issueDate: string;
   dueDate?: string;
@@ -49,6 +50,7 @@ export function InvoicePreview({ data }: { data: PreviewData }) {
   const statusLabel = data.status.charAt(0).toUpperCase() + data.status.slice(1);
   const tpl = getTemplate(data.template);
   const accent = resolveAccent(tpl, data.accentColor);
+  const docNoun = data.docType === "estimate" ? "Estimate" : "Invoice";
   // accent drives an inline CSS var; header style + font are classes
   const rootStyle = { ["--tpl-accent" as string]: accent, ["--tpl-on-accent" as string]: ON_ACCENT } as React.CSSProperties;
 
@@ -62,7 +64,7 @@ export function InvoicePreview({ data }: { data: PreviewData }) {
         </div>
       </div>
       <div className="pv-inv-no">
-        <span className="big">Invoice #{data.number}</span>
+        <span className="big">{docNoun} #{data.number}</span>
         Issued {data.issueDate || "—"}
         {data.dueDate ? <><br />Due {data.dueDate}</> : null}
       </div>
@@ -122,7 +124,7 @@ export function InvoicePreview({ data }: { data: PreviewData }) {
             <div className="r g"><span>Balance due</span><span className="mono v">{m(Math.max(data.total - data.paid, 0))}</span></div>
           </>
         ) : (
-          <div className="r g"><span>Total due</span><span className="mono v">{m(data.total)}</span></div>
+          <div className="r g"><span>{data.docType === "estimate" ? "Total" : "Total due"}</span><span className="mono v">{m(data.total)}</span></div>
         )}
       </div>
 

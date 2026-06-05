@@ -30,6 +30,7 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
   const font = await pdf.embedFont(serif ? StandardFonts.TimesRoman : StandardFonts.Helvetica);
   const bold = await pdf.embedFont(serif ? StandardFonts.TimesRomanBold : StandardFonts.HelveticaBold);
   const money = (n: number) => formatMoney(n, data.currency);
+  const docLabel = data.docType === "estimate" ? "ESTIMATE" : "INVOICE";
 
   let y = A4.h - M;
   const right = A4.w - M;
@@ -47,7 +48,7 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
     }
     page.drawText(data.business?.name ?? "Your business", { x: bx, y: A4.h - 46, size: 16, font: bold, color: ON });
     if (data.business?.email) page.drawText([data.business.email, data.currency].filter(Boolean).join("  ·  "), { x: bx, y: A4.h - 62, size: 9, font, color: ON, opacity: 0.85 });
-    page.drawText("INVOICE", { x: right - bold.widthOfTextAtSize("INVOICE", 20), y: A4.h - 46, size: 20, font: bold, color: ON });
+    page.drawText(docLabel, { x: right - bold.widthOfTextAtSize(docLabel, 20), y: A4.h - 46, size: 20, font: bold, color: ON });
     page.drawText(`#${data.number}`, { x: right - font.widthOfTextAtSize(`#${data.number}`, 10), y: A4.h - 62, size: 10, font, color: ON, opacity: 0.85 });
     y = A4.h - bandH - 24;
   } else {
@@ -58,7 +59,7 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
         if (img) { const scale = Math.min(120 / img.width, 48 / img.height, 1); page.drawImage(img, { x: M, y: y - img.height * scale, width: img.width * scale, height: img.height * scale }); }
       } catch { /* ignore bad logo */ }
     }
-    page.drawText("INVOICE", { x: right - bold.widthOfTextAtSize("INVOICE", 22), y: y - 18, size: 22, font: bold, color: tpl.headerStyle === "minimal" ? INK : ACCENT });
+    page.drawText(docLabel, { x: right - bold.widthOfTextAtSize(docLabel, 22), y: y - 18, size: 22, font: bold, color: tpl.headerStyle === "minimal" ? INK : ACCENT });
     page.drawText(data.number, { x: right - font.widthOfTextAtSize(data.number, 10), y: y - 34, size: 10, font, color: INK2 });
 
     y -= 62;

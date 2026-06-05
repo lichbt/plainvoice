@@ -289,6 +289,8 @@ table.pv-tbl td{padding:.55rem .3rem; border-bottom:1px solid var(--line)}
 .chip.viewed{background:var(--accent-wash); color:var(--accent)}
 .chip.overdue{background:var(--red-wash); color:var(--red)}
 .chip.paid{background:var(--accent); color:#F7F4EC}
+.chip.accepted{background:var(--accent); color:#F7F4EC}
+.chip.declined{background:var(--red-wash); color:var(--red)}
 
 /* ===== overlays / modal ===== */
 .overlay{position:fixed; inset:0; z-index:100; background:rgba(33,31,24,.42); backdrop-filter:blur(3px);
@@ -305,6 +307,11 @@ table.pv-tbl td{padding:.55rem .3rem; border-bottom:1px solid var(--line)}
 
 /* ===== invoice list ===== */
 .list-wrap{max-width:1180px; margin:0 auto; padding:1.6rem 28px 4rem}
+.doc-tabs{display:flex; gap:.3rem; margin-bottom:1.2rem; border-bottom:1px solid var(--line)}
+.doc-tab{background:none; border:none; padding:.6rem .9rem; font-size:.92rem; font-weight:600; color:var(--ink-faint);
+  border-bottom:2px solid transparent; margin-bottom:-1px; cursor:pointer}
+.doc-tab:hover{color:var(--ink)}
+.doc-tab.on{color:var(--accent); border-bottom-color:var(--accent)}
 .list-head{display:flex; flex-wrap:wrap; align-items:center; gap:.8rem; margin-bottom:1.4rem}
 .list-head h1{font-family:var(--display); font-size:2rem; font-weight:600; margin-right:auto}
 .list-controls{display:flex; gap:.6rem; flex-wrap:wrap}

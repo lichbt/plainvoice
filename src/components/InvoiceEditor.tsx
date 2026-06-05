@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { ensureSettings } from "../db/db";
 import { businesses, clients, invoices, items, payments, today } from "../db/repos";
-import type { Business, Client, Item, InvoiceStatus, Payment, PaymentMethod } from "../db/types";
+import type { Business, Client, Item, InvoiceStatus, DocType, Payment, PaymentMethod } from "../db/types";
 import { computeTotals, isOverdue, balanceDue as calcBalance } from "../lib/totals";
 import { CURRENCIES } from "../lib/currencies";
 import { InvoicePreview, type PreviewData } from "./InvoicePreview";
@@ -20,7 +20,8 @@ interface LineState { id: string; description: string; qty: string; rate: string
 const blankLine = (): LineState => ({ id: crypto.randomUUID(), description: "", qty: "1", rate: "0" });
 const num = (s: string) => { const n = parseFloat(s); return Number.isFinite(n) ? n : 0; };
 
-const STATUSES: InvoiceStatus[] = ["draft", "sent", "viewed", "paid"];
+const INVOICE_STATUSES: InvoiceStatus[] = ["draft", "sent", "viewed", "paid"];
+const ESTIMATE_STATUSES: InvoiceStatus[] = ["draft", "sent", "accepted", "declined"];
 
 export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const initialId =
@@ -28,6 +29,12 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("id") ?? undefined : undefined);
   const [id, setId] = useState<string | undefined>(initialId);
   const [loaded, setLoaded] = useState(false);
+
+  // doc type: "estimate" for new docs via /new?type=estimate; otherwise from the loaded record
+  const initialDocType: DocType =
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "estimate"
+      ? "estimate" : "invoice";
+  const [docType, setDocType] = useState<DocType>(initialDocType);
 
   const [clientId, setClientId] = useState<string | undefined>();
   const [number, setNumber] = useState("");
@@ -66,6 +73,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
         const found = await invoices.getWithLines(initialId);
         if (found) {
           const { invoice, lines: ls } = found;
+          setDocType(invoice.docType ?? "invoice");
           setClientId(invoice.clientId);
           setNumber(invoice.number);
           setStatusState(invoice.status);
@@ -83,7 +91,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           return;
         }
       }
-      const next = await invoices.nextNumber();
+      const next = await invoices.nextNumber(initialDocType);
       const s = await ensureSettings();
       const b = (await businesses.all()).find((x) => x.id === s.activeBusinessId) ?? (await businesses.all())[0];
       setNumber(next);
@@ -110,7 +118,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const persist = useCallback(async (): Promise<string> => {
     const { invoice } = await invoices.save({
-      id, clientId, number, status, issueDate,
+      id, clientId, number, docType, status, issueDate,
       dueDate: dueDate || undefined, currency, discount: num(discount),
       notes: notes || undefined, terms: terms || undefined,
       template, accentColor: accentColor || undefined,
@@ -118,7 +126,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     });
     if (!id) { setId(invoice.id); window.history.replaceState(null, "", `/invoice?id=${invoice.id}`); }
     return invoice.id;
-  }, [id, clientId, number, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
+  }, [id, clientId, number, docType, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -130,17 +138,19 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(null), 2600); }
 
   const client = clientList.find((c) => c.id === clientId);
-  const displayStatus: InvoiceStatus = isOverdue({ status, dueDate: dueDate || undefined }, today()) ? "overdue" : status;
+  const isEstimate = docType === "estimate";
+  // overdue only applies to invoices
+  const displayStatus: InvoiceStatus = !isEstimate && isOverdue({ status, dueDate: dueDate || undefined }, today()) ? "overdue" : status;
   const paid = paymentList.reduce((s, p) => s + p.amount, 0);
   const balance = calcBalance(totals.total, paymentList, currency);
 
   const preview: PreviewData = {
     business: business ? { name: business.name, logoDataUrl: business.logoDataUrl, address: business.address, email: business.email, taxId: business.taxId } : undefined,
     client: client ? { name: client.name, email: client.email, address: client.address } : undefined,
-    number, status: displayStatus, issueDate, dueDate: dueDate || undefined, currency,
+    number, docType, status: displayStatus, issueDate, dueDate: dueDate || undefined, currency,
     lines: lines.map((l, i) => ({ description: l.description, qty: num(l.qty), rate: num(l.rate), amount: totals.lineAmounts[i] })),
     subtotal: totals.subtotal, taxTotal: totals.taxTotal, discount: totals.discount, total: totals.total,
-    paid: paid > 0 ? paid : undefined,
+    paid: isEstimate ? undefined : (paid > 0 ? paid : undefined),
     notes: notes || undefined, terms: terms || undefined,
     paymentLink: business?.paymentLink,
     template, accentColor: accentColor || undefined,
@@ -203,6 +213,13 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     await exportInvoicePdf(preview);
   }
 
+  async function convertToInvoice() {
+    const savedId = await persist();
+    const newId = await invoices.convertToInvoice(savedId);
+    flash("✓ Created an invoice from this estimate");
+    window.location.href = `/invoice?id=${newId}`;
+  }
+
   async function onProfileSaved() {
     setShowProfile(false);
     if (pendingPdf.current) {
@@ -220,16 +237,18 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       <div className="app-bar">
         <div className="app-bar-in">
           <div className="left">
-            <a className="back" href="/app">← All invoices</a>
+            <a className="back" href="/app">← All {isEstimate ? "estimates" : "invoices"}</a>
             <span className={`chip ${displayStatus}`}>{displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}</span>
           </div>
           <div className="app-actions">
             <select className="btn btn-ghost btn-sm" value={status} onChange={(e) => changeStatus(e.target.value as InvoiceStatus)} aria-label="Status" style={{ paddingRight: ".6rem" }}>
-              {STATUSES.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
+              {(isEstimate ? ESTIMATE_STATUSES : INVOICE_STATUSES).map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
             </select>
             <button className="btn btn-ghost btn-sm" onClick={() => setShowPhoto(true)}>📷 From photo</button>
             <button className="btn btn-ghost btn-sm" onClick={() => setShowProfile(true)}>Business profile</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => setShowPayment(true)}>Record payment</button>
+            {isEstimate
+              ? <button className="btn btn-ghost btn-sm" onClick={convertToInvoice}>Convert to invoice</button>
+              : <button className="btn btn-ghost btn-sm" onClick={() => setShowPayment(true)}>Record payment</button>}
             <button className="btn btn-ghost btn-sm" onClick={handlePdf}>Download PDF</button>
             <button className="btn btn-primary btn-sm" onClick={() => setShowSend(true)}>Send</button>
           </div>
@@ -333,7 +352,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
                   <div className="tot-row grand"><span>Balance due</span><span className="mono v">{fmt(balance, currency)}</span></div>
                 </>
               ) : (
-                <div className="tot-row grand"><span>Total due</span><span className="mono v">{fmt(totals.total, currency)}</span></div>
+                <div className="tot-row grand"><span>{isEstimate ? "Total" : "Total due"}</span><span className="mono v">{fmt(totals.total, currency)}</span></div>
               )}
             </div>
           </div>
@@ -362,6 +381,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
         <SendModal
           to={client?.email ?? ""} number={number} total={totals.total} currency={currency}
           dueDate={dueDate || undefined} businessName={business?.name ?? "your business"} paymentLink={business?.paymentLink}
+          docNoun={isEstimate ? "Estimate" : "Invoice"}
           onClose={() => setShowSend(false)} onSend={sendInvoice}
         />
       )}

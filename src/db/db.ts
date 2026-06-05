@@ -34,6 +34,10 @@ export class PlainvoiceDB extends Dexie {
       reminders: "id, invoiceId, scheduledFor",
       settings: "id",
     });
+    // v2: index docType so the list can separate invoices from estimates
+    this.version(2).stores({
+      invoices: "id, clientId, status, number, docType, issueDate, dueDate, updatedAt",
+    });
   }
 }
 

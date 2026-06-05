@@ -63,6 +63,7 @@ export interface InvoiceDraft {
   id?: string;
   clientId?: string;
   number: string;
+  docType?: Invoice["docType"];
   status?: Invoice["status"];
   issueDate: string;
   dueDate?: string;
@@ -104,6 +105,7 @@ export const invoices = {
       id,
       clientId: draft.clientId,
       number: draft.number,
+      docType: draft.docType ?? existing?.docType ?? "invoice",
       status: draft.status ?? existing?.status ?? "draft",
       issueDate: draft.issueDate,
       dueDate: draft.dueDate,
@@ -156,15 +158,41 @@ export const invoices = {
     });
   },
 
-  /** Next sequential number like INV-0007 based on the highest existing numeric suffix. */
-  async nextNumber(prefix = "INV-"): Promise<string> {
+  /** Next sequential number per doc type: INV-0007 / EST-0007 (separate sequences). */
+  async nextNumber(docType: Invoice["docType"] = "invoice"): Promise<string> {
+    const prefix = docType === "estimate" ? "EST-" : "INV-";
     const all = await db.invoices.toArray();
     let max = 0;
     for (const inv of all) {
+      if ((inv.docType ?? "invoice") !== docType) continue;
       const m = inv.number.match(/(\d+)\s*$/);
       if (m) max = Math.max(max, parseInt(m[1], 10));
     }
     return `${prefix}${String(max + 1).padStart(4, "0")}`;
+  },
+
+  /** Create a new invoice from an estimate, copying client/lines/totals/styling. */
+  async convertToInvoice(estimateId: string): Promise<string> {
+    const found = await this.getWithLines(estimateId);
+    if (!found) throw new Error("Estimate not found");
+    const { invoice: est, lines } = found;
+    const number = await this.nextNumber("invoice");
+    const { invoice } = await this.save({
+      clientId: est.clientId,
+      number,
+      docType: "invoice",
+      status: "draft",
+      issueDate: today(),
+      dueDate: undefined,
+      currency: est.currency,
+      discount: est.discount,
+      notes: est.notes,
+      terms: est.terms,
+      template: est.template,
+      accentColor: est.accentColor,
+      lines: lines.map((l) => ({ description: l.description, qty: l.qty, rate: l.rate, taxRate: l.taxRate })),
+    });
+    return invoice.id;
   },
 };
 
