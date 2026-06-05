@@ -204,6 +204,14 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .fld input, .fld textarea, .fld select{width:100%; min-width:0; font-family:inherit; font-size:.92rem; color:var(--ink);
   background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm); padding:.6rem .7rem; transition:border-color .2s, box-shadow .2s}
 .fld input:focus, .fld textarea:focus, .fld select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
+/* Normalize <select> across browsers (iOS Safari renders native chrome/sizing
+   that can crowd neighbouring boxes). appearance:none + a custom chevron. */
+.fld select, .list-controls select, select.add-saved{
+  -webkit-appearance:none; -moz-appearance:none; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='none' stroke='%235B584C' stroke-width='1.6' d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right .7rem center; background-size:.7rem;
+  padding-right:1.8rem;
+}
 .row2{display:grid; grid-template-columns:1fr 1fr; gap:.8rem}
 .row2>*{min-width:0} /* let date/number inputs shrink instead of forcing overflow */
 .li-head, .li{display:grid; grid-template-columns:1fr 56px 84px 84px 48px; gap:.5rem; align-items:center}
