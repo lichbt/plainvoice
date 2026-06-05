@@ -55,6 +55,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [showPayment, setShowPayment] = useState(false);
   const [showSend, setShowSend] = useState(false);
   const [showItems, setShowItems] = useState(false);
+  const [barMenu, setBarMenu] = useState<null | "status" | "more">(null);
   const [toast, setToast] = useState<string | null>(null);
   const pendingPdf = useRef(false);
 
@@ -250,22 +251,41 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
         <div className="app-bar-in">
           <div className="left">
             <a className="back" href="/app">← All {isEstimate ? "estimates" : "invoices"}</a>
-            <span className={`chip ${displayStatus}`}>{displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}</span>
+            {/* status chip doubles as the status dropdown */}
+            <div className="bar-pop">
+              <button className={`chip chip-btn ${displayStatus}`} onClick={() => setBarMenu(barMenu === "status" ? null : "status")}>
+                {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)} <span className="caret">▾</span>
+              </button>
+              {barMenu === "status" && (
+                <div className="bar-menu">
+                  {(isEstimate ? ESTIMATE_STATUSES : INVOICE_STATUSES).map((s) => (
+                    <button key={s} className="bar-menu-item" onClick={() => { setBarMenu(null); changeStatus(s); }}>
+                      {s[0].toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="app-actions">
-            <select className="btn btn-ghost btn-sm" value={status} onChange={(e) => changeStatus(e.target.value as InvoiceStatus)} aria-label="Status" style={{ paddingRight: ".6rem" }}>
-              {(isEstimate ? ESTIMATE_STATUSES : INVOICE_STATUSES).map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
-            </select>
-            <button className="btn btn-ghost btn-sm" onClick={() => setShowPhoto(true)}>📷 From photo</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => setShowProfile(true)}>Business profile</button>
-            {isEstimate
-              ? <button className="btn btn-ghost btn-sm" onClick={convertToInvoice}>Convert to invoice</button>
-              : <button className="btn btn-ghost btn-sm" onClick={() => setShowPayment(true)}>Record payment</button>}
+            <div className="bar-pop">
+              <button className="btn btn-ghost btn-sm" onClick={() => setBarMenu(barMenu === "more" ? null : "more")}>⋯ More</button>
+              {barMenu === "more" && (
+                <div className="bar-menu" style={{ right: 0 }}>
+                  <button className="bar-menu-item" onClick={() => { setBarMenu(null); setShowPhoto(true); }}>📷 From photo</button>
+                  <button className="bar-menu-item" onClick={() => { setBarMenu(null); setShowProfile(true); }}>Business profile</button>
+                  {isEstimate
+                    ? <button className="bar-menu-item" onClick={() => { setBarMenu(null); convertToInvoice(); }}>Convert to invoice</button>
+                    : <button className="bar-menu-item" onClick={() => { setBarMenu(null); setShowPayment(true); }}>Record payment</button>}
+                </div>
+              )}
+            </div>
             <button className="btn btn-ghost btn-sm" onClick={handlePdf}>Download PDF</button>
             <button className="btn btn-primary btn-sm" onClick={() => setShowSend(true)}>Send</button>
           </div>
         </div>
       </div>
+      {barMenu && <div className="bar-backdrop" onClick={() => setBarMenu(null)} />}
 
       <div className="editor">
         {/* form */}

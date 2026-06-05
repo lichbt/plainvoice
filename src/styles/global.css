@@ -185,7 +185,21 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .foot-note{font-size:.82rem; color:var(--ink-faint)}
 
 /* ========== APP / EDITOR ========== */
-.app-bar{position:sticky; top:0; z-index:40; background:var(--paper-2); border-bottom:1px solid var(--line)}
+/* subtle accent: warm-paper bar with a thin forest-green underline */
+.app-bar{position:sticky; top:0; z-index:40; background:var(--paper-2); border-bottom:2px solid var(--accent)}
+
+/* status chip as a clickable dropdown trigger */
+.chip-btn{cursor:pointer; display:inline-flex; align-items:center; gap:.35rem}
+.chip-btn .caret{font-size:.7em; opacity:.8}
+
+/* small popovers in the app bar (status + more menus) */
+.bar-pop{position:relative}
+.bar-menu{position:absolute; top:calc(100% + 6px); left:0; z-index:60; min-width:180px;
+  background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm); box-shadow:var(--shadow); padding:4px}
+.bar-menu-item{display:block; width:100%; text-align:left; padding:.55rem .7rem; font-size:.88rem;
+  color:var(--ink); background:none; border:none; border-radius:6px; cursor:pointer}
+.bar-menu-item:hover{background:var(--paper-2)}
+.bar-backdrop{position:fixed; inset:0; z-index:55}
 .app-bar-in{display:flex; align-items:center; justify-content:space-between; gap:1rem;
   padding:.8rem 28px; max-width:1180px; margin:0 auto}
 .app-bar .left{display:flex; align-items:center; gap:1rem}
