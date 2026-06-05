@@ -200,6 +200,10 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
   color:var(--ink); background:none; border:none; border-radius:6px; cursor:pointer}
 .bar-menu-item:hover{background:var(--paper-2)}
 .bar-backdrop{position:fixed; inset:0; z-index:55}
+/* color/theme trigger in the header — a swatch of the current invoice color */
+.color-trigger{width:30px; height:30px; border-radius:50%; border:2px solid var(--line-strong); cursor:pointer; padding:0; transition:transform .1s}
+.color-trigger:hover{transform:scale(1.06)}
+.color-trigger.is-white{background:#FFFFFF}
 .app-bar-in{display:flex; align-items:center; justify-content:space-between; gap:1rem;
   padding:.8rem 28px; max-width:1180px; margin:0 auto}
 .app-bar .left{display:flex; align-items:center; gap:1rem}

@@ -55,7 +55,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [showPayment, setShowPayment] = useState(false);
   const [showSend, setShowSend] = useState(false);
   const [showItems, setShowItems] = useState(false);
-  const [barMenu, setBarMenu] = useState<null | "status" | "more">(null);
+  const [barMenu, setBarMenu] = useState<null | "status" | "more" | "color">(null);
   const [toast, setToast] = useState<string | null>(null);
   const pendingPdf = useRef(false);
 
@@ -269,6 +269,27 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           </div>
           <div className="app-actions">
             <div className="bar-pop">
+              <button className={`color-trigger${template === "classic" ? " is-white" : ""}`} aria-label="Invoice color"
+                style={template === "classic" ? undefined : { background: accentColor || "#1E5B41" }}
+                onClick={() => setBarMenu(barMenu === "color" ? null : "color")} />
+              {barMenu === "color" && (
+                <div className="bar-menu" style={{ padding: ".6rem" }}>
+                  <div className="accent-row">
+                    <button type="button" title="Classic (no color)"
+                      className={`accent-dot accent-white${template === "classic" ? " on" : ""}`}
+                      onClick={() => { setBarMenu(null); setTemplate("classic"); setAccentColor(""); }} />
+                    {ACCENTS.map((c) => {
+                      const active = template !== "classic" && accentColor === c;
+                      return (
+                        <button key={c} type="button" title={c} className={`accent-dot${active ? " on" : ""}`}
+                          style={{ background: c }} onClick={() => { setBarMenu(null); setTemplate("trades"); setAccentColor(c); }} />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="bar-pop">
               <button className="btn btn-ghost btn-sm" onClick={() => setBarMenu(barMenu === "more" ? null : "more")}>⋯ More</button>
               {barMenu === "more" && (
                 <div className="bar-menu" style={{ right: 0 }}>
@@ -314,25 +335,6 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
                   <option value="__new__">+ Add new client…</option>
                 </select>
                 {client ? <button className="btn btn-ghost btn-sm" onClick={() => setClientModal("edit")}>Edit</button> : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="panel" style={{ marginTop: "1.2rem" }}>
-            <div className="fld" style={{ margin: 0 }}>
-              <label>Color</label>
-              <div className="accent-row">
-                {/* white = clean classic (plain header); a color = colored header band */}
-                <button type="button" title="Classic (no color)"
-                  className={`accent-dot accent-white${template === "classic" ? " on" : ""}`}
-                  onClick={() => { setTemplate("classic"); setAccentColor(""); }} />
-                {ACCENTS.map((c) => {
-                  const active = template !== "classic" && accentColor === c;
-                  return (
-                    <button key={c} type="button" title={c} className={`accent-dot${active ? " on" : ""}`}
-                      style={{ background: c }} onClick={() => { setTemplate("trades"); setAccentColor(c); }} />
-                  );
-                })}
               </div>
             </div>
           </div>
