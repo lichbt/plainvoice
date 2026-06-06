@@ -153,7 +153,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     subtotal: totals.subtotal, taxTotal: totals.taxTotal, discount: totals.discount, total: totals.total,
     paid: isEstimate ? undefined : (paid > 0 ? paid : undefined),
     notes: notes || undefined, terms: terms || undefined,
-    paymentLink: business?.paymentLink,
+    paymentLink: isEstimate ? undefined : business?.paymentLink, // estimates aren't payable
+
     template, accentColor: accentColor || undefined,
   };
 
@@ -413,7 +414,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       {showSend && (
         <SendModal
           to={client?.email ?? ""} number={number} total={totals.total} currency={currency}
-          dueDate={dueDate || undefined} businessName={business?.name ?? "your business"} paymentLink={business?.paymentLink}
+          dueDate={dueDate || undefined} businessName={business?.name ?? "your business"} paymentLink={isEstimate ? undefined : business?.paymentLink}
           docNoun={isEstimate ? "Estimate" : "Invoice"}
           onClose={() => setShowSend(false)} onSend={sendInvoice}
         />
