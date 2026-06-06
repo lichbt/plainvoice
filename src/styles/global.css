@@ -186,7 +186,7 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 
 /* ========== APP / EDITOR ========== */
 /* subtle accent: warm-paper bar with a thin forest-green underline */
-.app-bar{position:sticky; top:0; z-index:40; background:var(--paper-2); border-bottom:2px solid var(--accent)}
+.app-bar{position:sticky; top:0; z-index:50; background:var(--paper-2); border-bottom:2px solid var(--accent)}
 
 /* status chip as a clickable dropdown trigger */
 .chip-btn{cursor:pointer; display:inline-flex; align-items:center; gap:.35rem}
@@ -199,7 +199,9 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .bar-menu-item{display:block; width:100%; text-align:left; padding:.55rem .7rem; font-size:.88rem;
   color:var(--ink); background:none; border:none; border-radius:6px; cursor:pointer}
 .bar-menu-item:hover{background:var(--paper-2)}
-.bar-backdrop{position:fixed; inset:0; z-index:55}
+/* backdrop sits below the app bar (whose menus must stay clickable) but above
+   the page, so an outside click closes the menu without blocking swatch clicks */
+.bar-backdrop{position:fixed; inset:0; z-index:45}
 /* color/theme trigger in the header — a swatch of the current invoice color */
 .color-trigger{width:30px; height:30px; border-radius:50%; border:2px solid var(--line-strong); cursor:pointer; padding:0; transition:transform .1s}
 .color-trigger:hover{transform:scale(1.06)}
