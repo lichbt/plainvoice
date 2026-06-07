@@ -12,6 +12,7 @@
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "deploy": "npm run build && wrangler pages deploy dist --project-name=plainvoice --branch=production"
   },
   "dependencies": {
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "@playwright/test": "^1.60.0",
     "@types/papaparse": "^5.5.2",
     "@types/qrcode": "^1.5.6",
     "@vitest/ui": "^4.1.8",

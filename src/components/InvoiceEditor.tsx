@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ensureSettings } from "../db/db";
+import { db, ensureSettings } from "../db/db";
 import { businesses, clients, invoices, items, payments, today } from "../db/repos";
 import type { Business, Client, Item, InvoiceStatus, DocType, Payment, PaymentMethod } from "../db/types";
 import { computeTotals, isOverdue, balanceDue as calcBalance } from "../lib/totals";
@@ -62,9 +62,12 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const clientList = useLiveQuery(() => clients.all(), [], [] as Client[]);
   const itemList = useLiveQuery(() => items.all(), [], [] as Item[]);
   const business = useLiveQuery(async () => {
-    const s = await ensureSettings();
+    // READ-ONLY: live-queries run in a read-only Dexie transaction, so we must
+    // not write here (ensureSettings does). Just read; settings are created on
+    // mount (effect below) and by profile/payment flows.
+    const s = await db.settings.get("singleton");
     const list = await businesses.all();
-    return list.find((b) => b.id === s.activeBusinessId) ?? list[0];
+    return list.find((b) => b.id === s?.activeBusinessId) ?? list[0];
   }, [], undefined as Business | undefined);
   const paymentList = useLiveQuery(async () => (id ? await payments.forInvoice(id) : ([] as Payment[])), [id], [] as Payment[]);
 
@@ -370,8 +373,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
             </div>
 
             <div className="row2" style={{ marginTop: "1.1rem" }}>
-              <div className="fld"><label>Tax %</label><input type="number" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} /></div>
-              <div className="fld"><label>Discount</label><input type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} /></div>
+              <div className="fld"><label>Tax %</label><input type="number" aria-label="Tax %" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} /></div>
+              <div className="fld"><label>Discount</label><input type="number" aria-label="Discount" value={discount} onChange={(e) => setDiscount(e.target.value)} /></div>
             </div>
             <div className="fld"><label>Notes / terms</label><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Thanks for your business! Payment due within 14 days." /></div>
 
