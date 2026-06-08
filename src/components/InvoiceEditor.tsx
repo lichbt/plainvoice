@@ -37,6 +37,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [docType, setDocType] = useState<DocType>(initialDocType);
 
   const [clientId, setClientId] = useState<string | undefined>();
+  const [businessId, setBusinessId] = useState<string | undefined>();
   const [number, setNumber] = useState("");
   const [status, setStatusState] = useState<InvoiceStatus>("draft");
   const [issueDate, setIssueDate] = useState(today());
@@ -49,7 +50,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [template, setTemplate] = useState<string>(DEFAULT_TEMPLATE.id);
   const [accentColor, setAccentColor] = useState<string>("");
   const [lines, setLines] = useState<LineState[]>([blankLine()]);
-  const [showProfile, setShowProfile] = useState(false);
+  // null = closed, "new" = add company, Business = edit that company
+  const [profileEdit, setProfileEdit] = useState<Business | "new" | null>(null);
   const [clientModal, setClientModal] = useState<null | "new" | "edit">(null);
   const [showPhoto, setShowPhoto] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
@@ -61,14 +63,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
 
   const clientList = useLiveQuery(() => clients.all(), [], [] as Client[]);
   const itemList = useLiveQuery(() => items.all(), [], [] as Item[]);
-  const business = useLiveQuery(async () => {
-    // READ-ONLY: live-queries run in a read-only Dexie transaction, so we must
-    // not write here (ensureSettings does). Just read; settings are created on
-    // mount (effect below) and by profile/payment flows.
-    const s = await db.settings.get("singleton");
-    const list = await businesses.all();
-    return list.find((b) => b.id === s?.activeBusinessId) ?? list[0];
-  }, [], undefined as Business | undefined);
+  const businessList = useLiveQuery(() => businesses.all(), [], [] as Business[]);
   const paymentList = useLiveQuery(async () => (id ? await payments.forInvoice(id) : ([] as Payment[])), [id], [] as Payment[]);
 
   useEffect(() => {
@@ -79,6 +74,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           const { invoice, lines: ls } = found;
           setDocType(invoice.docType ?? "invoice");
           setClientId(invoice.clientId);
+          setBusinessId(invoice.businessId ?? (await db.settings.get("singleton"))?.activeBusinessId ?? (await businesses.all())[0]?.id);
           setNumber(invoice.number);
           setStatusState(invoice.status);
           setIssueDate(invoice.issueDate);
@@ -97,8 +93,10 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       }
       const next = await invoices.nextNumber(initialDocType);
       const s = await ensureSettings();
-      const b = (await businesses.all()).find((x) => x.id === s.activeBusinessId) ?? (await businesses.all())[0];
+      const all = await businesses.all();
+      const b = all.find((x) => x.id === s.activeBusinessId) ?? all[0];
       setNumber(next);
+      setBusinessId(b?.id);
       if (b?.defaultCurrency) setCurrency(b.defaultCurrency);
       setLoaded(true);
       // photo-import entry point from the landing page (?photo=1)
@@ -122,7 +120,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const persist = useCallback(async (): Promise<string> => {
     const { invoice } = await invoices.save({
-      id, clientId, number, docType, status, issueDate,
+      id, clientId, businessId, number, docType, status, issueDate,
       dueDate: dueDate || undefined, currency, discount: num(discount),
       notes: notes || undefined, terms: terms || undefined,
       template, accentColor: accentColor || undefined,
@@ -130,7 +128,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     });
     if (!id) { setId(invoice.id); window.history.replaceState(null, "", `/${docType === "estimate" ? "estimate" : "invoice"}?id=${invoice.id}`); }
     return invoice.id;
-  }, [id, clientId, number, docType, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
+  }, [id, clientId, businessId, number, docType, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -142,6 +140,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(null), 2600); }
 
   const client = clientList.find((c) => c.id === clientId);
+  const business = businessList.find((b) => b.id === businessId) ?? businessList[0];
   const isEstimate = docType === "estimate";
   // overdue only applies to invoices
   const displayStatus: InvoiceStatus = !isEstimate && isOverdue({ status, dueDate: dueDate || undefined }, today()) ? "overdue" : status;
@@ -218,14 +217,14 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   }
 
   async function sendInvoice() {
-    if (!business?.name) { setShowSend(false); setShowProfile(true); return; }
+    if (!business?.name) { setShowSend(false); setProfileEdit("new"); return; }
     await persist();
     await exportInvoicePdf(preview);
     if (status === "draft") { setStatusState("sent"); const sid = await persist(); await invoices.setStatus(sid, "sent"); }
   }
 
   async function handlePdf() {
-    if (!business?.name) { pendingPdf.current = true; setShowProfile(true); return; }
+    if (!business?.name) { pendingPdf.current = true; setProfileEdit("new"); return; }
     await persist();
     await exportInvoicePdf(preview);
   }
@@ -237,14 +236,19 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     window.location.href = `/invoice?id=${newId}`;
   }
 
-  async function onProfileSaved() {
-    setShowProfile(false);
+  async function onProfileSaved(saved: Business) {
+    setProfileEdit(null);
+    setBusinessId(saved.id); // use the just-added/edited company on this doc
     if (pendingPdf.current) {
       pendingPdf.current = false;
-      const b = (await businesses.all())[0];
       await persist();
-      await exportInvoicePdf({ ...preview, business: b ? { name: b.name, logoDataUrl: b.logoDataUrl, address: b.address, email: b.email, taxId: b.taxId } : undefined });
+      await exportInvoicePdf({ ...preview, business: { name: saved.name, logoDataUrl: saved.logoDataUrl, address: saved.address, email: saved.email, taxId: saved.taxId } });
     }
+  }
+
+  async function onProfileDeleted(deletedId: string) {
+    setProfileEdit(null);
+    if (businessId === deletedId) setBusinessId((await businesses.all())[0]?.id);
   }
 
   if (!loaded) return <div style={{ padding: "3rem", color: "var(--ink-faint)" }}>Loading…</div>;
@@ -298,7 +302,6 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               {barMenu === "more" && (
                 <div className="bar-menu" style={{ right: 0 }}>
                   <button className="bar-menu-item" onClick={() => { setBarMenu(null); setShowPhoto(true); }}>📷 From photo</button>
-                  <button className="bar-menu-item" onClick={() => { setBarMenu(null); setShowProfile(true); }}>Business profile</button>
                   {isEstimate
                     ? <button className="bar-menu-item" onClick={() => { setBarMenu(null); convertToInvoice(); }}>Convert to invoice</button>
                     : <button className="bar-menu-item" onClick={() => { setBarMenu(null); setShowPayment(true); }}>Record payment</button>}
@@ -328,6 +331,18 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
             <div className="row2">
               <div className="fld"><label>Issue date</label><input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
               <div className="fld"><label>Due date</label><input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
+            </div>
+            <div className="fld">
+              <label>From (your company)</label>
+              <div style={{ display: "flex", gap: ".5rem", alignItems: "center" }}>
+                <select value={businessId ?? ""} style={{ flex: 1 }} aria-label="From (your company)"
+                  onChange={(e) => { if (e.target.value === "__new__") { setProfileEdit("new"); return; } setBusinessId(e.target.value || undefined); }}>
+                  {businessList.length === 0 ? <option value="">— No company —</option> : null}
+                  {businessList.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  <option value="__new__">+ Add company…</option>
+                </select>
+                {business ? <button className="btn btn-ghost btn-sm" onClick={() => setProfileEdit(business)}>Edit</button> : null}
+              </div>
             </div>
             <div className="fld">
               <label>Client</label>
@@ -406,10 +421,13 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           onClose={() => setClientModal(null)}
           onSaved={(c) => { setClientId(c.id); setClientModal(null); }} />
       )}
-      {showProfile && (
-        <BusinessProfileModal initial={business} defaultCurrency={currency}
-          onClose={() => { pendingPdf.current = false; setShowProfile(false); }}
-          onSaved={onProfileSaved} />
+      {profileEdit && (
+        <BusinessProfileModal
+          initial={profileEdit === "new" ? undefined : profileEdit}
+          defaultCurrency={currency}
+          onClose={() => { pendingPdf.current = false; setProfileEdit(null); }}
+          onSaved={onProfileSaved}
+          onDeleted={onProfileDeleted} />
       )}
       {showItems && <ItemsModal currency={currency} onClose={() => setShowItems(false)} />}
       {showPhoto && <PhotoImportModal onClose={() => setShowPhoto(false)} onResult={onPhotoResult} />}

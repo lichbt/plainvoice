@@ -10,11 +10,13 @@ export function BusinessProfileModal({
   defaultCurrency,
   onClose,
   onSaved,
+  onDeleted,
 }: {
   initial?: Business;
   defaultCurrency: string;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (business: Business) => void;
+  onDeleted?: (id: string) => void;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
@@ -44,16 +46,28 @@ export function BusinessProfileModal({
     const s = await ensureSettings();
     await db.settings.update("singleton", { activeBusinessId: s.activeBusinessId ?? rec.id });
     setSaving(false);
-    onSaved();
+    onSaved(rec);
+  }
+
+  async function remove() {
+    if (!initial) return;
+    if (!confirm(`Delete "${initial.name}"? This can't be undone.`)) return;
+    await businesses.remove(initial.id);
+    const s = await ensureSettings();
+    if (s.activeBusinessId === initial.id) {
+      const next = (await businesses.all())[0];
+      await db.settings.update("singleton", { activeBusinessId: next?.id });
+    }
+    onDeleted?.(initial.id);
   }
 
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <button className="x" onClick={onClose} aria-label="Close">×</button>
-        <h3>Your business</h3>
-        <p className="m-lead">Shown on every invoice. We only ask for what we need.</p>
-        <div className="fld"><label>Business name</label><input value={name} onChange={(e) => setName(e.target.value)} autoFocus /></div>
+        <h3>{initial ? "Edit company" : "Your company"}</h3>
+        <p className="m-lead">Shown on the invoice. We only ask for what we need.</p>
+        <div className="fld"><label>Business name</label><input aria-label="Business name" value={name} onChange={(e) => setName(e.target.value)} autoFocus /></div>
         <div className="row2">
           <div className="fld"><label>Email</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
           <div className="fld"><label>Default currency</label>
@@ -76,8 +90,9 @@ export function BusinessProfileModal({
             <input type="file" accept="image/png,image/jpeg" onChange={(e) => onLogo(e.target.files?.[0])} style={{ fontSize: ".82rem", border: "none", background: "none", padding: 0 }} />
           </div>
         </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: ".6rem", marginTop: "1rem" }}>
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>Cancel</button>
+        <div style={{ display: "flex", alignItems: "center", gap: ".6rem", marginTop: "1rem" }}>
+          {initial && onDeleted ? <button className="btn btn-danger btn-sm" onClick={remove}>Delete</button> : null}
+          <button className="btn btn-ghost btn-sm" style={{ marginLeft: "auto" }} onClick={onClose}>Cancel</button>
           <button className="btn btn-primary btn-sm" onClick={save} disabled={!name.trim() || saving}>{saving ? "Saving…" : "Save"}</button>
         </div>
       </div>

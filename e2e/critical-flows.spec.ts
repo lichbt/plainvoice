@@ -73,6 +73,37 @@ test("estimate: EST numbering + convert to invoice", async ({ page }) => {
   await expect(page.locator(".pv-inv-no .big")).toContainText("Invoice #INV-");
 });
 
+test("companies: add two, switch between them, delete one", async ({ page }) => {
+  await page.goto("/new");
+  const fromSelect = page.getByLabel("From (your company)");
+
+  // add first company
+  await fromSelect.selectOption("__new__");
+  let modal = page.locator(".modal");
+  await modal.getByLabel("Business name").fill("Acme LLC");
+  await modal.getByRole("button", { name: "Save" }).click();
+  await expect(page.locator(".pv-co")).toContainText("Acme LLC");
+
+  // add a second company
+  await fromSelect.selectOption("__new__");
+  modal = page.locator(".modal");
+  await modal.getByLabel("Business name").fill("Beta Studio");
+  await modal.getByRole("button", { name: "Save" }).click();
+  await expect(page.locator(".pv-co")).toContainText("Beta Studio");
+
+  // switch back to the first
+  await fromSelect.selectOption({ label: "Acme LLC" });
+  await expect(page.locator(".pv-co")).toContainText("Acme LLC");
+
+  // delete the selected company (Acme) via Edit → Delete
+  page.on("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Edit" }).first().click();
+  await page.locator(".modal").getByRole("button", { name: "Delete" }).click();
+  // Acme is gone; only Beta remains as an option
+  await expect(fromSelect.locator("option", { hasText: "Acme LLC" })).toHaveCount(0);
+  await expect(fromSelect.locator("option", { hasText: "Beta Studio" })).toHaveCount(1);
+});
+
 test("mobile: no horizontal overflow on editor and list", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const path of ["/new", "/app"]) {

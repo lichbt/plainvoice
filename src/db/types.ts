@@ -50,6 +50,7 @@ export interface InvoiceLine {
 export interface Invoice {
   id: string;
   clientId?: string;
+  businessId?: string; // which of the user's companies issued this doc
   number: string;
   docType?: DocType; // undefined = invoice (back-compat); "estimate" for quotes
   status: InvoiceStatus;

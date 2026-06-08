@@ -24,6 +24,7 @@ export const businesses = {
     await db.businesses.put(rec);
     return rec;
   },
+  remove: (id: string) => db.businesses.delete(id),
 };
 
 /* ---------- Clients ---------- */
@@ -62,6 +63,7 @@ export const items = {
 export interface InvoiceDraft {
   id?: string;
   clientId?: string;
+  businessId?: string;
   number: string;
   docType?: Invoice["docType"];
   status?: Invoice["status"];
@@ -104,6 +106,7 @@ export const invoices = {
     const invoice: Invoice = {
       id,
       clientId: draft.clientId,
+      businessId: draft.businessId ?? existing?.businessId,
       number: draft.number,
       docType: draft.docType ?? existing?.docType ?? "invoice",
       status: draft.status ?? existing?.status ?? "draft",
@@ -179,6 +182,7 @@ export const invoices = {
     const number = await this.nextNumber("invoice");
     const { invoice } = await this.save({
       clientId: est.clientId,
+      businessId: est.businessId,
       number,
       docType: "invoice",
       status: "draft",
