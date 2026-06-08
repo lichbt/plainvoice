@@ -379,8 +379,10 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
             {lines.map((l, i) => (
               <div className="li" key={l.id}>
                 <input value={l.description} placeholder="Item or service" aria-label="Description" onChange={(e) => changeDescription(i, e.target.value)} />
-                <input type="number" value={l.qty} aria-label="Quantity" placeholder="Qty" onChange={(e) => setLine(i, { qty: e.target.value })} />
-                <input type="number" value={l.rate} aria-label="Rate" placeholder="Rate" onChange={(e) => setLine(i, { rate: e.target.value })} />
+                <div className="li-field"><span className="li-lab">Qty</span>
+                  <input type="number" value={l.qty} aria-label="Quantity" onChange={(e) => setLine(i, { qty: e.target.value })} /></div>
+                <div className="li-field"><span className="li-lab">Rate</span>
+                  <input type="number" value={l.rate} aria-label="Rate" onChange={(e) => setLine(i, { rate: e.target.value })} /></div>
                 <span className="amt">{totals.lineAmounts[i] !== undefined ? new Intl.NumberFormat(undefined, { style: "currency", currency }).format(totals.lineAmounts[i]) : ""}</span>
                 <div className="li-actions">
                   <button className="save" title="Save to your items" aria-label="Save to your items" disabled={!l.description.trim()} onClick={() => saveLineToCatalog(l)}>＋</button>

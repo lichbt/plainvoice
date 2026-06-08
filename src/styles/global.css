@@ -249,6 +249,8 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .li-head{font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); padding:0 0 .4rem; font-weight:600}
 .li{margin-bottom:.5rem}
 .li input{font-size:.88rem; padding:.45rem .5rem; width:100%; font-family:inherit; color:var(--ink); background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm)}
+.li-field{min-width:0}
+.li-lab{display:none} /* desktop: column header labels the fields; hidden here */
 .li input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
 .li .amt{font-family:var(--mono); font-size:.85rem; text-align:right; color:var(--ink-soft)}
 .li-actions{display:flex; gap:2px; justify-content:flex-end; align-items:center}
@@ -418,12 +420,14 @@ table.pv-tbl td{padding:.55rem .3rem; border-bottom:1px solid var(--line)}
   .li{
     grid-template-columns:1fr 1fr auto 48px;
     grid-template-areas:"desc desc desc desc" "qty rate amount del";
-    gap:.4rem .5rem; align-items:center;
+    gap:.4rem .5rem; align-items:end;
     margin-bottom:.9rem; padding-bottom:.9rem; border-bottom:1px dashed var(--line);
   }
   .li>:nth-child(1){grid-area:desc}
   .li>:nth-child(2){grid-area:qty}
   .li>:nth-child(3){grid-area:rate}
-  .li>:nth-child(4){grid-area:amount; text-align:right}
+  .li>:nth-child(4){grid-area:amount; text-align:right; padding-bottom:.5rem}
   .li>:nth-child(5){grid-area:del}
+  /* with the column header hidden, show inline labels above qty/rate */
+  .li-lab{display:block; font-size:.62rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); margin-bottom:3px}
 }
