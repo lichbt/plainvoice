@@ -35,7 +35,7 @@ export function ClientModal({
         <button className="x" onClick={onClose} aria-label="Close">×</button>
         <h3>{initial ? "Edit client" : "New client"}</h3>
         <p className="m-lead">Saved to your client list for next time.</p>
-        <div className="fld"><label>Name</label><input value={name} onChange={(e) => setName(e.target.value)} autoFocus /></div>
+        <div className="fld"><label>Name</label><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} autoFocus /></div>
         <div className="fld"><label>Email</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
         <div className="fld"><label>Address</label><textarea rows={2} value={address} onChange={(e) => setAddress(e.target.value)} /></div>
         <div className="fld"><label>Notes</label><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>

@@ -95,13 +95,30 @@ test("companies: add two, switch between them, delete one", async ({ page }) => 
   await fromSelect.selectOption({ label: "Acme LLC" });
   await expect(page.locator(".pv-co")).toContainText("Acme LLC");
 
-  // delete the selected company (Acme) via Edit → Delete
+  // delete Acme via the Saved companies manager
   page.on("dialog", (d) => d.accept());
-  await page.getByRole("button", { name: "Edit" }).first().click();
-  await page.locator(".modal").getByRole("button", { name: "Delete" }).click();
-  // Acme is gone; only Beta remains as an option
-  await expect(fromSelect.locator("option", { hasText: "Acme LLC" })).toHaveCount(0);
-  await expect(fromSelect.locator("option", { hasText: "Beta Studio" })).toHaveCount(1);
+  await page.getByRole("button", { name: /Saved companies/ }).click();
+  const mgr = page.locator(".modal", { hasText: "Saved companies" });
+  await mgr.locator(".mgr-row", { hasText: "Acme LLC" }).getByLabel("Delete Acme LLC").click();
+  await expect(mgr.locator(".mgr-row", { hasText: "Acme LLC" })).toHaveCount(0);
+  await expect(mgr.locator(".mgr-row", { hasText: "Beta Studio" })).toHaveCount(1);
+});
+
+test("clients: add then delete via Saved clients manager", async ({ page }) => {
+  await page.goto("/new");
+  // add a client through the picker
+  await page.getByLabel("Client").selectOption("__new__");
+  const addModal = page.locator(".modal");
+  await addModal.getByLabel("Name").fill("Northwind");
+  await addModal.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByLabel("Client").locator("option", { hasText: "Northwind" })).toHaveCount(1);
+
+  // delete it via the Saved clients manager
+  page.on("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: /Saved clients/ }).click();
+  const mgr = page.locator(".modal", { hasText: "Saved clients" });
+  await mgr.locator(".mgr-row", { hasText: "Northwind" }).getByLabel("Delete Northwind").click();
+  await expect(mgr.locator(".mgr-row", { hasText: "Northwind" })).toHaveCount(0);
 });
 
 test("mobile: no horizontal overflow on editor and list", async ({ page }) => {

@@ -12,6 +12,8 @@ import { PhotoImportModal } from "./PhotoImportModal";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { SendModal } from "./SendModal";
 import { ItemsModal } from "./ItemsModal";
+import { ClientsModal } from "./ClientsModal";
+import { CompaniesModal } from "./CompaniesModal";
 import type { OcrLine } from "../lib/ocr";
 import { exportInvoicePdf } from "../lib/pdf";
 import { ACCENTS, DEFAULT_TEMPLATE } from "../lib/templates";
@@ -57,6 +59,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [showPayment, setShowPayment] = useState(false);
   const [showSend, setShowSend] = useState(false);
   const [showItems, setShowItems] = useState(false);
+  const [showClients, setShowClients] = useState(false);
+  const [showCompanies, setShowCompanies] = useState(false);
   const [barMenu, setBarMenu] = useState<null | "status" | "more" | "color">(null);
   const [toast, setToast] = useState<string | null>(null);
   const pendingPdf = useRef(false);
@@ -138,6 +142,14 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   }, [loaded, persist]);
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(null), 2600); }
+
+  // If the selected client/company gets deleted in a manager, drop/fall back.
+  useEffect(() => {
+    if (loaded && clientId && clientList.length >= 0 && !clientList.some((c) => c.id === clientId)) setClientId(undefined);
+  }, [clientList, clientId, loaded]);
+  useEffect(() => {
+    if (loaded && businessId && businessList.length > 0 && !businessList.some((b) => b.id === businessId)) setBusinessId(businessList[0]?.id);
+  }, [businessList, businessId, loaded]);
 
   const client = clientList.find((c) => c.id === clientId);
   const business = businessList.find((b) => b.id === businessId) ?? businessList[0];
@@ -333,28 +345,28 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               <div className="fld"><label>Due date</label><input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
             </div>
             <div className="fld">
-              <label>From (your company)</label>
-              <div style={{ display: "flex", gap: ".5rem", alignItems: "center" }}>
-                <select value={businessId ?? ""} style={{ flex: 1 }} aria-label="From (your company)"
-                  onChange={(e) => { if (e.target.value === "__new__") { setProfileEdit("new"); return; } setBusinessId(e.target.value || undefined); }}>
-                  {businessList.length === 0 ? <option value="">— No company —</option> : null}
-                  {businessList.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                  <option value="__new__">+ Add company…</option>
-                </select>
-                {business ? <button className="btn btn-ghost btn-sm" onClick={() => setProfileEdit(business)}>Edit</button> : null}
+              <div className="fld-head">
+                <label>From (your company)</label>
+                <button type="button" className="fld-link" onClick={() => setShowCompanies(true)}>Saved companies{businessList.length ? ` (${businessList.length})` : ""}</button>
               </div>
+              <select value={businessId ?? ""} aria-label="From (your company)"
+                onChange={(e) => { if (e.target.value === "__new__") { setProfileEdit("new"); return; } setBusinessId(e.target.value || undefined); }}>
+                {businessList.length === 0 ? <option value="">— No company —</option> : null}
+                {businessList.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                <option value="__new__">+ Add company…</option>
+              </select>
             </div>
             <div className="fld">
-              <label>Client</label>
-              <div style={{ display: "flex", gap: ".5rem", alignItems: "center" }}>
-                <select value={clientId ?? ""} style={{ flex: 1 }}
-                  onChange={(e) => { if (e.target.value === "__new__") { setClientModal("new"); return; } setClientId(e.target.value || undefined); }}>
-                  <option value="">— No client —</option>
-                  {clientList.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  <option value="__new__">+ Add new client…</option>
-                </select>
-                {client ? <button className="btn btn-ghost btn-sm" onClick={() => setClientModal("edit")}>Edit</button> : null}
+              <div className="fld-head">
+                <label>Client</label>
+                <button type="button" className="fld-link" onClick={() => setShowClients(true)}>Saved clients{clientList.length ? ` (${clientList.length})` : ""}</button>
               </div>
+              <select value={clientId ?? ""} aria-label="Client"
+                onChange={(e) => { if (e.target.value === "__new__") { setClientModal("new"); return; } setClientId(e.target.value || undefined); }}>
+                <option value="">— No client —</option>
+                {clientList.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <option value="__new__">+ Add new client…</option>
+              </select>
             </div>
           </div>
 
@@ -430,6 +442,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           onDeleted={onProfileDeleted} />
       )}
       {showItems && <ItemsModal currency={currency} onClose={() => setShowItems(false)} />}
+      {showClients && <ClientsModal onClose={() => setShowClients(false)} />}
+      {showCompanies && <CompaniesModal currency={currency} onClose={() => setShowCompanies(false)} />}
       {showPhoto && <PhotoImportModal onClose={() => setShowPhoto(false)} onResult={onPhotoResult} />}
       {showPayment && <RecordPaymentModal currency={currency} balanceDue={balance} onClose={() => setShowPayment(false)} onSave={recordPayment} />}
       {showSend && (
