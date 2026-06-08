@@ -1,44 +1,41 @@
-# Plainvoice — Design System
+# Plainvoice — Design System (Stripe-inspired)
 
-Warm-paper editorial aesthetic, ported from the Phase 0 prototype
-(`plainvoice-prototype_1.html`). **Ink on warm paper, forest-green accent,
-serif display + mono numerals, subtle paper grain.**
+Applied from the `voltagent/awesome-design-md` Stripe `DESIGN.md`.
+**Deep-navy ink · electric indigo primary · Inter at weight 300 with negative
+tracking · tabular figures for money · pill buttons · cool off-white surfaces ·
+gradient-mesh marketing hero.**
 
-Single source of truth: the `:root` tokens + component classes in
-`src/styles/global.css`. Tailwind v4 utilities are aliased to these tokens via
-`@theme inline`, so `bg-paper`, `text-ink`, `text-accent` etc. track the palette.
+Single source of truth: `:root` tokens + component classes in `src/styles/global.css`.
 
-## Fonts (Google Fonts, loaded in global.css)
-- **Display / headings:** Fraunces (serif) — `--display`
-- **Body / UI:** Hanken Grotesk — `--sans`
-- **Numerals (money, totals, invoice #):** JetBrains Mono, tabular-nums — `--mono` / `.mono` / `.num`
+## Fonts
+- **Display + body:** Inter (Google Fonts), weights 300/400/500/600. Display tiers at **300** with negative letter-spacing (the Stripe signature). `font-feature-settings: "ss01"` globally.
+- **Money / numerics:** Inter with `font-feature-settings: "tnum"` (tabular) via `.num` / `.mono`.
 
 ## Color tokens
 | Token | Value | Use |
 |-------|-------|-----|
-| `--paper` | `#F4F0E6` | page background |
-| `--paper-2` | `#FBF8F0` | panels / cards |
-| `--paper-3` | `#FFFFFF` | inputs / invoice sheet |
-| `--ink` | `#211F18` | primary text |
-| `--ink-soft` | `#5B584C` | secondary text |
-| `--ink-faint` | `#8B8678` | labels / muted |
-| `--line` / `--line-strong` | `#E3DCCB` / `#D2C9B3` | borders / hairlines |
-| `--accent` / `--accent-2` | `#1E5B41` / `#2C7C58` | forest green — actions, links |
-| `--accent-wash` | `#E7F0E9` | focus ring, accent bg |
-| `--amber` / `--amber-wash` | `#9C6B1F` / `#F5ECD8` | sent status |
-| `--red` / `--red-wash` | `#9A382C` / `#F3E0DC` | overdue / destructive |
+| `--paper` | `#F6F9FC` | page background (cool off-white) |
+| `--paper-2` / `--paper-3` | `#FFFFFF` | cards / inputs / invoice sheet |
+| `--ink` | `#0D253D` | body text (deep navy, never black) |
+| `--ink-soft` | `#273951` | secondary text |
+| `--ink-faint` | `#64748D` | helper / labels |
+| `--line` / `--line-strong` | `#E3E8EE` / `#CDD6E0` | hairlines / borders |
+| `--accent` / `--accent-2` | `#533AFD` / `#4434D4` | electric indigo — CTAs, links, focus |
+| `--accent-wash` | `#ECEAFE` | focus ring, soft indigo bg |
+| `--red` / `--red-wash` | `#EA2261` / `#FCE4EC` | ruby — overdue / destructive |
+| `--amber` | `#9C6B1F` | sent status |
 
-Radii `--r` 14px / `--r-sm` 9px. Buttons are pills (999px). Shadows: `--shadow`, `--shadow-lg`.
+Radii: `--r` 12px (cards) / `--r-sm` 6px (inputs) / buttons are pills (999px).
+Shadows: `--shadow` (1px lift) / `--shadow-lg` (floating panels), tinted `rgba(0,55,112,…)`.
 
-## Status chips (`.chip.<status>`)
-`draft` → ink-soft outline · `sent` → amber · `viewed` → accent wash · `paid` → solid accent · `overdue` → red
+## Signatures
+- **Pill buttons**, indigo fill, tight padding. Indigo reserved for CTAs + links (one filled per area).
+- **Tabular money** everywhere a figure appears.
+- **Gradient-mesh hero** — pastel cream → orange → lavender → indigo → ruby wash across the landing hero (`.hero::before`).
+- Invoice template default accent is indigo; the color picker offers the Stripe palette.
 
-## Structure / routes
-- `/` — marketing landing (hero, them-vs-you, Pricing Promise, switcher, AI). Static, GEO-friendly.
-- `/new` — invoice editor (app-bar + Details/Line-items panels + live preview).
-- `/invoice?id=` — edit existing invoice (same editor).
-- `/app` — invoice list.
+## Routes
+- `/` landing · `/new` editor · `/invoice?id=` / `/estimate?id=` edit · `/app` list.
 
 ## Motion
-- `prefers-reduced-motion: reduce` disables all animation/transition (handled globally in global.css).
-- Logo checkmark draws once; hero cards float gently; sections reveal on scroll (landing only).
+`prefers-reduced-motion: reduce` disables all animation/transition.

@@ -290,7 +290,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           <div className="app-actions">
             <div className="bar-pop">
               <button className={`color-trigger${template === "classic" ? " is-white" : ""}`} aria-label="Invoice color"
-                style={template === "classic" ? undefined : { background: accentColor || "#1E5B41" }}
+                style={template === "classic" ? undefined : { background: accentColor || "#533AFD" }}
                 onClick={() => setBarMenu(barMenu === "color" ? null : "color")} />
               {barMenu === "color" && (
                 <div className="bar-menu" style={{ padding: ".6rem" }}>

@@ -6,9 +6,9 @@ import { formatMoney } from "./totals";
 import { getTemplate, resolveAccent, ON_ACCENT } from "./templates";
 import { qrDataUrl } from "./qr";
 
-const INK = rgb(0.12, 0.11, 0.09);
-const INK2 = rgb(0.36, 0.33, 0.29);
-const LINE = rgb(0.89, 0.86, 0.79);
+const INK = rgb(0.051, 0.145, 0.239); // #0D253D deep navy
+const INK2 = rgb(0.392, 0.455, 0.553); // #64748D
+const LINE = rgb(0.890, 0.910, 0.933); // #E3E8EE hairline
 
 const A4 = { w: 595.28, h: 841.89 };
 const M = 48; // margin
