@@ -11,7 +11,8 @@ Tick them off when shipping for real.
 
 ## When the AI layer (Phase 2) ships
 - [ ] **OpenRouter API key** set as a Pages secret (`OPENROUTER_API_KEY`) — never in client.
-- [ ] Pick the default **model id** (e.g. `anthropic/claude-3.5-haiku`).
+- [ ] Default **model id** is `google/gemini-2.0-flash-exp:free` (free, supports tool calling).
+      Override per-deploy with the `AI_MODEL` secret if you want a paid/stronger one.
 - [ ] Decide the **free AI allowance** (suggested: 3 / month, no account).
 - [ ] Verify the **MoR provider onboards Vietnam-based sellers** with a Wise/Payoneer
       payout **before** writing billing code (spec §15 blocker).
