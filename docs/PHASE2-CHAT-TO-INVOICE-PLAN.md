@@ -2,8 +2,8 @@
 
 Type a sentence → an **editable invoice draft**. The "wow" on first use, and the
 easiest AI value to demo. Shares the Phase-2 backend/auth/billing scaffold described in
-`PHASE2-FLOW2-PLAN.md` (Pages Function + Claude, then magic-link auth, then MoR billing).
-This doc covers only the **feature-specific** parts.
+`PHASE2-FLOW2-PLAN.md` (Pages Function → **OpenRouter**, then magic-link auth, then MoR
+billing). This doc covers only the **feature-specific** parts.
 
 > Example input: *"design work 8h at $150, logo $200, and 2 rounds of revisions at $90 for Acme Studios, due in 30 days"*
 > Output: 3 editable line items, client "Acme Studios", Net-30 due date — all editable, totals computed in code.
@@ -27,8 +27,8 @@ This doc covers only the **feature-specific** parts.
    - (Later) the AI panel on the marketing page links here.
 2. User types free text → **Send to AI** (shows a small "drafting…" state).
 3. Client POSTs the text + minimal context to `POST /api/ai/parse-invoice`.
-4. Backend calls Claude with **forced structured output** (tool-use / JSON schema) →
-   returns strict JSON.
+4. Backend calls **OpenRouter** with **forced structured output** (OpenAI-compatible
+   function/tool calling) → returns strict JSON.
 5. Client **validates** the JSON against a local schema, **maps** it into editor state
    (lines, optional client match, optional due-date/currency hints), then
    **recomputes totals in code**.
@@ -45,13 +45,15 @@ This doc covers only the **feature-specific** parts.
   `knownClients` lets the model match an existing client by name (we resolve the id
   client-side; the server never sees the client DB).
 - **Guardrails before the call:** IP rate-limit (KV) + daily global budget cap (KV).
-- **Model:** Claude **Haiku** with **tool-use forcing** a single structured result. The
-  tool schema (the model MUST fill exactly this — no prose, no totals):
+- **Provider:** **OpenRouter** (`POST https://openrouter.ai/api/v1/chat/completions`,
+  `Authorization: Bearer ${OPENROUTER_API_KEY}`), model e.g. `anthropic/claude-3.5-haiku`,
+  using OpenAI-compatible **function/tool calling with `tool_choice` forced** to one tool
+  so the model MUST return this exact JSON — no prose, no totals:
 
   ```jsonc
   {
     "name": "draft_invoice",
-    "input_schema": {
+    "parameters": {          // OpenAI/OpenRouter "function.parameters" (JSON Schema)
       "type": "object",
       "properties": {
         "currency": { "type": "string", "description": "ISO 4217 if stated, else omit" },
@@ -127,7 +129,7 @@ helper. The only new surface is the input box + the parse/validate/map lib + the
 | Step | What | Needs from you | Effort |
 |---|---|---|---|
 | 0 | Pages Functions build spike (shared) | — | ~0.5 day |
-| 1 | `/api/ai/parse-invoice` (tool-use schema, rate-limit, budget, cost log) | **Anthropic API key** (you set as a Pages secret) | ~1 day |
+| 1 | `/api/ai/parse-invoice` (forced function-call schema, rate-limit, budget, cost log) | **OpenRouter API key** (placeholder; set as Pages secret `OPENROUTER_API_KEY`) | ~1 day |
 | 2 | `aiInvoice.ts` validate+map + unit tests | — | ~0.5 day |
 | 3 | Editor "Describe it" input + AI pill + draft state + free local allowance | free-allowance number | ~1 day |
 | 4 | Landing `/new?ai=1` entry + E2E (mock the endpoint) | — | ~0.5 day |
@@ -138,10 +140,11 @@ with it first.
 
 ## Decisions needed before building
 1. Confirm **Cloudflare Pages Functions** as the backend (vs standalone Worker).
-2. **Anthropic API key** — you create it and set it as a Pages secret (I never handle it).
+2. **OpenRouter API key** (placeholder) — you create it and set it as a Pages secret
+   `OPENROUTER_API_KEY` (I never handle it). Swapping models is then a config change.
 3. **Free allowance** number (suggest 3 drafts / month, no account).
-4. **Structured output** approach: Claude **tool-use** (recommended, most reliable) vs
-   JSON-mode prompting.
+4. Default **model** id (e.g. `anthropic/claude-3.5-haiku`). Structured output uses
+   OpenRouter's OpenAI-compatible **forced function calling** (most reliable).
 
 ## Testing strategy
 - **Unit:** `aiInvoice.ts` validate/map — malformed JSON, total-vs-rate confusion, missing

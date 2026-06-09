@@ -21,9 +21,9 @@ billing exists. First feature: **Smart Collections** (draft an overdue-invoice r
 ```
  static client (today)            NEW backend                  NEW externals
  ───────────────────             ───────────                  ─────────────
- Astro + React (Pages)  ──POST──▶ Cloudflare Pages Function ──▶ Anthropic API (Claude Haiku)
- local IndexedDB                  /functions/api/ai/reminder      (key = Worker secret)
- free-tier credit counter         · IP rate-limit (KV)
+ Astro + React (Pages)  ──POST──▶ Cloudflare Pages Function ──▶ OpenRouter (OpenAI-compatible)
+ local IndexedDB                  /functions/api/ai/reminder      → Claude Haiku (or any model)
+ free-tier credit counter         · IP rate-limit (KV)            key = OPENROUTER_API_KEY (secret)
    (localStorage)                 · daily $ budget cap (KV)
                                   · token/cost log (KV or D1)
                         (phase 2b) /functions/api/auth/*  ──────▶ email (Resend) magic-link
@@ -52,7 +52,10 @@ No account, no payment. This is the smallest slice that proves the value + econo
 - Before calling Claude:
   - **IP rate-limit** via KV (e.g. 10/day/IP) — stops a no-account user draining budget.
   - **Global daily budget cap** via KV (e.g. stop at $X/day) — hard ceiling.
-- Call **Claude Haiku** with a tight template + slot-fill prompt, `max_tokens` small.
+- Call **OpenRouter** (`POST https://openrouter.ai/api/v1/chat/completions`, OpenAI-compatible,
+  `Authorization: Bearer ${OPENROUTER_API_KEY}`, model e.g. `anthropic/claude-3.5-haiku`) with
+  a tight template + slot-fill prompt, `max_tokens` small. OpenRouter lets us swap models
+  later without code changes.
 - **Log** `{in,out}` tokens + computed cost to KV/D1 (Hard Rule #5).
 - Return `{ text }`. On budget/limit hit → `429` with a friendly reason.
 
@@ -107,7 +110,7 @@ Needed so credits/Pro can attach to a *person*, not a device.
 | Step | What | Needs from you | Effort |
 |---|---|---|---|
 | 2a.0 | Pages Functions build spike | — | ~0.5 day |
-| 2a.1 | `/api/ai/reminder` + KV rate-limit + budget + cost log | **Anthropic API key** (you set `wrangler secret put`) | ~1 day |
+| 2a.1 | `/api/ai/reminder` + KV rate-limit + budget + cost log | **OpenRouter API key** (placeholder; you set `wrangler pages secret put OPENROUTER_API_KEY`) | ~1 day |
 | 2a.2 | Chase modal (tones, value-first draft, edit, send) + local allowance + Pro pill | free-allowance number | ~1–1.5 days |
 | 2b | Magic-link auth + D1 credit ledger | email domain (Resend) | ~2 days |
 | 2c | MoR checkout + webhook + entitlement | **MoR account** (verify VN payout first) + pricing | ~2–3 days |
@@ -118,9 +121,11 @@ Needed so credits/Pro can attach to a *person*, not a device.
 
 ## Decisions needed before 2a
 1. Confirm **Cloudflare Pages Functions** as the backend (vs a standalone Worker).
-2. **Anthropic API key** — you create it and set it as a Pages secret (I never handle it).
+2. **OpenRouter API key** (placeholder) — you create it and set it as a Pages secret
+   `OPENROUTER_API_KEY` (I never handle it). OpenRouter is OpenAI-compatible and routes to
+   many models, so swapping Claude ↔ another is a config change, not code.
 3. **Free allowance** number (suggest 3 Smart-Collections drafts / month, no account).
-4. Direct **Anthropic API** to start (the spec mentioned 9router; can add later for routing).
+4. Default **model** id (e.g. `anthropic/claude-3.5-haiku`) — changeable anytime via OpenRouter.
 
 ## Decisions deferred to 2c
 - MoR provider (after confirming VN onboarding + payout).
