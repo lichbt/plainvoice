@@ -203,9 +203,6 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
    the page, so an outside click closes the menu without blocking swatch clicks */
 .bar-backdrop{position:fixed; inset:0; z-index:45}
 /* color/theme trigger in the header — a swatch of the current invoice color */
-.color-trigger{width:30px; height:30px; border-radius:50%; border:2px solid var(--line-strong); cursor:pointer; padding:0; transition:transform .1s}
-.color-trigger:hover{transform:scale(1.06)}
-.color-trigger.is-white{background:#FFFFFF}
 .app-bar-in{display:flex; align-items:center; justify-content:space-between; gap:1rem;
   padding:.8rem 28px; max-width:1180px; margin:0 auto}
 .app-bar .left{display:flex; align-items:center; gap:1rem}
@@ -289,6 +286,9 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 
 /* live preview */
 .preview-wrap{position:sticky; top:90px}
+/* template / colour picker beneath the invoice sheet, bottom-left */
+.preview-theme{display:flex; align-items:center; gap:.7rem; margin-top:1rem}
+.preview-theme-lab{font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint)}
 .preview{background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow-lg); padding:2rem 2.1rem; position:relative; overflow:hidden}
 .pv-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.6rem; gap:1rem}
 .pv-co{font-family:var(--display); font-size:1.45rem; font-weight:600}

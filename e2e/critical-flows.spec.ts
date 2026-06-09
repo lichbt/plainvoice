@@ -28,16 +28,14 @@ test("color picker: swatch applies a colored header band (clickable, not blocked
   // no band by default (classic/white)
   await expect(page.locator(".pv-band")).toHaveCount(0);
 
-  await page.locator(".color-trigger").click();
-  // this click MUST land on the swatch — if a backdrop covers it, Playwright fails
-  await page.locator('.bar-menu .accent-dot[title="#1E4F6B"]').click();
+  // template picker lives below the invoice preview, bottom-left
+  await page.locator('.preview-theme .accent-dot[title="#1E4F6B"]').click();
 
   const band = page.locator(".pv-band");
   await expect(band).toBeVisible();
   await expect(band).toHaveCSS("background-color", "rgb(30, 79, 107)");
   // picking white removes the band again
-  await page.locator(".color-trigger").click();
-  await page.locator('.bar-menu .accent-dot[title="Classic (no color)"]').click();
+  await page.locator('.preview-theme .accent-dot[title="Classic (no color)"]').click();
   await expect(page.locator(".pv-band")).toHaveCount(0);
 });
 

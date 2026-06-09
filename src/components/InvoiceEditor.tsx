@@ -289,27 +289,6 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           </div>
           <div className="app-actions">
             <div className="bar-pop">
-              <button className={`color-trigger${template === "classic" ? " is-white" : ""}`} aria-label="Invoice color"
-                style={template === "classic" ? undefined : { background: accentColor || "#1E5B41" }}
-                onClick={() => setBarMenu(barMenu === "color" ? null : "color")} />
-              {barMenu === "color" && (
-                <div className="bar-menu" style={{ padding: ".6rem" }}>
-                  <div className="accent-row">
-                    <button type="button" title="Classic (no color)"
-                      className={`accent-dot accent-white${template === "classic" ? " on" : ""}`}
-                      onClick={() => { setBarMenu(null); setTemplate("classic"); setAccentColor(""); }} />
-                    {ACCENTS.map((c) => {
-                      const active = template !== "classic" && accentColor === c;
-                      return (
-                        <button key={c} type="button" title={c} className={`accent-dot${active ? " on" : ""}`}
-                          style={{ background: c }} onClick={() => { setBarMenu(null); setTemplate("trades"); setAccentColor(c); }} />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="bar-pop">
               <button className="btn btn-ghost btn-sm" onClick={() => setBarMenu(barMenu === "more" ? null : "more")}>⋯ More</button>
               {barMenu === "more" && (
                 <div className="bar-menu" style={{ right: 0 }}>
@@ -427,6 +406,21 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
         {/* live preview */}
         <div className="preview-wrap">
           <InvoicePreview data={preview} />
+          <div className="preview-theme">
+            <span className="preview-theme-lab">Template</span>
+            <div className="accent-row">
+              <button type="button" title="Classic (no color)"
+                className={`accent-dot accent-white${template === "classic" ? " on" : ""}`}
+                onClick={() => { setTemplate("classic"); setAccentColor(""); }} />
+              {ACCENTS.map((c) => {
+                const active = template !== "classic" && accentColor === c;
+                return (
+                  <button key={c} type="button" title={c} className={`accent-dot${active ? " on" : ""}`}
+                    style={{ background: c }} onClick={() => { setTemplate("trades"); setAccentColor(c); }} />
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
