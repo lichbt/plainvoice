@@ -23,7 +23,7 @@ billing exists. First feature: **Smart Collections** (draft an overdue-invoice r
  ───────────────────             ───────────                  ─────────────
  Astro + React (Pages)  ──POST──▶ Cloudflare Pages Function ──▶ OpenRouter (OpenAI-compatible)
  local IndexedDB                  /functions/api/ai/reminder      → Claude Haiku (or any model)
- free-tier credit counter         · IP rate-limit (KV)            key = OPENROUTER_API_KEY (secret)
+ "N AI uses left" counter         · IP rate-limit (KV)            key = OPENROUTER_API_KEY (secret)
    (localStorage)                 · daily $ budget cap (KV)
                                   · token/cost log (KV or D1)
                         (phase 2b) /functions/api/auth/*  ──────▶ email (Resend) magic-link
@@ -39,6 +39,35 @@ couples to the Pages project; acceptable here.
 > Today we deploy `dist/`. We'll either (a) move to `wrangler pages deploy` with a
 > `functions/` dir at repo root (Pages compiles it), or (b) keep Astro static and add
 > an `_worker.js`/adapter. Confirm during 2a — it's a 30-min spike, not a rewrite.
+
+---
+
+## Metering & pricing model — "AI uses," not "credits"
+
+A plain counter, framed as **uses left** rather than abstract "credits." Friendlier,
+clearer UX ("3 AI invoices left" beats "3 credits"), same mechanics: **one integer**,
+**flat 1-per-use** — every paid AI action decrements by 1, no weighting to reason about.
+
+**The boundary that is the whole ballgame:** the counter ticks **only when a paid AI
+feature completes** — *never* on a plain invoice.
+- Make an invoice by hand → **free, uncounted, unlimited, forever.**
+- Use AI to build / translate / chase one → **that's the 1.**
+
+If a normal invoice ever decremented the counter, we'd be right back to charging-per-invoice
+— the exact thing this product avoids. Manual invoices must never touch the counter; that's
+what keeps the free-core promise intact.
+
+**How it shows:** a small **"N AI uses left"** badge near the AI buttons. When it hits 0 →
+the value-first moment: show the AI result/preview **first**, then *"Out of free AI — get 50
+more for $5."* → pay → redirect auto-unlocks → **+50 uses** → badge updates. No key, no signup.
+
+**Two implementation notes:**
+1. **Anchor the granted number server-side at purchase** (e.g. 50 uses tied to that payment),
+   so the local counter can't be topped back up just by clearing browser data. The *counting*
+   stays local and simple; only the **grant** needs the server check.
+2. Flat 1-per-use is fine **as long as the $5 / 50-uses pack covers the average AI cost.** A
+   vision call (photo OCR) costs more than a text call, so keep the **blended cost across uses
+   well under ~10¢ each** when pricing the pack.
 
 ---
 
@@ -65,9 +94,9 @@ No account, no payment. This is the smallest slice that proves the value + econo
 - Calls `/api/ai/reminder` → shows the **drafted reminder first** (value before ask),
   editable textarea.
 - Buttons: **Copy** · **Send** (reuse Flow 4 share-sheet/mailto). Recompute amounts in code.
-- **Free allowance** metered locally: `settings.aiCreditsUsedThisMonth` + month key, reset
-  monthly. When exhausted → show the upgrade choices UI (2c), which in 2a is a
-  **"Pro coming soon"** placeholder (honest — no fake checkout).
+- **Free uses** metered locally as "N AI uses left" (see the metering model above) — decrement
+  only on a completed paid AI action. When it hits 0 → show the upgrade UI (2c), which in 2a is
+  a **"Pro coming soon"** placeholder (honest — no fake checkout).
 - AI entry points render with a visible **"Pro"/"AI" pill**, never hidden.
 
 ### Cost control
@@ -80,12 +109,12 @@ No account, no payment. This is the smallest slice that proves the value + econo
 
 ## Sub-phase 2b — Passwordless account (magic-link)
 
-Needed so credits/Pro can attach to a *person*, not a device.
+Needed so AI uses / Pro can attach to a *person*, not a device.
 - `functions/api/auth/request` → email a signed magic link (Resend; verified DKIM domain).
 - `functions/api/auth/callback` → set an httpOnly session cookie (signed JWT).
-- `functions/api/auth/me` → returns `{ email, plan, creditsRemaining }`.
+- `functions/api/auth/me` → returns `{ email, plan, usesLeft }`.
 - Client: "Save & track? Enter email → click link." **No password fields, ever.**
-- Move credit metering server-side (D1 ledger keyed to account); local counter becomes a
+- Move "uses" metering server-side (D1 ledger keyed to account); local counter becomes a
   cache. Account is still **optional** — free tier works without it.
 
 ---
@@ -96,10 +125,12 @@ Needed so credits/Pro can attach to a *person*, not a device.
   Lemon Squeezy / Polar / Paddle. **BLOCKER to verify first (spec §15):** confirm the
   provider onboards **Vietnam-based sellers** with a usable payout (Wise/Payoneer)
   *before* writing billing code.
-- Products: **Pro $9/mo** (unlimited AI within fair use) and **credit packs** (e.g. 20/$5).
-- Flow: allowance exhausted → after showing the preview, present **Use 1 credit / Buy
-  credits / Go Pro**. → MoR **hosted checkout** (card handled by MoR, never in-app) →
-  on return refresh `/api/auth/me` → entitlement live → the pending AI action completes.
+- Products: **"AI uses" packs** (e.g. **50 uses / $5**) and optionally **Pro $9/mo** (unlimited
+  AI within fair use). Packs are the primary model — flat 1-per-use, no key, no signup.
+- Flow: uses hit 0 → after showing the preview, present **Get 50 more for $5** (and/or Go Pro).
+  → MoR **hosted checkout** (card handled by MoR, never in-app) → on return refresh
+  `/api/auth/me` → **grant +50 uses (anchored server-side to the payment)** → the pending AI
+  action completes → badge updates.
 - `functions/api/billing/webhook` → **idempotent** (dedupe on external id) → flip plan /
   top up credits in D1.
 
@@ -112,7 +143,7 @@ Needed so credits/Pro can attach to a *person*, not a device.
 | 2a.0 | Pages Functions build spike | — | ~0.5 day |
 | 2a.1 | `/api/ai/reminder` + KV rate-limit + budget + cost log | **OpenRouter API key** (placeholder; you set `wrangler pages secret put OPENROUTER_API_KEY`) | ~1 day |
 | 2a.2 | Chase modal (tones, value-first draft, edit, send) + local allowance + Pro pill | free-allowance number | ~1–1.5 days |
-| 2b | Magic-link auth + D1 credit ledger | email domain (Resend) | ~2 days |
+| 2b | Magic-link auth + D1 "uses" ledger | email domain (Resend) | ~2 days |
 | 2c | MoR checkout + webhook + entitlement | **MoR account** (verify VN payout first) + pricing | ~2–3 days |
 
 **Recommendation:** build **2a only** first and live with it for a while. It delivers the
@@ -129,4 +160,5 @@ Needed so credits/Pro can attach to a *person*, not a device.
 
 ## Decisions deferred to 2c
 - MoR provider (after confirming VN onboarding + payout).
-- Pricing: Pro $9/mo + credit pack size/price.
+- Pricing: confirm the **50 uses / $5** pack (keep blended AI cost well under ~10¢/use);
+  optional **Pro $9/mo**.
