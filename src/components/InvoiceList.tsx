@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { invoices, clients, today } from "../db/repos";
 import type { Invoice, Client, InvoiceStatus, DocType } from "../db/types";
@@ -17,6 +17,10 @@ export default function InvoiceList() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<InvoiceStatus | "all">("all");
   const [showImport, setShowImport] = useState(false);
+  // Flow 3: landing "Import a CSV" deep-links to /app?import=1
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("import")) setShowImport(true);
+  }, []);
   const [exportOpen, setExportOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const td = today();
@@ -35,6 +39,19 @@ export default function InvoiceList() {
     (list ?? []).forEach((inv) => { c[(inv.docType ?? "invoice") as DocType]++; });
     return c;
   }, [list]);
+
+  // Flow 5: the one key figure for a list (not a dashboard) — outstanding & overdue.
+  const money = useMemo(() => {
+    const invs = (list ?? []).filter((i) => (i.docType ?? "invoice") === "invoice");
+    let outstanding = 0, overdue = 0, ccy = "USD";
+    invs.forEach((i) => {
+      if (i.status === "paid" || i.status === "draft") return;
+      ccy = i.currency;
+      outstanding += i.total;
+      if (isOverdue(i, td)) overdue += i.total;
+    });
+    return { outstanding, overdue, ccy };
+  }, [list, td]);
 
   const rows = useMemo(() => {
     if (!list) return [];
@@ -78,7 +95,15 @@ export default function InvoiceList() {
           <button className={`doc-tab${isEstimate ? " on" : ""}`} onClick={() => { setTab("estimate"); setFilter("all"); }}>Estimates{counts.estimate ? ` (${counts.estimate})` : ""}</button>
         </div>
         <div className="list-head">
-          <h1>{isEstimate ? "Estimates" : "Invoices"}</h1>
+          <div className="list-title">
+            <h1>{isEstimate ? "Estimates" : "Invoices"}</h1>
+            {!isEstimate && money.outstanding > 0 && (
+              <div className="list-summary">
+                <span className="num">{formatMoney(money.outstanding, money.ccy)}</span> outstanding
+                {money.overdue > 0 && <span className="overdue-fig"> · <span className="num">{formatMoney(money.overdue, money.ccy)}</span> overdue</span>}
+              </div>
+            )}
+          </div>
           <div className="list-controls">
             <input placeholder="Search number or client…" value={q} onChange={(e) => setQ(e.target.value)} />
             <select value={filter} onChange={(e) => setFilter(e.target.value as InvoiceStatus | "all")}>

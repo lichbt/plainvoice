@@ -4,7 +4,7 @@ import { db, ensureSettings } from "../db/db";
 import { businesses, clients, invoices, items, payments, today } from "../db/repos";
 import type { Business, Client, Item, InvoiceStatus, DocType, Payment, PaymentMethod } from "../db/types";
 import { computeTotals, isOverdue, balanceDue as calcBalance } from "../lib/totals";
-import { CURRENCIES } from "../lib/currencies";
+import { CURRENCIES, localeCurrency } from "../lib/currencies";
 import { InvoicePreview, type PreviewData } from "./InvoicePreview";
 import { BusinessProfileModal } from "./BusinessProfileModal";
 import { ClientModal } from "./ClientModal";
@@ -17,10 +17,17 @@ import { CompaniesModal } from "./CompaniesModal";
 import type { OcrLine } from "../lib/ocr";
 import { exportInvoicePdf } from "../lib/pdf";
 import { ACCENTS, DEFAULT_TEMPLATE } from "../lib/templates";
+import { DONATE_URL } from "../lib/links";
 
 interface LineState { id: string; description: string; qty: string; rate: string }
 const blankLine = (): LineState => ({ id: crypto.randomUUID(), description: "", qty: "1", rate: "0" });
 const num = (s: string) => { const n = parseFloat(s); return Number.isFinite(n) ? n : 0; };
+// Flow 1 smart default: due date = issue + N days (Net 14). UTC-based to match today().
+const addDays = (iso: string, days: number) => {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
 
 const INVOICE_STATUSES: InvoiceStatus[] = ["draft", "sent", "viewed", "paid"];
 const ESTIMATE_STATUSES: InvoiceStatus[] = ["draft", "sent", "accepted", "declined"];
@@ -58,12 +65,14 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [showPhoto, setShowPhoto] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showSend, setShowSend] = useState(false);
+  const [showDonate, setShowDonate] = useState(false);
   const [showItems, setShowItems] = useState(false);
   const [showClients, setShowClients] = useState(false);
   const [showCompanies, setShowCompanies] = useState(false);
   const [barMenu, setBarMenu] = useState<null | "status" | "more" | "color">(null);
   const [toast, setToast] = useState<string | null>(null);
   const pendingPdf = useRef(false);
+  const pendingSend = useRef(false);
 
   const clientList = useLiveQuery(() => clients.all(), [], [] as Client[]);
   const itemList = useLiveQuery(() => items.all(), [], [] as Item[]);
@@ -101,7 +110,9 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       const b = all.find((x) => x.id === s.activeBusinessId) ?? all[0];
       setNumber(next);
       setBusinessId(b?.id);
-      if (b?.defaultCurrency) setCurrency(b.defaultCurrency);
+      // Flow 1 smart defaults: Net 14 due date, currency from business or locale
+      if (initialDocType === "invoice") setDueDate(addDays(today(), 14));
+      setCurrency(b?.defaultCurrency ?? localeCurrency());
       setLoaded(true);
       // photo-import entry point from the landing page (?photo=1)
       if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("photo")) {
@@ -134,12 +145,18 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     return invoice.id;
   }, [id, clientId, businessId, number, docType, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
 
+  // A brand-new, untouched invoice is "empty" — don't autosave it (avoids
+  // littering the list with $0 draft rows just from opening /new).
+  const isEmptyNew =
+    !id && !clientId && num(discount) === 0 &&
+    lines.every((l) => !l.description.trim() && num(l.rate) === 0);
+
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || isEmptyNew) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => { void persist(); }, 600);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, [loaded, persist]);
+  }, [loaded, isEmptyNew, persist]);
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(null), 2600); }
 
@@ -228,11 +245,20 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     setShowPayment(false);
   }
 
-  async function sendInvoice() {
-    if (!business?.name) { setShowSend(false); setProfileEdit("new"); return; }
-    await persist();
-    await exportInvoicePdf(preview);
+  // Flow 4 step 1: ensure business identity before the share/send sheet opens.
+  function openSend() {
+    if (!business?.name) { pendingSend.current = true; setProfileEdit("new"); return; }
+    setShowSend(true);
+  }
+
+  // Called by SendModal after the share sheet / mailto actually fires.
+  async function onSent() {
+    setShowSend(false);
     if (status === "draft") { setStatusState("sent"); const sid = await persist(); await invoices.setStatus(sid, "sent"); }
+    else await persist();
+    // Flow 4 step 6: first successful send only → gentle, once-only donate prompt.
+    const s = await ensureSettings();
+    if (!s.donatePrompted) { await db.settings.update("singleton", { donatePrompted: true }); setShowDonate(true); }
   }
 
   async function handlePdf() {
@@ -256,6 +282,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       await persist();
       await exportInvoicePdf({ ...preview, business: { name: saved.name, logoDataUrl: saved.logoDataUrl, address: saved.address, email: saved.email, taxId: saved.taxId } });
     }
+    if (pendingSend.current) { pendingSend.current = false; setShowSend(true); }
   }
 
   async function onProfileDeleted(deletedId: string) {
@@ -300,7 +327,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               )}
             </div>
             <button className="btn btn-ghost btn-sm" onClick={handlePdf}>Download PDF</button>
-            <button className="btn btn-primary btn-sm" onClick={() => setShowSend(true)}>Send</button>
+            <button className="btn btn-primary btn-sm" onClick={openSend}>Send</button>
           </div>
         </div>
       </div>
@@ -320,8 +347,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               </div>
             </div>
             <div className="row2">
-              <div className="fld"><label>Issue date</label><input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
-              <div className="fld"><label>Due date</label><input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
+              <div className="fld"><label>Issue date</label><input type="date" aria-label="Issue date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
+              <div className="fld"><label>Due date</label><input type="date" aria-label="Due date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
             </div>
             <div className="fld">
               <div className="fld-head">
@@ -446,11 +473,18 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
         <SendModal
           to={client?.email ?? ""} number={number} total={totals.total} currency={currency}
           dueDate={dueDate || undefined} businessName={business?.name ?? "your business"} paymentLink={isEstimate ? undefined : business?.paymentLink}
-          docNoun={isEstimate ? "Estimate" : "Invoice"}
-          onClose={() => setShowSend(false)} onSend={sendInvoice}
+          docNoun={isEstimate ? "Estimate" : "Invoice"} preview={preview}
+          onClose={() => setShowSend(false)} onSent={onSent}
         />
       )}
       {toast && <div className="toast show">{toast}</div>}
+      {showDonate && (
+        <div className="donate-bar" role="status">
+          <span>Sent! 🎉 Plainvoice is free and always will be — tip if it helped. Totally optional.</span>
+          <a className="btn btn-primary btn-sm" href={DONATE_URL} target="_blank" rel="noopener" onClick={() => setShowDonate(false)}>Leave a tip</a>
+          <button className="donate-x" aria-label="Dismiss" onClick={() => setShowDonate(false)}>×</button>
+        </div>
+      )}
     </>
   );
 }
