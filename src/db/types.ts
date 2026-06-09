@@ -96,4 +96,5 @@ export interface Settings {
   plan: Plan;
   aiCreditsRemaining: number;
   activeBusinessId?: string;
+  donatePrompted?: boolean; // Flow 4: show the tip prompt once, after first send
 }

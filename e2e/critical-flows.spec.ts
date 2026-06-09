@@ -119,6 +119,35 @@ test("clients: add then delete via Saved clients manager", async ({ page }) => {
   await expect(mgr.locator(".mgr-row", { hasText: "Northwind" })).toHaveCount(0);
 });
 
+test("flow 1: new invoice gets a Net-14 due date by default", async ({ page }) => {
+  await page.goto("/new");
+  const issue = await page.getByLabel("Issue date").inputValue();
+  const due = await page.getByLabel("Due date").inputValue();
+  expect(due).not.toBe("");
+  const days = (Date.parse(due) - Date.parse(issue)) / 86_400_000;
+  expect(days).toBe(14);
+});
+
+test("flow 4: donate prompt shows once after first send (mailto desktop path)", async ({ page }) => {
+  // desktop Chromium has no file-share, so the modal uses the download+mailto path
+  await page.addInitScript(() => {
+    // stop the mailto navigation from leaving the page
+    const orig = Object.getOwnPropertyDescriptor(window.location, "href");
+    Object.defineProperty(window.location, "href", { set() {}, get: orig?.get });
+  });
+  await page.goto("/new");
+  // add a business so Send doesn't divert to the company form
+  await page.getByLabel("From (your company)").selectOption("__new__");
+  await page.locator(".modal").getByLabel("Business name").fill("Acme LLC");
+  await page.locator(".modal").getByRole("button", { name: "Save" }).click();
+
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.locator(".modal.wide").getByRole("button", { name: /Download PDF/ }).click();
+  await expect(page.locator(".donate-bar")).toBeVisible();
+  await page.locator(".donate-bar .donate-x").click();
+  await expect(page.locator(".donate-bar")).toHaveCount(0);
+});
+
 test("mobile: no horizontal overflow on editor and list", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const path of ["/new", "/app"]) {

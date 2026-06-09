@@ -96,7 +96,10 @@ import Logo from "../components/Logo.astro";
         <div class="sec-eyebrow">Switching</div>
         <h2 class="sec">Bring your old invoices in one photo.</h2>
         <p class="sec-lead">Snap a picture of a printed invoice — yours or the app you're leaving — and we rebuild it as an editable draft. Reads right on your device, costs nothing, no account needed.</p>
-        <a class="btn btn-primary" href="/new?photo=1">Try photo import →</a>
+        <div style="display:flex; gap:.7rem; flex-wrap:wrap; align-items:center">
+          <a class="btn btn-primary" href="/new?photo=1">Try photo import →</a>
+          <a class="btn btn-ghost" href="/app?import=1">Coming from another app? Import a CSV</a>
+        </div>
       </div>
       <div class="mini-shot reveal">
         <div class="snap">

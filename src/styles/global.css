@@ -362,6 +362,10 @@ table.pv-tbl td{padding:.55rem .3rem; border-bottom:1px solid var(--line)}
   border-bottom:2px solid transparent; margin-bottom:-1px; cursor:pointer}
 .doc-tab:hover{color:var(--ink)}
 .doc-tab.on{color:var(--accent); border-bottom-color:var(--accent)}
+.outstanding{font-size:1rem; color:var(--ink-soft); margin-bottom:.9rem}
+.outstanding .num{font-weight:600; color:var(--ink); font-size:1.15rem}
+.outstanding .overdue-fig{color:var(--red)}
+.outstanding .overdue-fig .num{color:var(--red)}
 .list-head{display:flex; flex-wrap:wrap; align-items:center; gap:.8rem; margin-bottom:1.4rem}
 .list-head h1{font-family:var(--display); font-size:2rem; font-weight:600; margin-right:auto}
 .list-controls{display:flex; gap:.6rem; flex-wrap:wrap}
@@ -382,6 +386,15 @@ table.pv-tbl td{padding:.55rem .3rem; border-bottom:1px solid var(--line)}
   background:var(--ink); color:var(--paper); padding:.8rem 1.2rem; border-radius:999px; font-size:.88rem; font-weight:500;
   box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; display:flex; gap:.5rem; align-items:center}
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+/* Flow 4: gentle, non-blocking donate prompt after first send */
+.donate-bar{position:fixed; bottom:18px; left:50%; transform:translateX(-50%); z-index:180;
+  display:flex; align-items:center; gap:.8rem; max-width:min(560px,92vw);
+  background:var(--paper-2); border:1px solid var(--line); border-radius:999px;
+  box-shadow:var(--shadow-lg); padding:.55rem .65rem .55rem 1.1rem; font-size:.88rem; color:var(--ink)}
+.donate-x{background:none; border:none; font-size:1.2rem; line-height:1; color:var(--ink-faint); cursor:pointer; padding:0 .2rem}
+.donate-x:hover{color:var(--ink)}
+@media(max-width:520px){.donate-bar{flex-wrap:wrap; border-radius:14px; text-align:left}}
 
 @keyframes scan{0%{top:0}100%{top:100%}}
 
