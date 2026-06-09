@@ -120,16 +120,19 @@ import Logo from "../components/Logo.astro";
   <section id="ai">
     <div class="wrap feature-split">
       <div class="chase reveal">
-        <span class="tag">Smart Collections · Pro</span>
-        <div style="font-weight:600; margin:.5rem 0 .2rem">Invoice #0039 · 21 days overdue</div>
-        <div class="bubble">Hi Jordan — just a friendly nudge that invoice #0039 for $1,240 was due on May 11. Could you let me know when I can expect payment? Happy to resend the link. Thanks!</div>
-        <div style="font-size:.74rem; color:var(--ink-faint); margin-top:.6rem">Drafted for you · you approve before anything sends</div>
+        <span class="tag">Chat-to-invoice · AI</span>
+        <div class="bubble" style="border-radius:12px 12px 4px 12px; margin-left:auto; max-width:90%">“2h consulting at $120 and a $500 setup fee for Acme, due in 30 days”</div>
+        <div style="font-size:.72rem; color:var(--ink-faint); margin:.7rem 0 .3rem">↓ becomes an editable draft</div>
+        <div class="inv-row"><span>Consulting · 2</span><span class="mono">$240.00</span></div>
+        <div class="inv-row"><span>Setup fee</span><span class="mono">$500.00</span></div>
+        <div class="inv-row" style="border:none; font-weight:600"><span>Total</span><span class="mono">$740.00</span></div>
+        <div style="font-size:.74rem; color:var(--ink-faint); margin-top:.4rem">You edit before sending · totals always computed, never guessed</div>
       </div>
       <div class="reveal">
         <div class="sec-eyebrow">The only thing we charge for</div>
-        <h2 class="sec">AI that gets you paid — not a wall.</h2>
-        <p class="sec-lead">Chase overdue invoices with a tone-perfect reminder, dictate an invoice in a sentence, or snap a messy receipt. Pay per use with credits, or go unlimited with Pro. Never a charge to do the basics.</p>
-        <a class="btn btn-ghost" href="/new">See it in the editor →</a>
+        <h2 class="sec">AI that does the typing — not a wall.</h2>
+        <p class="sec-lead">Describe a job in a sentence and get an editable invoice. Snap a messy receipt, or chase an overdue invoice with a tone-perfect reminder. Your first AI uses are free; after that, simple packs — 50 uses for $5. Making invoices by hand is always free.</p>
+        <a class="btn btn-primary" href="/new?ai=1">Describe an invoice →</a>
       </div>
     </div>
   </section>

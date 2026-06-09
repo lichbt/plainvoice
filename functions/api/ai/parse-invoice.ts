@@ -11,13 +11,36 @@
 // TODO (hardening, needs a KV binding): per-IP rate-limit + daily $ budget cap +
 // token/cost log. Until then we cap input size and rely on the platform.
 
+interface KV {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void>;
+}
 interface Env {
   OPENROUTER_API_KEY?: string;
   AI_MODEL?: string;
+  AI_KV?: KV; // optional KV binding for rate-limit + daily budget cap (fail-open if absent)
 }
 
 const MAX_INPUT = 2000;
 const DEFAULT_MODEL = "anthropic/claude-3.5-haiku";
+const IP_DAILY = 20; // max AI calls per IP per day
+const GLOBAL_DAILY = 500; // hard daily ceiling across everyone (budget backstop)
+
+// Coarse rate-limit + budget cap via KV. Fail-open when no KV binding is set so
+// the feature still works before you create the namespace.
+async function withinLimits(env: Env, ip: string): Promise<{ ok: boolean; reason?: string }> {
+  if (!env.AI_KV) return { ok: true };
+  const day = new Date().toISOString().slice(0, 10);
+  const ipKey = `rl:${day}:${ip}`;
+  const gKey = `budget:${day}`;
+  const ipN = parseInt((await env.AI_KV.get(ipKey)) || "0", 10);
+  if (ipN >= IP_DAILY) return { ok: false, reason: "rate_limited" };
+  const gN = parseInt((await env.AI_KV.get(gKey)) || "0", 10);
+  if (gN >= GLOBAL_DAILY) return { ok: false, reason: "daily_budget" };
+  await env.AI_KV.put(ipKey, String(ipN + 1), { expirationTtl: 172800 });
+  await env.AI_KV.put(gKey, String(gN + 1), { expirationTtl: 172800 });
+  return { ok: true };
+}
 
 const SYSTEM = [
   "You turn a freelancer's plain-language description of work into invoice line items.",
@@ -78,6 +101,10 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   }
   if (text.length < 3) return json({ error: "empty" }, 400);
   if (text.length > MAX_INPUT) return json({ error: "too_long" }, 413);
+
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const limit = await withinLimits(env, ip);
+  if (!limit.ok) return json({ error: limit.reason }, 429);
 
   const userMsg =
     `Description: ${text}` +
