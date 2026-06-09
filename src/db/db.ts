@@ -47,11 +47,29 @@ export function newId(): string {
   return crypto.randomUUID();
 }
 
+// Free AI "uses" for a no-account user (Flow 2 metering). Decrement only on a
+// completed AI action — a plain invoice NEVER touches this. Paid packs add more.
+export const FREE_AI_USES = 10;
+
 /** Ensure the singleton settings row exists. Free plan, AI off — never gates the core. */
 export async function ensureSettings(): Promise<Settings> {
   const existing = await db.settings.get("singleton");
-  if (existing) return existing;
-  const fresh: Settings = { id: "singleton", plan: "free", aiCreditsRemaining: 0 };
+  if (existing) {
+    if (existing.aiUsesLeft === undefined) {
+      await db.settings.update("singleton", { aiUsesLeft: FREE_AI_USES });
+      return { ...existing, aiUsesLeft: FREE_AI_USES };
+    }
+    return existing;
+  }
+  const fresh: Settings = { id: "singleton", plan: "free", aiCreditsRemaining: 0, aiUsesLeft: FREE_AI_USES };
   await db.settings.put(fresh);
   return fresh;
+}
+
+/** Spend one AI use; returns the new remaining count. */
+export async function consumeAiUse(): Promise<number> {
+  const s = await ensureSettings();
+  const left = Math.max(0, (s.aiUsesLeft ?? FREE_AI_USES) - 1);
+  await db.settings.update("singleton", { aiUsesLeft: left });
+  return left;
 }

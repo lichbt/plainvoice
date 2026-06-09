@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db, ensureSettings } from "../db/db";
+import { db, ensureSettings, consumeAiUse, FREE_AI_USES } from "../db/db";
 import { businesses, clients, invoices, items, payments, today } from "../db/repos";
 import type { Business, Client, Item, InvoiceStatus, DocType, Payment, PaymentMethod } from "../db/types";
 import { computeTotals, isOverdue, balanceDue as calcBalance } from "../lib/totals";
@@ -18,6 +18,8 @@ import type { OcrLine } from "../lib/ocr";
 import { exportInvoicePdf } from "../lib/pdf";
 import { ACCENTS, DEFAULT_TEMPLATE } from "../lib/templates";
 import { DONATE_URL } from "../lib/links";
+import { AiDraftBar } from "./AiDraftBar";
+import type { AiInvoiceDraft } from "../lib/aiInvoice";
 
 interface LineState { id: string; description: string; qty: string; rate: string }
 const blankLine = (): LineState => ({ id: crypto.randomUUID(), description: "", qty: "1", rate: "0" });
@@ -44,6 +46,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "estimate"
       ? "estimate" : "invoice";
   const [docType, setDocType] = useState<DocType>(initialDocType);
+  // landing "describe it" entry → /new?ai=1 focuses the AI input
+  const aiAutoFocus = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("ai") === "1";
 
   const [clientId, setClientId] = useState<string | undefined>();
   const [businessId, setBusinessId] = useState<string | undefined>();
@@ -77,6 +81,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const clientList = useLiveQuery(() => clients.all(), [], [] as Client[]);
   const itemList = useLiveQuery(() => items.all(), [], [] as Item[]);
   const businessList = useLiveQuery(() => businesses.all(), [], [] as Business[]);
+  const aiUsesLeft = useLiveQuery(async () => (await db.settings.get("singleton"))?.aiUsesLeft ?? FREE_AI_USES, [], FREE_AI_USES);
   const paymentList = useLiveQuery(async () => (id ? await payments.forInvoice(id) : ([] as Payment[])), [id], [] as Payment[]);
 
   useEffect(() => {
@@ -227,6 +232,23 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     setLines(empty ? mapped : [...lines, ...mapped]);
     setShowPhoto(false);
     flash(`✓ Loaded ${mapped.length} line item${mapped.length === 1 ? "" : "s"} from photo · on-device, free`);
+  }
+
+  // Chat-to-invoice (Flow 2): map the validated AI draft into editor state.
+  // Totals are recomputed in code (the AI only gave qty + unit rate).
+  async function onDrafted(d: AiInvoiceDraft) {
+    const mapped: LineState[] = d.lines.map((l) => ({ id: crypto.randomUUID(), description: l.description, qty: String(l.qty), rate: String(l.rate) }));
+    const empty = lines.length === 1 && !lines[0].description && num(lines[0].rate) === 0;
+    setLines(empty ? mapped : [...lines, ...mapped]);
+    if (d.currency) setCurrency(d.currency);
+    if (d.dueInDays) setDueDate(addDays(issueDate, d.dueInDays));
+    if (d.notes) setNotes((n) => (n ? n : d.notes!));
+    if (d.clientName) {
+      const match = clientList.find((c) => c.name.toLowerCase() === d.clientName!.toLowerCase());
+      if (match) setClientId(match.id);
+    }
+    const left = await consumeAiUse(); // spend one AI use (only on success)
+    flash(`✨ Drafted ${mapped.length} line item${mapped.length === 1 ? "" : "s"} · ${left} AI use${left === 1 ? "" : "s"} left`);
   }
 
   async function changeStatus(s: InvoiceStatus) {
@@ -381,6 +403,13 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               <span>Line items <span style={{ fontSize: ".74rem", fontWeight: 400, color: "var(--ink-faint)" }}>qty × rate</span></span>
               <button className="add-li" style={{ margin: 0 }} onClick={() => setShowItems(true)}>Saved items{itemList.length ? ` (${itemList.length})` : ""}</button>
             </h3>
+            <AiDraftBar
+              knownClients={clientList.map((c) => c.name)}
+              defaultCurrency={currency}
+              usesLeft={aiUsesLeft}
+              onDrafted={onDrafted}
+              autoFocus={aiAutoFocus}
+            />
             <div className="li-head"><span>Description</span><span>Qty</span><span>Rate</span><span style={{ textAlign: "right" }}>Amount</span><span></span></div>
             {lines.map((l, i) => (
               <div className="li" key={l.id}>

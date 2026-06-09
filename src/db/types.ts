@@ -97,4 +97,5 @@ export interface Settings {
   aiCreditsRemaining: number;
   activeBusinessId?: string;
   donatePrompted?: boolean; // Flow 4: show the tip prompt once, after first send
+  aiUsesLeft?: number; // Flow 2: remaining AI uses (free 10, then paid packs)
 }

@@ -148,6 +148,38 @@ test("flow 4: donate prompt shows once after first send (mailto desktop path)", 
   await expect(page.locator(".donate-bar")).toHaveCount(0);
 });
 
+test("chat-to-invoice: AI draft maps to lines, totals computed in code, uses decrement", async ({ page }) => {
+  // stub the AI endpoint (no real API call in CI)
+  await page.route("**/api/ai/parse-invoice", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ draft: { currency: "USD", dueInDays: 30, lines: [
+        { description: "Consulting", qty: 2, rate: 120 },
+        { description: "Setup fee", rate: 500 }, // total deliberately omitted
+      ] } }),
+    }),
+  );
+  await page.goto("/new");
+  await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left");
+  await page.getByLabel("Describe the invoice").fill("2h consulting at $120 and a $500 setup fee, due in 30 days");
+  await page.getByRole("button", { name: /Draft it/ }).click();
+
+  // lines mapped + total recomputed in code (2*120 + 500 = 740) — AI never sent a total
+  await expect(page.locator(".li").first().getByPlaceholder("Item or service")).toHaveValue("Consulting");
+  await expect(page.locator(".pv-tot .r.g .v")).toHaveText(/740\.00/);
+  await expect(page.locator(".ai-uses")).toHaveText("9 AI uses left");
+});
+
+test("chat-to-invoice: graceful message when AI isn't configured (503)", async ({ page }) => {
+  await page.route("**/api/ai/parse-invoice", (route) => route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"ai_not_configured"}' }));
+  await page.goto("/new");
+  await page.getByLabel("Describe the invoice").fill("some work for $100");
+  await page.getByRole("button", { name: /Draft it/ }).click();
+  await expect(page.locator(".ai-error")).toContainText(/isn't switched on/);
+  await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left"); // not spent on failure
+});
+
 test("mobile: no horizontal overflow on editor and list", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const path of ["/new", "/app"]) {
