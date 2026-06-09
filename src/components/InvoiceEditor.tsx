@@ -145,12 +145,18 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     return invoice.id;
   }, [id, clientId, businessId, number, docType, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
 
+  // A brand-new, untouched invoice is "empty" — don't autosave it (avoids
+  // littering the list with $0 draft rows just from opening /new).
+  const isEmptyNew =
+    !id && !clientId && num(discount) === 0 &&
+    lines.every((l) => !l.description.trim() && num(l.rate) === 0);
+
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || isEmptyNew) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => { void persist(); }, 600);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
-  }, [loaded, persist]);
+  }, [loaded, isEmptyNew, persist]);
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(null), 2600); }
 

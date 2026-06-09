@@ -94,14 +94,16 @@ export default function InvoiceList() {
           <button className={`doc-tab${!isEstimate ? " on" : ""}`} onClick={() => { setTab("invoice"); setFilter("all"); }}>Invoices{counts.invoice ? ` (${counts.invoice})` : ""}</button>
           <button className={`doc-tab${isEstimate ? " on" : ""}`} onClick={() => { setTab("estimate"); setFilter("all"); }}>Estimates{counts.estimate ? ` (${counts.estimate})` : ""}</button>
         </div>
-        {!isEstimate && money.outstanding > 0 && (
-          <div className="outstanding">
-            <span className="num">{formatMoney(money.outstanding, money.ccy)}</span> outstanding
-            {money.overdue > 0 && <span className="overdue-fig"> · <span className="num">{formatMoney(money.overdue, money.ccy)}</span> overdue</span>}
-          </div>
-        )}
         <div className="list-head">
-          <h1>{isEstimate ? "Estimates" : "Invoices"}</h1>
+          <div className="list-title">
+            <h1>{isEstimate ? "Estimates" : "Invoices"}</h1>
+            {!isEstimate && money.outstanding > 0 && (
+              <div className="list-summary">
+                <span className="num">{formatMoney(money.outstanding, money.ccy)}</span> outstanding
+                {money.overdue > 0 && <span className="overdue-fig"> · <span className="num">{formatMoney(money.overdue, money.ccy)}</span> overdue</span>}
+              </div>
+            )}
+          </div>
           <div className="list-controls">
             <input placeholder="Search number or client…" value={q} onChange={(e) => setQ(e.target.value)} />
             <select value={filter} onChange={(e) => setFilter(e.target.value as InvoiceStatus | "all")}>

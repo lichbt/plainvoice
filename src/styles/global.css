@@ -362,11 +362,12 @@ table.pv-tbl td{padding:.55rem .3rem; border-bottom:1px solid var(--line)}
   border-bottom:2px solid transparent; margin-bottom:-1px; cursor:pointer}
 .doc-tab:hover{color:var(--ink)}
 .doc-tab.on{color:var(--accent); border-bottom-color:var(--accent)}
-.outstanding{font-size:1rem; color:var(--ink-soft); margin-bottom:.9rem}
-.outstanding .num{font-weight:600; color:var(--ink); font-size:1.15rem}
-.outstanding .overdue-fig{color:var(--red)}
-.outstanding .overdue-fig .num{color:var(--red)}
-.list-head{display:flex; flex-wrap:wrap; align-items:center; gap:.8rem; margin-bottom:1.4rem}
+.list-head{display:flex; flex-wrap:wrap; align-items:flex-end; gap:.8rem; margin-bottom:1.4rem}
+.list-title{margin-right:auto}
+.list-summary{font-size:.92rem; color:var(--ink-soft); margin-top:.3rem}
+.list-summary .num{font-weight:600; color:var(--ink)}
+.list-summary .overdue-fig{color:var(--red)}
+.list-summary .overdue-fig .num{color:var(--red)}
 .list-head h1{font-family:var(--display); font-size:2rem; font-weight:600; margin-right:auto}
 .list-controls{display:flex; gap:.6rem; flex-wrap:wrap}
 .list-controls input, .list-controls select{font-family:inherit; font-size:.9rem; color:var(--ink);
