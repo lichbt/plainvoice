@@ -22,7 +22,9 @@ interface Env {
 }
 
 const MAX_INPUT = 2000;
-const DEFAULT_MODEL = "anthropic/claude-3.5-haiku";
+// Free OpenRouter model. MUST support tool/function calling (we force tool_choice
+// below). Override per-deploy with the AI_MODEL secret if you want a paid/stronger one.
+const DEFAULT_MODEL = "google/gemini-2.0-flash-exp:free";
 const IP_DAILY = 20; // max AI calls per IP per day
 const GLOBAL_DAILY = 500; // hard daily ceiling across everyone (budget backstop)
 
