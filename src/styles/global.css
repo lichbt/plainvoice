@@ -307,6 +307,22 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .ai-hint{margin-top:.45rem; font-size:.72rem; color:var(--ink-faint)}
 .ai-hint kbd{font-family:var(--mono,monospace); font-size:.68rem; background:var(--paper-2); border:1px solid var(--line); border-radius:4px; padding:0 .25rem}
 .ai-error{margin-top:.5rem; font-size:.8rem; color:var(--red)}
+.ai-buy-link{margin-left:.5rem; font:inherit; font-size:.72rem; font-weight:600; background:none; border:none; padding:0; color:var(--accent); cursor:pointer; text-decoration:underline}
+.ai-out .btn{margin-left:.4rem}
+/* buy-AI-uses modal */
+.buy-pack{display:flex; align-items:center; justify-content:space-between; gap:1rem; background:var(--accent-wash);
+  border:1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius:var(--r-sm); padding:.9rem 1rem; margin:.2rem 0 1rem}
+.buy-pack-n{font-weight:700; font-size:1.05rem; color:var(--ink)}
+.buy-pack-sub{font-size:.74rem; color:var(--ink-faint); margin-top:.1rem}
+.buy-sep{display:flex; align-items:center; gap:.6rem; color:var(--ink-faint); font-size:.72rem; margin:.6rem 0}
+.buy-sep::before,.buy-sep::after{content:""; flex:1; height:1px; background:var(--line)}
+.buy-redeem{display:flex; gap:.5rem; margin-top:.4rem}
+.buy-redeem input{flex:1; min-width:0; font-family:var(--mono,monospace); font-size:.82rem; letter-spacing:.02em;
+  color:var(--ink); background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm); padding:.55rem .7rem}
+.buy-redeem input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
+.buy-done{text-align:center; padding:1rem .5rem}
+.buy-done-tick{width:48px; height:48px; margin:0 auto .7rem; border-radius:999px; background:var(--accent-wash);
+  color:var(--accent); font-size:1.5rem; display:flex; align-items:center; justify-content:center}
 .ai-out{font-size:.88rem; color:var(--ink)}
 /* manager modal rows (saved clients / companies) */
 .mgr-row{display:flex; align-items:center; gap:.5rem; padding:.55rem 0; border-bottom:1px solid var(--line); font-size:.9rem}
