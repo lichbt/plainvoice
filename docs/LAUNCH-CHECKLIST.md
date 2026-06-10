@@ -17,19 +17,20 @@ Tick them off when shipping for real.
 - [ ] Verify the **MoR provider onboards Vietnam-based sellers** with a Wise/Payoneer
       payout **before** writing billing code (spec §15 blocker).
 
-## AI-uses purchase flow (Lemon Squeezy) — to go live
-The flow needs no accounts/DB: buy a pack → get a license key → paste it in-app →
-`/api/billing/redeem` activates it (Lemon Squeezy enforces one-time activation).
+## AI-uses purchase flow (Lemon Squeezy overlay) — to go live
+Dead simple, no accounts/keys/DB: the buyer clicks **Buy**, Lemon Squeezy's overlay
+checkout opens in-page, and on success the app adds the uses automatically.
 - [ ] Create a **Lemon Squeezy** account + store; confirm payout works for Vietnam (PayPal/Wise).
-- [ ] Create a **one-time product** "50 AI uses · $5" → enable **license keys**,
-      set **activation limit = 1** (this is what makes a key redeemable exactly once).
-- [ ] Replace **`BUY_USES_URL`** in `src/lib/links.ts` with the product's real checkout URL.
-- [ ] Set Pages vars so only *our* keys are accepted: **`LS_STORE_ID`** and **`LS_VARIANT_ID`**
-      (from the LS dashboard). Optional **`USES_PER_PACK`** (default 50).
-- [ ] Test end-to-end with a real (or test-mode) purchase: buy → paste key → uses added;
-      paste again → "already used".
-- [ ] Note: balances are stored on-device (no account). A user who clears site data loses
-      remaining uses — acceptable for v1; revisit with a server-anchored grant later.
+- [ ] Create a **one-time product** "50 AI uses · $5".
+- [ ] Replace **`BUY_USES_URL`** in `src/lib/links.ts` with the product's checkout URL
+      (Store → Products → Share). The app auto-appends `?embed=1` for the overlay.
+- [ ] In Lemon Squeezy → Settings → confirm the **store domain is allowed** for the overlay
+      (the lemon.js overlay must be permitted on plainvoice.co / pages.dev).
+- [ ] Test with a real (or test-mode) purchase: Buy → pay in the overlay → "50 AI uses added".
+- [ ] No server secrets needed for this flow (no `LS_*` vars). Grant happens client-side on
+      the overlay's success event.
+- [ ] Note: balances are on-device (no account), and the grant is client-trusted — fine for
+      v1 honest-user metering; revisit with a server-verified grant (webhook + KV) later.
 
 ## Nice-to-have polish (optional)
 - [ ] Final **product name + logo** (working name "Plainvoice"; global find-replace).
