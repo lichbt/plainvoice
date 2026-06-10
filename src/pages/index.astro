@@ -182,11 +182,27 @@ import Logo from "../components/Logo.astro";
         <div class="phone">
           <div class="phone-notch"></div>
           <div class="phone-screen">
-            <div class="home-tile">
-              <img src="/icon.svg" alt="Plainvoice app icon" width="56" height="56" />
-              <span>Plainvoice</span>
+            <div class="app-screen">
+              <div class="app-top">
+                <span class="app-back">‹</span>
+                <span class="app-title">Invoice</span>
+                <span class="app-chip">● Sent</span>
+              </div>
+              <div class="app-sheet">
+                <div class="app-sheet-head">
+                  <div>
+                    <div class="app-biz">Maple &amp; Co.</div>
+                    <div class="app-sub">#0042 · USD</div>
+                  </div>
+                  <span class="app-status">Due Jun 15</span>
+                </div>
+                <div class="app-row"><span>Brand identity</span><span>$1,800</span></div>
+                <div class="app-row"><span>Web mockups · 6h</span><span>$720</span></div>
+                <div class="app-row"><span>Revisions</span><span>$240</span></div>
+                <div class="app-total"><span>Total due</span><span>$2,760.00</span></div>
+              </div>
+              <button type="button" class="app-send" tabindex="-1" aria-hidden="true">Send invoice</button>
             </div>
-            <div class="home-dots"><i></i><i></i><i></i></div>
           </div>
         </div>
         <div class="pwa-badges">

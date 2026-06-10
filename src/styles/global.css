@@ -86,14 +86,25 @@ button{font-family:inherit; cursor:pointer}
   padding:12px; box-shadow:var(--shadow-lg); border:1px solid rgba(0,0,0,.2)}
 .phone-notch{position:absolute; top:12px; left:50%; transform:translateX(-50%); width:84px; height:18px;
   background:#211F18; border-radius:0 0 12px 12px; z-index:2}
-.phone-screen{width:100%; height:100%; border-radius:24px; background:var(--paper);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.6rem; overflow:hidden}
-.home-tile{display:flex; flex-direction:column; align-items:center; gap:.5rem}
-.home-tile img{border-radius:16px; background:var(--accent-wash); padding:10px; box-shadow:var(--shadow)}
-.home-tile span{font-size:.82rem; font-weight:600; color:var(--ink)}
-.home-dots{display:flex; gap:.4rem}
-.home-dots i{width:6px; height:6px; border-radius:999px; background:var(--line)}
-.home-dots i:first-child{background:var(--accent)}
+.phone-screen{width:100%; height:100%; border-radius:24px; background:var(--paper-2); overflow:hidden}
+/* mini in-app invoice preview shown inside the phone */
+.app-screen{width:100%; height:100%; display:flex; flex-direction:column; gap:.5rem; padding:1.7rem .7rem .7rem}
+.app-top{display:flex; align-items:center; justify-content:space-between; padding:0 .1rem .1rem}
+.app-back{color:var(--accent); font-size:1rem; font-weight:700; line-height:1}
+.app-title{font-size:.66rem; font-weight:600; color:var(--ink)}
+.app-chip{background:var(--accent-wash); color:var(--accent); border-radius:999px; padding:.08rem .4rem; font-size:.5rem; font-weight:600}
+.app-sheet{background:var(--paper-3); border:1px solid var(--line); border-radius:11px; box-shadow:var(--shadow);
+  padding:.55rem .6rem; display:flex; flex-direction:column; gap:.32rem}
+.app-sheet-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.15rem}
+.app-biz{font-family:var(--display); font-weight:600; font-size:.7rem; line-height:1.15}
+.app-sub{font-size:.5rem; color:var(--ink-faint)}
+.app-status{font-size:.5rem; color:var(--ink-faint)}
+.app-row{display:flex; justify-content:space-between; font-size:.56rem; color:var(--ink-faint);
+  border-bottom:1px dashed var(--line); padding-bottom:.28rem}
+.app-row span:last-child{font-variant-numeric:tabular-nums; color:var(--ink)}
+.app-total{display:flex; justify-content:space-between; font-size:.64rem; font-weight:700; color:var(--ink); margin-top:.12rem}
+.app-send{margin-top:auto; background:var(--accent); color:#fff; border:none; border-radius:9px;
+  padding:.5rem; font-size:.62rem; font-weight:600; font-family:inherit; cursor:default}
 .pwa-badges{display:flex; gap:.4rem; flex-wrap:wrap; justify-content:center}
 /* interactive language chips in the auto-translate landing demo */
 .tr-chips{display:flex; gap:.4rem; flex-wrap:wrap; margin:.3rem 0 1rem}
