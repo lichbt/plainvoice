@@ -17,20 +17,26 @@ Tick them off when shipping for real.
 - [ ] Verify the **MoR provider onboards Vietnam-based sellers** with a Wise/Payoneer
       payout **before** writing billing code (spec §15 blocker).
 
-## AI-uses purchase flow (Lemon Squeezy overlay) — to go live
-Dead simple, no accounts/keys/DB: the buyer clicks **Buy**, Lemon Squeezy's overlay
-checkout opens in-page, and on success the app adds the uses automatically.
+## AI-uses purchase flow (Lemon Squeezy overlay + server-verified grant) — to go live
+Buyer clicks **Buy** → Lemon Squeezy overlay opens in-page → on success the app
+calls `/api/billing/claim`, which re-fetches the order from the Lemon Squeezy API,
+confirms it's **paid / our product / matching identifier**, dedupes it in KV, and
+returns the uses to grant. No accounts, no key to paste.
 - [ ] Create a **Lemon Squeezy** account + store; confirm payout works for Vietnam (PayPal/Wise).
 - [ ] Create a **one-time product** "50 AI uses · $5".
 - [ ] Replace **`BUY_USES_URL`** in `src/lib/links.ts` with the product's checkout URL
       (Store → Products → Share). The app auto-appends `?embed=1` for the overlay.
-- [ ] In Lemon Squeezy → Settings → confirm the **store domain is allowed** for the overlay
-      (the lemon.js overlay must be permitted on plainvoice.co / pages.dev).
-- [ ] Test with a real (or test-mode) purchase: Buy → pay in the overlay → "50 AI uses added".
-- [ ] No server secrets needed for this flow (no `LS_*` vars). Grant happens client-side on
-      the overlay's success event.
-- [ ] Note: balances are on-device (no account), and the grant is client-trusted — fine for
-      v1 honest-user metering; revisit with a server-verified grant (webhook + KV) later.
+- [ ] Confirm your **store domain is allowed** for the lemon.js overlay (LS settings).
+- [ ] Set the **`LS_API_KEY`** Pages secret (LS → Settings → API). Required for the
+      server to verify orders. Until it's set, the app falls back to a client-side grant.
+- [ ] Bind a **KV namespace as `BILLING_KV`** (Pages → Settings → Functions → KV bindings).
+      This is the "granted once" ledger — without it, replay protection is off.
+- [ ] Optional Pages vars **`LS_STORE_ID`** / **`LS_VARIANT_ID`** (extra checks the order is
+      ours) and **`USES_PER_PACK`** (default 50).
+- [ ] Test with a real (or test-mode) purchase: Buy → pay → "50 AI uses added";
+      a repeat claim of the same order returns "already added".
+- [ ] Note: balances are still stored on-device (no account). A user who clears site data
+      loses remaining uses — acceptable for v1; full account-bound balances are a later step.
 
 ## Nice-to-have polish (optional)
 - [ ] Final **product name + logo** (working name "Plainvoice"; global find-replace).
