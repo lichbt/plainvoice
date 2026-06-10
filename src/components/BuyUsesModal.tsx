@@ -108,6 +108,7 @@ export function BuyUsesModal({ onClose }: { onClose: () => void }) {
             <div className="buy-done-tick">✓</div>
             <h3>{added} AI uses added</h3>
             <p className="m-lead">You're all set — enjoy the AI features.</p>
+            <p className="buy-note">📱 Saved to this browser on this device. Keep using Plainvoice here to spend them.</p>
             <button className="btn btn-primary" onClick={onClose}>Done</button>
           </div>
         ) : (
@@ -128,6 +129,11 @@ export function BuyUsesModal({ onClose }: { onClose: () => void }) {
               </button>
             </div>
 
+            <div className="buy-note">
+              📱 <strong>Saved to this browser.</strong> AI uses are stored on this device — clearing
+              your browser data or switching to another device/browser won't carry them over. The free
+              core (invoices, PDFs, translate labels) always works anywhere.
+            </div>
             <p className="buy-foot">Secure checkout by Lemon Squeezy. Your uses are added the moment payment clears.</p>
             {error && <div className="ai-error">{error}</div>}
           </>
