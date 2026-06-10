@@ -73,3 +73,11 @@ export async function consumeAiUse(): Promise<number> {
   await db.settings.update("singleton", { aiUsesLeft: left });
   return left;
 }
+
+/** Add purchased AI uses (after a redeemed license key); returns the new total. */
+export async function grantAiUses(n: number): Promise<number> {
+  const s = await ensureSettings();
+  const total = (s.aiUsesLeft ?? FREE_AI_USES) + Math.max(0, Math.floor(n));
+  await db.settings.update("singleton", { aiUsesLeft: total });
+  return total;
+}

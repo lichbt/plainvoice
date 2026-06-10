@@ -220,6 +220,63 @@ test("chat-to-invoice: graceful message when AI isn't configured (503)", async (
   await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left"); // not spent on failure
 });
 
+// Force the local AI-uses counter to a value, then reload so the live query re-reads it.
+async function setAiUses(page: import("@playwright/test").Page, n: number) {
+  await page.evaluate((val) => new Promise<void>((resolve, reject) => {
+    const req = indexedDB.open("plainvoice");
+    req.onsuccess = () => {
+      const db = req.result;
+      const tx = db.transaction("settings", "readwrite");
+      const store = tx.objectStore("settings");
+      const g = store.get("singleton");
+      g.onsuccess = () => {
+        const cur = g.result || { id: "singleton", plan: "free", aiCreditsRemaining: 0 };
+        cur.aiUsesLeft = val;
+        store.put(cur);
+      };
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => reject(tx.error);
+    };
+    req.onerror = () => reject(req.error);
+  }), n);
+}
+
+test("buy AI uses: redeem a license key grants uses", async ({ page }) => {
+  await page.route("**/api/billing/redeem", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, uses: 50 }) }));
+
+  await page.goto("/new");
+  await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left");
+  await setAiUses(page, 0);
+  await page.reload();
+
+  // out-of-uses state shows the buy button
+  await page.locator(".ai-out").getByRole("button", { name: /Buy 50 more/ }).click();
+  const modal = page.locator(".modal");
+  await modal.getByLabel("License key").fill("11111111-2222-3333-4444-555555555555");
+  await modal.getByRole("button", { name: "Redeem" }).click();
+
+  await expect(modal.getByText("50 AI uses added")).toBeVisible();
+  await modal.getByRole("button", { name: "Done" }).click();
+  await expect(page.locator(".ai-uses")).toHaveText("50 AI uses left");
+});
+
+test("buy AI uses: already-redeemed key shows an error, no grant", async ({ page }) => {
+  await page.route("**/api/billing/redeem", (route) =>
+    route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ ok: false, error: "already_redeemed" }) }));
+
+  await page.goto("/new");
+  await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left"); // app ready (settings store exists)
+  await setAiUses(page, 0);
+  await page.reload();
+  await page.locator(".ai-out").getByRole("button", { name: /Buy 50 more/ }).click();
+  const modal = page.locator(".modal");
+  await modal.getByLabel("License key").fill("99999999-8888-7777-6666-555555555555");
+  await modal.getByRole("button", { name: "Redeem" }).click();
+  await expect(modal.locator(".ai-error")).toContainText(/already been used/);
+  await expect(modal.getByText(/AI uses added/)).toHaveCount(0);
+});
+
 test("translate: labels swap free, free-text AI-translated, cached (no re-bill)", async ({ page }) => {
   let calls = 0;
   await page.route("**/api/ai/translate", async (route) => {

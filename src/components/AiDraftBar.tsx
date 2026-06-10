@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { parseAiDraft, type AiInvoiceDraft } from "../lib/aiInvoice";
+import { BuyUsesModal } from "./BuyUsesModal";
 
 // Chat-to-invoice input (Flow 2). Value-first: describe the work — or paste a
 // whole client chat/email — and get an editable draft. The AI "uses" counter is
@@ -20,8 +21,10 @@ export function AiDraftBar({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [buyOpen, setBuyOpen] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const out = usesLeft <= 0;
+  const low = usesLeft > 0 && usesLeft <= 3;
 
   // grow the textarea with its content (so a pasted chat is fully visible)
   function autoGrow(el: HTMLTextAreaElement) {
@@ -62,10 +65,11 @@ export function AiDraftBar({
         <span className="ai-pill">✨ AI</span>
         <span className="ai-bar-title">Describe it or paste a chat — get a draft</span>
         <span className={`ai-uses${out ? " out" : ""}`}>{usesLeft} AI use{usesLeft === 1 ? "" : "s"} left</span>
+        {low && <button type="button" className="ai-buy-link" onClick={() => setBuyOpen(true)}>Buy more</button>}
       </div>
       {out ? (
         <div className="ai-out">
-          Out of free AI. <strong>Get 50 more for $5</strong> — <span style={{ color: "var(--ink-faint)" }}>coming soon.</span>
+          You're out of AI uses. <button type="button" className="btn btn-primary btn-sm" onClick={() => setBuyOpen(true)}>Buy 50 more · $5</button>
         </div>
       ) : (
         <>
@@ -89,6 +93,7 @@ export function AiDraftBar({
           {error && <div className="ai-error">{error}</div>}
         </>
       )}
+      {buyOpen && <BuyUsesModal onClose={() => setBuyOpen(false)} />}
     </div>
   );
 }
