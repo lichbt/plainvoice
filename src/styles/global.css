@@ -76,6 +76,13 @@ button{font-family:inherit; cursor:pointer}
 .pill-accent{background:var(--accent-wash); color:var(--accent)}
 .pill-amber{background:var(--amber-wash); color:var(--amber)}
 .pill-ink{background:#211F18; color:#F4F0E6}
+/* interactive language chips in the auto-translate landing demo */
+.tr-chips{display:flex; gap:.4rem; flex-wrap:wrap; margin:.3rem 0 1rem}
+.tr-chip{background:var(--paper-2); color:var(--ink-faint); border:1px solid var(--line);
+  cursor:pointer; font-family:inherit; transition:background .15s, color .15s, border-color .15s}
+.tr-chip:hover{border-color:var(--accent); color:var(--accent)}
+.tr-chip.pill-accent{border-color:transparent; color:var(--accent)}
+.chase [data-k]{transition:opacity .12s}
 
 /* ---------- logo ---------- */
 .logo{display:flex; align-items:center; gap:.6rem; font-family:var(--display);
