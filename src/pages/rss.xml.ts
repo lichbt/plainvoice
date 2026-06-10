@@ -9,7 +9,7 @@ export async function GET(context: APIContext) {
   return rss({
     title: "Plainvoice blog",
     description: "Notes on invoicing, freelancing across borders, and building a genuinely free invoice app.",
-    site: context.site ?? "https://plainvoice.co",
+    site: context.site ?? "https://plainvoices.com",
     items: posts.map((post) => ({
       title: post.data.title,
       description: post.data.description,
