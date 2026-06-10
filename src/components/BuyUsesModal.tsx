@@ -1,43 +1,68 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { grantAiUses } from "../db/db";
 import { BUY_USES_URL, USES_PER_PACK, PACK_PRICE } from "../lib/links";
 
-// Buy more AI uses. No account/login: you buy a pack on the Lemon Squeezy hosted
-// checkout, get a license key, and paste it here. The server activates the key
-// (one-time, enforced by Lemon Squeezy) and we add the uses to the local counter.
+// Buy more AI uses — no account, no key to paste. We open Lemon Squeezy's overlay
+// checkout in-page; when the purchase succeeds the overlay fires Checkout.Success
+// and we add the uses to the local counter. Lemon Squeezy handles tax/VAT + payout.
+declare global {
+  interface Window {
+    LemonSqueezy?: { Setup: (o: { eventHandler: (e: { event: string }) => void }) => void; Url: { Open: (url: string) => void } };
+    createLemonSqueezy?: () => void;
+  }
+}
+
+// Load lemon.js once; resolve when window.LemonSqueezy is ready.
+function ensureLemon(): Promise<Window["LemonSqueezy"]> {
+  if (window.LemonSqueezy) return Promise.resolve(window.LemonSqueezy);
+  return new Promise((resolve, reject) => {
+    const ready = () => { window.createLemonSqueezy?.(); resolve(window.LemonSqueezy); };
+    const existing = document.querySelector<HTMLScriptElement>("script[data-lemon]");
+    if (existing) { existing.addEventListener("load", ready); existing.addEventListener("error", () => reject(new Error("load"))); return; }
+    const s = document.createElement("script");
+    s.src = "https://assets.lemonsqueezy.com/lemon.js";
+    s.defer = true; s.dataset.lemon = "1";
+    s.onload = ready; s.onerror = () => reject(new Error("load"));
+    document.head.appendChild(s);
+  });
+}
+
+// Force the overlay (?embed=1) so checkout opens in-page, not a new tab.
+function embedUrl(url: string): string {
+  return url.includes("embed=1") ? url : url + (url.includes("?") ? "&" : "?") + "embed=1";
+}
+
 export function BuyUsesModal({ onClose }: { onClose: () => void }) {
-  const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState<number | null>(null);
 
-  const ERR: Record<string, string> = {
-    invalid: "That key doesn't look right. Copy it exactly from your receipt email.",
-    already_redeemed: "This key has already been used.",
-    wrong_store: "That key isn't from Plainvoice.",
-    wrong_product: "That key is for a different product.",
-    upstream_unreachable: "Couldn't reach the billing service — try again in a moment.",
-  };
+  // Wire the overlay's success event to the local grant.
+  useEffect(() => {
+    let done = false;
+    ensureLemon()
+      .then((ls) => {
+        ls?.Setup({
+          eventHandler: (e) => {
+            if (e.event === "Checkout.Success" && !done) {
+              done = true;
+              void grantAiUses(USES_PER_PACK).then(() => { setAdded(USES_PER_PACK); setBusy(false); });
+            }
+          },
+        });
+      })
+      .catch(() => {/* opening will surface the error */});
+  }, []);
 
-  async function redeem() {
-    const k = key.trim();
-    if (k.length < 8 || busy) return;
-    setBusy(true); setError(null);
+  async function buy() {
+    setError(null); setBusy(true);
     try {
-      const res = await fetch("/api/billing/redeem", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ key: k }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; uses?: number; error?: string };
-      if (!data.ok) { setError(ERR[data.error ?? ""] ?? "Couldn't redeem that key. Try again."); return; }
-      const total = await grantAiUses(data.uses ?? USES_PER_PACK);
-      setAdded(data.uses ?? USES_PER_PACK);
-      void total;
+      const ls = await ensureLemon();
+      ls?.Url.Open(embedUrl(BUY_USES_URL));
+      // busy stays true until Checkout.Success (or the user closes the overlay)
     } catch {
-      setError("Network hiccup — try again.");
-    } finally {
       setBusy(false);
+      setError("Couldn't open checkout — check your connection and try again.");
     }
   }
 
@@ -50,7 +75,7 @@ export function BuyUsesModal({ onClose }: { onClose: () => void }) {
           <div className="buy-done">
             <div className="buy-done-tick">✓</div>
             <h3>{added} AI uses added</h3>
-            <p className="m-lead">You're all set. Enjoy the AI features.</p>
+            <p className="m-lead">You're all set — enjoy the AI features.</p>
             <button className="btn btn-primary" onClick={onClose}>Done</button>
           </div>
         ) : (
@@ -58,38 +83,20 @@ export function BuyUsesModal({ onClose }: { onClose: () => void }) {
             <h3>More AI uses</h3>
             <p className="m-lead">
               Everything else in Plainvoice is free. AI features (chat-to-invoice, auto-translate) use one
-              "use" each — top up whenever you run low. No subscription.
+              "use" each. Top up whenever you run low — one-time, no subscription, no account.
             </p>
 
             <div className="buy-pack">
               <div>
                 <div className="buy-pack-n">{USES_PER_PACK} AI uses</div>
-                <div className="buy-pack-sub">one-time · no expiry · no account</div>
+                <div className="buy-pack-sub">one-time · no expiry · added instantly</div>
               </div>
-              <a className="btn btn-primary" href={BUY_USES_URL} target="_blank" rel="noopener">
-                Buy · {PACK_PRICE}
-              </a>
-            </div>
-
-            <div className="buy-sep"><span>then paste your key</span></div>
-
-            <p className="m-lead" style={{ marginTop: 0 }}>
-              After paying you'll get a license key by email and on the receipt page. Paste it here to add your uses.
-            </p>
-            <div className="buy-redeem">
-              <input
-                value={key}
-                onChange={(e) => setKey(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") redeem(); }}
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                aria-label="License key"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <button className="btn btn-primary btn-sm" onClick={redeem} disabled={busy || key.trim().length < 8}>
-                {busy ? "Checking…" : "Redeem"}
+              <button className="btn btn-primary" onClick={buy} disabled={busy}>
+                {busy ? "Opening…" : `Buy · ${PACK_PRICE}`}
               </button>
             </div>
+
+            <p className="buy-foot">Secure checkout by Lemon Squeezy. Your uses are added the moment payment clears.</p>
             {error && <div className="ai-error">{error}</div>}
           </>
         )}

@@ -241,40 +241,30 @@ async function setAiUses(page: import("@playwright/test").Page, n: number) {
   }), n);
 }
 
-test("buy AI uses: redeem a license key grants uses", async ({ page }) => {
-  await page.route("**/api/billing/redeem", (route) =>
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, uses: 50 }) }));
+test("buy AI uses: overlay checkout success grants uses (no key to paste)", async ({ page }) => {
+  // Stub Lemon Squeezy's lemon.js overlay: opening checkout immediately fires
+  // Checkout.Success, the same event a real successful payment fires.
+  await page.addInitScript(() => {
+    const w = window as unknown as Record<string, any>;
+    w.createLemonSqueezy = () => {};
+    w.LemonSqueezy = {
+      Setup: (o: { eventHandler: (e: { event: string }) => void }) => { w.__ls = o.eventHandler; },
+      Url: { Open: () => { w.__ls?.({ event: "Checkout.Success" }); } },
+    };
+  });
 
   await page.goto("/new");
   await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left");
   await setAiUses(page, 0);
   await page.reload();
 
-  // out-of-uses state shows the buy button
+  // out-of-uses state → buy → overlay succeeds → uses appear, no key step
   await page.locator(".ai-out").getByRole("button", { name: /Buy 50 more/ }).click();
   const modal = page.locator(".modal");
-  await modal.getByLabel("License key").fill("11111111-2222-3333-4444-555555555555");
-  await modal.getByRole("button", { name: "Redeem" }).click();
-
+  await modal.getByRole("button", { name: /Buy ·/ }).click();
   await expect(modal.getByText("50 AI uses added")).toBeVisible();
   await modal.getByRole("button", { name: "Done" }).click();
   await expect(page.locator(".ai-uses")).toHaveText("50 AI uses left");
-});
-
-test("buy AI uses: already-redeemed key shows an error, no grant", async ({ page }) => {
-  await page.route("**/api/billing/redeem", (route) =>
-    route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ ok: false, error: "already_redeemed" }) }));
-
-  await page.goto("/new");
-  await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left"); // app ready (settings store exists)
-  await setAiUses(page, 0);
-  await page.reload();
-  await page.locator(".ai-out").getByRole("button", { name: /Buy 50 more/ }).click();
-  const modal = page.locator(".modal");
-  await modal.getByLabel("License key").fill("99999999-8888-7777-6666-555555555555");
-  await modal.getByRole("button", { name: "Redeem" }).click();
-  await expect(modal.locator(".ai-error")).toContainText(/already been used/);
-  await expect(modal.getByText(/AI uses added/)).toHaveCount(0);
 });
 
 test("translate: labels swap free, free-text AI-translated, cached (no re-bill)", async ({ page }) => {
