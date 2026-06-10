@@ -121,6 +121,7 @@ export const invoices = {
       terms: draft.terms,
       template: draft.template ?? existing?.template,
       accentColor: draft.accentColor ?? existing?.accentColor,
+      translations: existing?.translations, // preserved; stale langs self-invalidate by signature
       publicToken: existing?.publicToken,
       viewedAt: existing?.viewedAt,
       paidAt: existing?.paidAt,
@@ -145,6 +146,14 @@ export const invoices = {
     });
 
     return { invoice, lines };
+  },
+
+  /** Cache a language's translated free text on the invoice (auto-translate). */
+  async saveTranslation(id: string, lang: string, t: import("./types").InvoiceTranslation): Promise<void> {
+    const inv = await db.invoices.get(id);
+    if (!inv) return;
+    const translations = { ...(inv.translations ?? {}), [lang]: t };
+    await db.invoices.update(id, { translations });
   },
 
   async setStatus(id: string, status: Invoice["status"]): Promise<void> {

@@ -4,6 +4,7 @@ import type { Business, Client } from "../db/types";
 import { formatMoney } from "../lib/totals";
 import { getTemplate, resolveAccent, ON_ACCENT } from "../lib/templates";
 import { qrDataUrl } from "../lib/qr";
+import { getLabels, formatDateFor, statusKey, type LabelKey } from "../lib/i18n/labels";
 
 function PayQr({ text }: { text: string }) {
   const [src, setSrc] = useState<string>("");
@@ -43,14 +44,21 @@ export interface PreviewData {
   paymentLink?: string;
   template?: string;
   accentColor?: string;
+  // Auto-translate: resolved label dictionary + BCP-47 locale. Absent = English.
+  // (Free-text fields above — lines/notes/terms — arrive already translated.)
+  labels?: Record<LabelKey, string>;
+  locale?: string;
+  lang?: string; // target language code (drives PDF font choice)
 }
 
 export function InvoicePreview({ data }: { data: PreviewData }) {
-  const m = (n: number) => formatMoney(n, data.currency);
-  const statusLabel = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+  const L = data.labels ?? getLabels("en");
+  const m = (n: number) => formatMoney(n, data.currency, data.locale);
+  const d = (iso?: string) => formatDateFor(iso, data.locale ?? "en");
+  const statusLabel = L[statusKey(data.status)];
   const tpl = getTemplate(data.template);
   const accent = resolveAccent(tpl, data.accentColor);
-  const docNoun = data.docType === "estimate" ? "Estimate" : "Invoice";
+  const docNoun = data.docType === "estimate" ? L.docEstimate : L.docInvoice;
   // accent drives an inline CSS var; header style + font are classes
   const rootStyle = { ["--tpl-accent" as string]: accent, ["--tpl-on-accent" as string]: ON_ACCENT } as React.CSSProperties;
 
@@ -65,8 +73,8 @@ export function InvoicePreview({ data }: { data: PreviewData }) {
       </div>
       <div className="pv-inv-no">
         <span className="big">{docNoun} #{data.number}</span>
-        Issued {data.issueDate || "—"}
-        {data.dueDate ? <><br />Due {data.dueDate}</> : null}
+        {L.issued} {d(data.issueDate)}
+        {data.dueDate ? <><br />{L.due} {d(data.dueDate)}</> : null}
       </div>
     </div>
   );
@@ -77,13 +85,13 @@ export function InvoicePreview({ data }: { data: PreviewData }) {
 
       <div className="pv-parties">
         <div>
-          <div className="h">Billed to</div>
+          <div className="h">{L.billedTo}</div>
           <div className="nm">{data.client?.name || "—"}</div>
           {data.client?.email ? <div style={{ color: "var(--ink-faint)" }}>{data.client.email}</div> : null}
           {data.client?.address ? <div style={{ color: "var(--ink-faint)", whiteSpace: "pre-line" }}>{data.client.address}</div> : null}
         </div>
         <div style={{ textAlign: "right" }}>
-          <div className="h">Status</div>
+          <div className="h">{L.status}</div>
           <div className="nm">{statusLabel}</div>
         </div>
       </div>
@@ -91,15 +99,15 @@ export function InvoicePreview({ data }: { data: PreviewData }) {
       <table className="pv-tbl">
         <thead>
           <tr>
-            <th>Description</th>
-            <th className="num">Qty</th>
-            <th className="num">Rate</th>
-            <th className="num">Amount</th>
+            <th>{L.description}</th>
+            <th className="num">{L.qty}</th>
+            <th className="num">{L.rate}</th>
+            <th className="num">{L.amount}</th>
           </tr>
         </thead>
         <tbody>
           {data.lines.length === 0 ? (
-            <tr><td colSpan={4} style={{ color: "var(--ink-faint)", textAlign: "center" }}>No line items yet</td></tr>
+            <tr><td colSpan={4} style={{ color: "var(--ink-faint)", textAlign: "center" }}>{L.noLines}</td></tr>
           ) : (
             data.lines.map((l, i) => (
               <tr key={i}>
@@ -114,23 +122,23 @@ export function InvoicePreview({ data }: { data: PreviewData }) {
       </table>
 
       <div className="pv-tot">
-        <div className="r"><span>Subtotal</span><span className="mono">{m(data.subtotal)}</span></div>
-        {data.taxTotal > 0 ? <div className="r"><span>Tax</span><span className="mono">{m(data.taxTotal)}</span></div> : null}
-        {data.discount > 0 ? <div className="r"><span>Discount</span><span className="mono">−{m(data.discount)}</span></div> : null}
+        <div className="r"><span>{L.subtotal}</span><span className="mono">{m(data.subtotal)}</span></div>
+        {data.taxTotal > 0 ? <div className="r"><span>{L.tax}</span><span className="mono">{m(data.taxTotal)}</span></div> : null}
+        {data.discount > 0 ? <div className="r"><span>{L.discount}</span><span className="mono">−{m(data.discount)}</span></div> : null}
         {data.paid && data.paid > 0 ? (
           <>
-            <div className="r"><span>Total</span><span className="mono">{m(data.total)}</span></div>
-            <div className="r"><span>Paid</span><span className="mono">−{m(data.paid)}</span></div>
-            <div className="r g"><span>Balance due</span><span className="mono v">{m(Math.max(data.total - data.paid, 0))}</span></div>
+            <div className="r"><span>{L.total}</span><span className="mono">{m(data.total)}</span></div>
+            <div className="r"><span>{L.paid}</span><span className="mono">−{m(data.paid)}</span></div>
+            <div className="r g"><span>{L.balanceDue}</span><span className="mono v">{m(Math.max(data.total - data.paid, 0))}</span></div>
           </>
         ) : (
-          <div className="r g"><span>{data.docType === "estimate" ? "Total" : "Total due"}</span><span className="mono v">{m(data.total)}</span></div>
+          <div className="r g"><span>{data.docType === "estimate" ? L.total : L.totalDue}</span><span className="mono v">{m(data.total)}</span></div>
         )}
       </div>
 
       {(data.notes || data.terms || data.paymentLink) && (
         <div className="pv-foot">
-          {data.paymentLink ? <div><strong style={{ color: "var(--accent)" }}>Pay online:</strong> {data.paymentLink}<PayQr text={data.paymentLink} /></div> : null}
+          {data.paymentLink ? <div><strong style={{ color: "var(--accent)" }}>{L.payOnline}:</strong> {data.paymentLink}<PayQr text={data.paymentLink} /></div> : null}
           {data.notes ? <div>{data.notes}</div> : null}
           {data.terms ? <div>{data.terms}</div> : null}
         </div>

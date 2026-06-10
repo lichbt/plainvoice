@@ -6,6 +6,8 @@ import type { Business, Client, Item, InvoiceStatus, DocType, Payment, PaymentMe
 import { computeTotals, isOverdue, balanceDue as calcBalance } from "../lib/totals";
 import { CURRENCIES, localeCurrency } from "../lib/currencies";
 import { InvoicePreview, type PreviewData } from "./InvoicePreview";
+import { LANGS, getLang, getLabels } from "../lib/i18n/labels";
+import { translateContent, contentSignature, hasTranslatableText, type TranslatableContent, type CachedTranslation } from "../lib/translateInvoice";
 import { BusinessProfileModal } from "./BusinessProfileModal";
 import { ClientModal } from "./ClientModal";
 import { PhotoImportModal } from "./PhotoImportModal";
@@ -75,6 +77,12 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [showCompanies, setShowCompanies] = useState(false);
   const [barMenu, setBarMenu] = useState<null | "status" | "more" | "color">(null);
   const [toast, setToast] = useState<string | null>(null);
+  // Auto-translate: current target language + per-language cached translated text.
+  const [lang, setLang] = useState("en");
+  const [translating, setTranslating] = useState(false);
+  const [transError, setTransError] = useState<string | null>(null);
+  const [showOriginal, setShowOriginal] = useState(false);
+  const [transCache, setTransCache] = useState<Record<string, CachedTranslation>>({});
   const pendingPdf = useRef(false);
   const pendingSend = useRef(false);
 
@@ -105,6 +113,13 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           setTemplate(invoice.template ?? DEFAULT_TEMPLATE.id);
           setAccentColor(invoice.accentColor ?? "");
           setLines(ls.length ? ls.map((l) => ({ id: l.id, description: l.description, qty: String(l.qty), rate: String(l.rate) })) : [blankLine()]);
+          if (invoice.translations) {
+            const cache: Record<string, CachedTranslation> = {};
+            for (const [code, t] of Object.entries(invoice.translations)) {
+              cache[code] = { sig: t.sig, content: { lineDescriptions: t.lineDescriptions, notes: t.notes, terms: t.terms } };
+            }
+            setTransCache(cache);
+          }
           setLoaded(true);
           return;
         }
@@ -165,6 +180,54 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(null), 2600); }
 
+  // Pick a target language → labels + locale formatting swap instantly & free;
+  // the user's free text (descriptions/notes/terms) goes to the AI once per
+  // language and is cached, so re-viewing never costs another use.
+  async function pickLang(code: string) {
+    setTransError(null);
+    setShowOriginal(false);
+    setLang(code);
+    if (code === "en") return;
+
+    const content: TranslatableContent = {
+      lineDescriptions: lines.map((l) => l.description),
+      notes: notes || undefined,
+      terms: terms || undefined,
+    };
+    const sig = contentSignature(content);
+    const cached = transCache[code];
+    if (cached?.sig === sig) return; // already translated this exact content — free
+    if (!hasTranslatableText(content)) return; // only labels/numbers — nothing to bill
+
+    setTranslating(true);
+    try {
+      const res = await translateContent(content, code, cached);
+      if (res.error) {
+        setTransError(
+          res.error === "ai_not_configured" ? "Translation isn't switched on yet — labels are still translated."
+          : res.error === "rate_limited" ? "Daily AI limit reached. Labels are still translated."
+          : res.error === "daily_budget" ? "AI is busy right now. Labels are still translated."
+          : "Couldn't translate the text — labels are still translated.",
+        );
+        return; // keep target-language labels (free); free text stays original
+      }
+      setTransCache((c) => ({ ...c, [code]: { sig, content: res.content } }));
+      if (res.billed) {
+        const savedId = await persist();
+        await invoices.saveTranslation(savedId, code, {
+          sig,
+          lineDescriptions: res.content.lineDescriptions,
+          notes: res.content.notes,
+          terms: res.content.terms,
+        });
+        const left = await consumeAiUse();
+        flash(`🌐 Translated to ${getLang(code).name} · ${left} AI use${left === 1 ? "" : "s"} left`);
+      }
+    } finally {
+      setTranslating(false);
+    }
+  }
+
   // If the selected client/company gets deleted in a manager, drop/fall back.
   useEffect(() => {
     if (loaded && clientId && clientList.length >= 0 && !clientList.some((c) => c.id === clientId)) setClientId(undefined);
@@ -181,17 +244,24 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const paid = paymentList.reduce((s, p) => s + p.amount, 0);
   const balance = calcBalance(totals.total, paymentList, currency);
 
+  // Light hint: some currencies map unambiguously to a language (★ in the picker).
+  const suggestLang = SUGGEST_BY_CURRENCY[currency] ?? "";
+  // Which language the preview/PDF render in. "Show original" forces English.
+  const viewLang = showOriginal ? "en" : lang;
+  const tx = viewLang !== "en" ? transCache[viewLang]?.content : undefined;
+
   const preview: PreviewData = {
     business: business ? { name: business.name, logoDataUrl: business.logoDataUrl, address: business.address, email: business.email, taxId: business.taxId } : undefined,
     client: client ? { name: client.name, email: client.email, address: client.address } : undefined,
     number, docType, status: displayStatus, issueDate, dueDate: dueDate || undefined, currency,
-    lines: lines.map((l, i) => ({ description: l.description, qty: num(l.qty), rate: num(l.rate), amount: totals.lineAmounts[i] })),
+    lines: lines.map((l, i) => ({ description: tx?.lineDescriptions[i] ?? l.description, qty: num(l.qty), rate: num(l.rate), amount: totals.lineAmounts[i] })),
     subtotal: totals.subtotal, taxTotal: totals.taxTotal, discount: totals.discount, total: totals.total,
     paid: isEstimate ? undefined : (paid > 0 ? paid : undefined),
-    notes: notes || undefined, terms: terms || undefined,
+    notes: (tx?.notes ?? notes) || undefined, terms: (tx?.terms ?? terms) || undefined,
     paymentLink: isEstimate ? undefined : business?.paymentLink, // estimates aren't payable
 
     template, accentColor: accentColor || undefined,
+    labels: getLabels(viewLang), locale: getLang(viewLang).locale, lang: viewLang,
   };
 
   const setLine = (i: number, patch: Partial<LineState>) => setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
@@ -440,7 +510,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               <div className="fld"><label>Tax %</label><input type="number" aria-label="Tax %" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} /></div>
               <div className="fld"><label>Discount</label><input type="number" aria-label="Discount" value={discount} onChange={(e) => setDiscount(e.target.value)} /></div>
             </div>
-            <div className="fld"><label>Notes / terms</label><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Thanks for your business! Payment due within 14 days." /></div>
+            <div className="fld"><label>Notes / terms</label><textarea rows={2} aria-label="Notes / terms" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Thanks for your business! Payment due within 14 days." /></div>
 
             <div className="totals">
               <div className="tot-row"><span>Subtotal</span><span className="mono">{fmt(totals.subtotal, currency)}</span></div>
@@ -476,6 +546,26 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
                 );
               })}
             </div>
+          </div>
+
+          <div className="preview-lang">
+            <span className="preview-theme-lab">🌐 Language</span>
+            <select aria-label="Invoice language" value={lang} disabled={translating}
+              onChange={(e) => void pickLang(e.target.value)}>
+              {LANGS.map((l) => (
+                <option key={l.code} value={l.code}>{l.code === suggestLang ? "★ " : ""}{l.name}{l.code === "en" ? " (original)" : ""}</option>
+              ))}
+            </select>
+            {translating && <span className="lang-note">Translating…</span>}
+            {!translating && lang !== "en" && !transError && (
+              <>
+                <span className="lang-note">Labels free · text AI-translated</span>
+                <button type="button" className="lang-orig" onClick={() => setShowOriginal((v) => !v)}>
+                  {showOriginal ? "Show translation" : "Show original"}
+                </button>
+              </>
+            )}
+            {transError && <span className="lang-note lang-err">{transError}</span>}
           </div>
         </div>
       </div>
@@ -522,3 +612,9 @@ function fmt(n: number, currency: string) {
   try { return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(n); }
   catch { return `${n} ${currency}`; }
 }
+
+// Currencies that point unambiguously at one of our languages → suggested (★).
+// Only the clear cases; EUR/USD/GBP stay neutral (English default).
+const SUGGEST_BY_CURRENCY: Record<string, string> = {
+  VND: "vi", THB: "th", JPY: "ja", KRW: "ko", CNY: "zh", IDR: "id",
+};

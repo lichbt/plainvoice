@@ -1,10 +1,13 @@
 // Client-side PDF export with pdf-lib — local, zero server cost (Spec §9).
 // Layout intentionally mirrors InvoicePreview so "preview = exact PDF" holds.
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type RGB } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import type { PreviewData } from "../components/InvoicePreview";
 import { formatMoney } from "./totals";
 import { getTemplate, resolveAccent, ON_ACCENT } from "./templates";
 import { qrDataUrl } from "./qr";
+import { getLabels, formatDateFor, getLang } from "./i18n/labels";
+import { pdfFontKind, PDF_FONTS, loadFontBytes } from "./i18n/pdfFonts";
 
 const INK = rgb(0.12, 0.11, 0.09);
 const INK2 = rgb(0.36, 0.33, 0.29);
@@ -25,12 +28,42 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
   const tpl = getTemplate(data.template);
   const ACCENT = hexToRgb(resolveAccent(tpl, data.accentColor));
   const ON = hexToRgb(ON_ACCENT);
-  // serif templates use Times, sans use Helvetica (closest standard fonts)
-  const serif = tpl.font === "serif";
-  const font = await pdf.embedFont(serif ? StandardFonts.TimesRoman : StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(serif ? StandardFonts.TimesRomanBold : StandardFonts.HelveticaBold);
-  const money = (n: number) => formatMoney(n, data.currency);
-  const docLabel = data.docType === "estimate" ? "ESTIMATE" : "INVOICE";
+
+  // Auto-translate: pick fonts + labels for the target language. Vietnamese,
+  // Thai and CJK need an embedded Noto font; if that asset isn't hosted yet we
+  // fall back to an English PDF rather than rendering blank glyphs.
+  let lang = getLang(data.lang);
+  let locale = data.locale;
+  let font!: PDFFont, bold!: PDFFont;
+  const kind = pdfFontKind(lang);
+  let embedded = false;
+  if (kind !== "builtin") {
+    pdf.registerFontkit(fontkit);
+    const files = PDF_FONTS[kind];
+    const regBytes = await loadFontBytes(files.regular);
+    if (regBytes) {
+      font = await pdf.embedFont(regBytes, { subset: true });
+      const boldBytes = files.bold ? await loadFontBytes(files.bold) : null;
+      bold = boldBytes ? await pdf.embedFont(boldBytes, { subset: true }) : font;
+      embedded = true;
+    }
+  }
+  if (!embedded) {
+    if (kind !== "builtin") { lang = getLang("en"); locale = "en"; } // graceful: no font → English PDF
+    const serif = tpl.font === "serif";
+    font = await pdf.embedFont(serif ? StandardFonts.TimesRoman : StandardFonts.Helvetica);
+    bold = await pdf.embedFont(serif ? StandardFonts.TimesRomanBold : StandardFonts.HelveticaBold);
+  }
+
+  const L = embedded && data.labels ? data.labels : getLabels(lang.code);
+  const money = (n: number) => formatMoney(n, data.currency, locale);
+  const date = (iso?: string) => formatDateFor(iso, locale ?? "en");
+  const up = (s: string) => s.toUpperCase(); // harmless for CJK/Thai (no case)
+  // Sanitize user content: a no-op with an embedded Unicode font, but in the
+  // Helvetica fallback (font asset missing) it strips non-WinAnsi chars so the
+  // export can never throw "WinAnsi cannot encode …" on translated content.
+  const t = embedded ? (s: string) => s : (s: string) => s.replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, "?");
+  const docLabel = up(data.docType === "estimate" ? L.docEstimate : L.docInvoice);
 
   let y = A4.h - M;
   const right = A4.w - M;
@@ -46,10 +79,10 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
         if (img) { const s = Math.min(110 / img.width, 40 / img.height, 1); page.drawImage(img, { x: M, y: A4.h - bandH / 2 - (img.height * s) / 2, width: img.width * s, height: img.height * s }); bx = M + img.width * s + 12; }
       } catch { /* ignore */ }
     }
-    page.drawText(data.business?.name ?? "Your business", { x: bx, y: A4.h - 46, size: 16, font: bold, color: ON });
-    if (data.business?.email) page.drawText([data.business.email, data.currency].filter(Boolean).join("  ·  "), { x: bx, y: A4.h - 62, size: 9, font, color: ON, opacity: 0.85 });
+    page.drawText(t(data.business?.name ?? "Your business"), { x: bx, y: A4.h - 46, size: 16, font: bold, color: ON });
+    if (data.business?.email) page.drawText(t([data.business.email, data.currency].filter(Boolean).join("  ·  ")), { x: bx, y: A4.h - 62, size: 9, font, color: ON, opacity: 0.85 });
     page.drawText(docLabel, { x: right - bold.widthOfTextAtSize(docLabel, 20), y: A4.h - 46, size: 20, font: bold, color: ON });
-    page.drawText(`#${data.number}`, { x: right - font.widthOfTextAtSize(`#${data.number}`, 10), y: A4.h - 62, size: 10, font, color: ON, opacity: 0.85 });
+    page.drawText(t(`#${data.number}`), { x: right - font.widthOfTextAtSize(t(`#${data.number}`), 10), y: A4.h - 62, size: 10, font, color: ON, opacity: 0.85 });
     y = A4.h - bandH - 24;
   } else {
     // plain / minimal header
@@ -60,13 +93,13 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
       } catch { /* ignore bad logo */ }
     }
     page.drawText(docLabel, { x: right - bold.widthOfTextAtSize(docLabel, 22), y: y - 18, size: 22, font: bold, color: tpl.headerStyle === "minimal" ? INK : ACCENT });
-    page.drawText(data.number, { x: right - font.widthOfTextAtSize(data.number, 10), y: y - 34, size: 10, font, color: INK2 });
+    page.drawText(t(data.number), { x: right - font.widthOfTextAtSize(t(data.number), 10), y: y - 34, size: 10, font, color: INK2 });
 
     y -= 62;
-    y = drawLines(page, [data.business?.name ?? "Your business"], M, y, 12, bold, INK);
-    if (data.business?.address) y = drawLines(page, data.business.address.split("\n"), M, y, 9, font, INK2);
-    if (data.business?.email) y = drawLines(page, [data.business.email], M, y, 9, font, INK2);
-    if (data.business?.taxId) y = drawLines(page, [`Tax ID: ${data.business.taxId}`], M, y, 9, font, INK2);
+    y = drawLines(page, [t(data.business?.name ?? "Your business")], M, y, 12, bold, INK);
+    if (data.business?.address) y = drawLines(page, t(data.business.address).split("\n"), M, y, 9, font, INK2);
+    if (data.business?.email) y = drawLines(page, [t(data.business.email)], M, y, 9, font, INK2);
+    if (data.business?.taxId) y = drawLines(page, [t(`Tax ID: ${data.business.taxId}`)], M, y, 9, font, INK2);
 
     hr(page, y - 6);
     y -= 22;
@@ -74,31 +107,31 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
 
   // bill to + dates
   const billTop = y;
-  page.drawText("BILL TO", { x: M, y, size: 8, font: bold, color: INK2 });
+  page.drawText(up(L.billedTo), { x: M, y, size: 8, font: bold, color: INK2 });
   let by = y - 14;
-  by = drawLines(page, [data.client?.name ?? "—"], M, by, 10, bold, INK);
-  if (data.client?.address) by = drawLines(page, data.client.address.split("\n"), M, by, 9, font, INK2);
-  if (data.client?.email) by = drawLines(page, [data.client.email], M, by, 9, font, INK2);
+  by = drawLines(page, [t(data.client?.name ?? "—")], M, by, 10, bold, INK);
+  if (data.client?.address) by = drawLines(page, t(data.client.address).split("\n"), M, by, 9, font, INK2);
+  if (data.client?.email) by = drawLines(page, [t(data.client.email)], M, by, 9, font, INK2);
 
   const dLabel = (label: string, val: string, yy: number) => {
-    const t = `${label}  ${val}`;
-    page.drawText(t, { x: right - font.widthOfTextAtSize(t, 9), y: yy, size: 9, font, color: INK });
+    const txt = `${label}  ${val}`;
+    page.drawText(txt, { x: right - font.widthOfTextAtSize(txt, 9), y: yy, size: 9, font, color: INK });
   };
-  dLabel("Issued", data.issueDate || "—", billTop - 14);
-  if (data.dueDate) dLabel("Due", data.dueDate, billTop - 28);
+  dLabel(L.issued, date(data.issueDate), billTop - 14);
+  if (data.dueDate) dLabel(L.due, date(data.dueDate), billTop - 28);
 
   y = Math.min(by, billTop - 34) - 16;
 
   // line table header
   const cols = { desc: M, qty: 330, rate: 400, amount: right };
-  page.drawText("DESCRIPTION", { x: cols.desc, y, size: 8, font: bold, color: INK2 });
-  rt(page, "QTY", cols.qty, y, 8, bold, INK2);
-  rt(page, "RATE", cols.rate, y, 8, bold, INK2);
-  rt(page, "AMOUNT", cols.amount, y, 8, bold, INK2);
+  page.drawText(up(L.description), { x: cols.desc, y, size: 8, font: bold, color: INK2 });
+  rt(page, up(L.qty), cols.qty, y, 8, bold, INK2);
+  rt(page, up(L.rate), cols.rate, y, 8, bold, INK2);
+  rt(page, up(L.amount), cols.amount, y, 8, bold, INK2);
   y -= 6; hr(page, y); y -= 14;
 
   for (const l of data.lines) {
-    page.drawText(trim(l.description || "—", 48), { x: cols.desc, y, size: 9, font, color: INK });
+    page.drawText(t(trim(l.description || "—", 48)), { x: cols.desc, y, size: 9, font, color: INK });
     rt(page, String(l.qty), cols.qty, y, 9, font, INK);
     rt(page, money(l.rate), cols.rate, y, 9, font, INK);
     rt(page, money(l.amount), cols.amount, y, 9, font, INK);
@@ -115,35 +148,35 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
     rt(page, val, right, y, b ? 12 : 9, f, b ? ACCENT : INK);
     y -= b ? 18 : 15;
   };
-  totalRow("Subtotal", money(data.subtotal));
-  if (data.discount > 0) totalRow("Discount", `-${money(data.discount)}`);
-  if (data.taxTotal > 0) totalRow("Tax", money(data.taxTotal));
+  totalRow(L.subtotal, money(data.subtotal));
+  if (data.discount > 0) totalRow(L.discount, `-${money(data.discount)}`);
+  if (data.taxTotal > 0) totalRow(L.tax, money(data.taxTotal));
   // grand-total rule — confined to the totals column, with space above and below
   // so it never strikes through the (taller) Total text.
   y -= 6;
   page.drawLine({ start: { x: tx, y }, end: { x: right, y }, thickness: 1, color: INK });
   y -= 14;
   if (data.paid && data.paid > 0) {
-    totalRow("Total", money(data.total));
-    totalRow("Paid", `-${money(data.paid)}`);
-    totalRow("Balance due", money(Math.max(data.total - data.paid, 0)), true);
+    totalRow(L.total, money(data.total));
+    totalRow(L.paid, `-${money(data.paid)}`);
+    totalRow(L.balanceDue, money(Math.max(data.total - data.paid, 0)), true);
   } else {
-    totalRow("Total", money(data.total), true);
+    totalRow(data.docType === "estimate" ? L.total : L.totalDue, money(data.total), true);
   }
 
   // payment link (+ scannable QR) / notes / terms
   y -= 12;
   if (data.paymentLink) {
-    page.drawText("Pay online", { x: M, y, size: 9, font: bold, color: ACCENT });
-    y = drawLines(page, [data.paymentLink], M, y - 12, 8, font, INK2);
+    page.drawText(L.payOnline, { x: M, y, size: 9, font: bold, color: ACCENT });
+    y = drawLines(page, [t(data.paymentLink)], M, y - 12, 8, font, INK2);
     try {
       const qr = await embedDataUrl(pdf, await qrDataUrl(data.paymentLink, 220));
       if (qr) { const s = 64; page.drawImage(qr, { x: M, y: y - s - 2, width: s, height: s }); y -= s + 8; }
     } catch { /* QR is best-effort */ }
     y -= 6;
   }
-  if (data.notes) { page.drawText("Notes", { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(data.notes, 90), M, y - 12, 8, font, INK2); y -= 6; }
-  if (data.terms) { page.drawText("Terms", { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(data.terms, 90), M, y - 12, 8, font, INK2); }
+  if (data.notes) { page.drawText(L.notes, { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(t(data.notes), 90), M, y - 12, 8, font, INK2); y -= 6; }
+  if (data.terms) { page.drawText(L.terms, { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(t(data.terms), 90), M, y - 12, 8, font, INK2); }
 
   return pdf.save();
 }
