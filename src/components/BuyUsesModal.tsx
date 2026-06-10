@@ -37,22 +37,54 @@ export function BuyUsesModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState<number | null>(null);
 
-  // Wire the overlay's success event to the local grant.
+  // Wire the overlay's success event to a server-verified grant.
   useEffect(() => {
     let done = false;
     ensureLemon()
       .then((ls) => {
         ls?.Setup({
-          eventHandler: (e) => {
+          eventHandler: (e: { event: string; data?: unknown }) => {
             if (e.event === "Checkout.Success" && !done) {
               done = true;
-              void grantAiUses(USES_PER_PACK).then(() => { setAdded(USES_PER_PACK); setBusy(false); });
+              void onPaid(e.data ?? e);
             }
           },
         });
       })
       .catch(() => {/* opening will surface the error */});
   }, []);
+
+  // Verify the order on the server, then grant. Falls back to a plain grant if
+  // the billing backend isn't configured yet (so it still works pre-setup).
+  async function onPaid(evt: unknown) {
+    const d = evt as Record<string, any>;
+    const order = d?.order?.data ?? d?.order ?? d?.data ?? d;
+    const orderId = order?.id ?? d?.order_id ?? "";
+    const identifier = order?.attributes?.identifier ?? d?.identifier ?? "";
+    try {
+      const res = await fetch("/api/billing/claim", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ orderId, identifier }),
+      });
+      if (res.status === 503) { await grant(USES_PER_PACK); return; } // backend not wired → simple grant
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; uses?: number; error?: string };
+      if (data.ok) { await grant(data.uses ?? USES_PER_PACK); return; }
+      if (data.error === "already_claimed") { setError("This purchase was already added to your uses."); setBusy(false); return; }
+      // Paid but couldn't confirm — don't silently drop it.
+      setError("Payment received, but we couldn't confirm it automatically. Email your receipt and we'll add your uses.");
+      setBusy(false);
+    } catch {
+      // network failure after payment — fall back to granting so the buyer isn't stuck
+      await grant(USES_PER_PACK);
+    }
+  }
+
+  async function grant(n: number) {
+    await grantAiUses(n);
+    setAdded(n);
+    setBusy(false);
+  }
 
   async function buy() {
     setError(null); setBusy(true);

@@ -241,30 +241,56 @@ async function setAiUses(page: import("@playwright/test").Page, n: number) {
   }), n);
 }
 
-test("buy AI uses: overlay checkout success grants uses (no key to paste)", async ({ page }) => {
-  // Stub Lemon Squeezy's lemon.js overlay: opening checkout immediately fires
-  // Checkout.Success, the same event a real successful payment fires.
+// Stub lemon.js so opening checkout fires Checkout.Success with a fake order,
+// exactly like a real successful payment.
+async function stubOverlay(page: import("@playwright/test").Page) {
   await page.addInitScript(() => {
     const w = window as unknown as Record<string, any>;
     w.createLemonSqueezy = () => {};
     w.LemonSqueezy = {
-      Setup: (o: { eventHandler: (e: { event: string }) => void }) => { w.__ls = o.eventHandler; },
-      Url: { Open: () => { w.__ls?.({ event: "Checkout.Success" }); } },
+      Setup: (o: { eventHandler: (e: unknown) => void }) => { w.__ls = o.eventHandler; },
+      Url: { Open: () => { w.__ls?.({ event: "Checkout.Success", data: { order: { data: { id: "42", attributes: { identifier: "uuid-42" } } } } }); } },
     };
   });
+}
+
+test("buy AI uses: server-verified claim grants uses (no key to paste)", async ({ page }) => {
+  let claimBody: any = null;
+  await page.route("**/api/billing/claim", async (route) => {
+    claimBody = route.request().postDataJSON();
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, uses: 50 }) });
+  });
+  await stubOverlay(page);
 
   await page.goto("/new");
   await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left");
   await setAiUses(page, 0);
   await page.reload();
 
-  // out-of-uses state → buy → overlay succeeds → uses appear, no key step
   await page.locator(".ai-out").getByRole("button", { name: /Buy 50 more/ }).click();
   const modal = page.locator(".modal");
   await modal.getByRole("button", { name: /Buy ·/ }).click();
   await expect(modal.getByText("50 AI uses added")).toBeVisible();
   await modal.getByRole("button", { name: "Done" }).click();
   await expect(page.locator(".ai-uses")).toHaveText("50 AI uses left");
+  // the order id + unguessable identifier from the overlay were sent for verification
+  expect(claimBody).toMatchObject({ orderId: "42", identifier: "uuid-42" });
+});
+
+test("buy AI uses: falls back to a simple grant when billing isn't configured (503)", async ({ page }) => {
+  await page.route("**/api/billing/claim", (route) =>
+    route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ ok: false, error: "not_configured" }) }));
+  await stubOverlay(page);
+
+  await page.goto("/new");
+  await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left");
+  await setAiUses(page, 0);
+  await page.reload();
+
+  await page.locator(".ai-out").getByRole("button", { name: /Buy 50 more/ }).click();
+  const modal = page.locator(".modal");
+  await modal.getByRole("button", { name: /Buy ·/ }).click();
+  await expect(modal.getByText("50 AI uses added")).toBeVisible(); // still works pre-setup
 });
 
 test("translate: labels swap free, free-text AI-translated, cached (no re-bill)", async ({ page }) => {
