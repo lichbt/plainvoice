@@ -180,6 +180,55 @@ test("chat-to-invoice: graceful message when AI isn't configured (503)", async (
   await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left"); // not spent on failure
 });
 
+test("translate: labels swap free, free-text AI-translated, cached (no re-bill)", async ({ page }) => {
+  let calls = 0;
+  await page.route("**/api/ai/translate", async (route) => {
+    calls++;
+    const body = route.request().postDataJSON() as { strings: string[] };
+    const map: Record<string, string> = { Consulting: "Conseil", "Thanks!": "Merci !" };
+    const translations = body.strings.map((s) => map[s] ?? `FR:${s}`);
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ translations }) });
+  });
+
+  await page.goto("/new");
+  await page.locator(".li").first().getByPlaceholder("Item or service").fill("Consulting");
+  await page.locator(".li").first().getByLabel("Rate").fill("100");
+  await page.getByLabel("Notes / terms").fill("Thanks!");
+  await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left");
+
+  // pick French → labels translate instantly, content via the (stubbed) AI
+  await page.getByLabel("Invoice language").selectOption("fr");
+
+  await expect(page.locator(".pv-inv-no .big")).toContainText("Facture");
+  await expect(page.locator(".pv-tbl tbody tr td").first()).toHaveText("Conseil");
+  await expect(page.locator(".pv-tot")).toContainText("Sous-total");
+  await expect(page.locator(".ai-uses")).toHaveText("9 AI uses left");
+  expect(calls).toBe(1);
+
+  // "Show original" reverts to English labels + original text, no extra bill
+  await page.locator(".lang-orig").click();
+  await expect(page.locator(".pv-inv-no .big")).toContainText("Invoice");
+  await expect(page.locator(".pv-tbl tbody tr td").first()).toHaveText("Consulting");
+
+  // back to French via en → cache hit, still 9, still one call
+  await page.locator(".lang-orig").click();
+  await page.getByLabel("Invoice language").selectOption("en");
+  await page.getByLabel("Invoice language").selectOption("fr");
+  await expect(page.locator(".pv-inv-no .big")).toContainText("Facture");
+  await expect(page.locator(".ai-uses")).toHaveText("9 AI uses left");
+  expect(calls).toBe(1);
+});
+
+test("translate: labels-only language switch costs no AI use", async ({ page }) => {
+  let calls = 0;
+  await page.route("**/api/ai/translate", async (route) => { calls++; await route.fulfill({ status: 200, body: '{"translations":[]}' }); });
+  await page.goto("/new");
+  await page.getByLabel("Invoice language").selectOption("es");
+  await expect(page.locator(".pv-inv-no .big")).toContainText("Factura");
+  await expect(page.locator(".ai-uses")).toHaveText("10 AI uses left");
+  expect(calls).toBe(0);
+});
+
 test("mobile: no horizontal overflow on editor and list", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const path of ["/new", "/app"]) {

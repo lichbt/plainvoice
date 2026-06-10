@@ -1,10 +1,13 @@
 // Client-side PDF export with pdf-lib — local, zero server cost (Spec §9).
 // Layout intentionally mirrors InvoicePreview so "preview = exact PDF" holds.
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type RGB } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import type { PreviewData } from "../components/InvoicePreview";
 import { formatMoney } from "./totals";
 import { getTemplate, resolveAccent, ON_ACCENT } from "./templates";
 import { qrDataUrl } from "./qr";
+import { getLabels, formatDateFor, getLang } from "./i18n/labels";
+import { pdfFontKind, PDF_FONTS, loadFontBytes } from "./i18n/pdfFonts";
 
 const INK = rgb(0.12, 0.11, 0.09);
 const INK2 = rgb(0.36, 0.33, 0.29);
@@ -25,12 +28,38 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
   const tpl = getTemplate(data.template);
   const ACCENT = hexToRgb(resolveAccent(tpl, data.accentColor));
   const ON = hexToRgb(ON_ACCENT);
-  // serif templates use Times, sans use Helvetica (closest standard fonts)
-  const serif = tpl.font === "serif";
-  const font = await pdf.embedFont(serif ? StandardFonts.TimesRoman : StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(serif ? StandardFonts.TimesRomanBold : StandardFonts.HelveticaBold);
-  const money = (n: number) => formatMoney(n, data.currency);
-  const docLabel = data.docType === "estimate" ? "ESTIMATE" : "INVOICE";
+
+  // Auto-translate: pick fonts + labels for the target language. Vietnamese,
+  // Thai and CJK need an embedded Noto font; if that asset isn't hosted yet we
+  // fall back to an English PDF rather than rendering blank glyphs.
+  let lang = getLang(data.lang);
+  let locale = data.locale;
+  let font!: PDFFont, bold!: PDFFont;
+  const kind = pdfFontKind(lang);
+  let embedded = false;
+  if (kind !== "builtin") {
+    pdf.registerFontkit(fontkit);
+    const files = PDF_FONTS[kind];
+    const regBytes = await loadFontBytes(files.regular);
+    if (regBytes) {
+      font = await pdf.embedFont(regBytes, { subset: true });
+      const boldBytes = files.bold ? await loadFontBytes(files.bold) : null;
+      bold = boldBytes ? await pdf.embedFont(boldBytes, { subset: true }) : font;
+      embedded = true;
+    }
+  }
+  if (!embedded) {
+    if (kind !== "builtin") { lang = getLang("en"); locale = "en"; } // graceful: no font → English PDF
+    const serif = tpl.font === "serif";
+    font = await pdf.embedFont(serif ? StandardFonts.TimesRoman : StandardFonts.Helvetica);
+    bold = await pdf.embedFont(serif ? StandardFonts.TimesRomanBold : StandardFonts.HelveticaBold);
+  }
+
+  const L = embedded && data.labels ? data.labels : getLabels(lang.code);
+  const money = (n: number) => formatMoney(n, data.currency, locale);
+  const date = (iso?: string) => formatDateFor(iso, locale ?? "en");
+  const up = (s: string) => s.toUpperCase(); // harmless for CJK/Thai (no case)
+  const docLabel = up(data.docType === "estimate" ? L.docEstimate : L.docInvoice);
 
   let y = A4.h - M;
   const right = A4.w - M;
@@ -74,7 +103,7 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
 
   // bill to + dates
   const billTop = y;
-  page.drawText("BILL TO", { x: M, y, size: 8, font: bold, color: INK2 });
+  page.drawText(up(L.billedTo), { x: M, y, size: 8, font: bold, color: INK2 });
   let by = y - 14;
   by = drawLines(page, [data.client?.name ?? "—"], M, by, 10, bold, INK);
   if (data.client?.address) by = drawLines(page, data.client.address.split("\n"), M, by, 9, font, INK2);
@@ -84,17 +113,17 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
     const t = `${label}  ${val}`;
     page.drawText(t, { x: right - font.widthOfTextAtSize(t, 9), y: yy, size: 9, font, color: INK });
   };
-  dLabel("Issued", data.issueDate || "—", billTop - 14);
-  if (data.dueDate) dLabel("Due", data.dueDate, billTop - 28);
+  dLabel(L.issued, date(data.issueDate), billTop - 14);
+  if (data.dueDate) dLabel(L.due, date(data.dueDate), billTop - 28);
 
   y = Math.min(by, billTop - 34) - 16;
 
   // line table header
   const cols = { desc: M, qty: 330, rate: 400, amount: right };
-  page.drawText("DESCRIPTION", { x: cols.desc, y, size: 8, font: bold, color: INK2 });
-  rt(page, "QTY", cols.qty, y, 8, bold, INK2);
-  rt(page, "RATE", cols.rate, y, 8, bold, INK2);
-  rt(page, "AMOUNT", cols.amount, y, 8, bold, INK2);
+  page.drawText(up(L.description), { x: cols.desc, y, size: 8, font: bold, color: INK2 });
+  rt(page, up(L.qty), cols.qty, y, 8, bold, INK2);
+  rt(page, up(L.rate), cols.rate, y, 8, bold, INK2);
+  rt(page, up(L.amount), cols.amount, y, 8, bold, INK2);
   y -= 6; hr(page, y); y -= 14;
 
   for (const l of data.lines) {
@@ -115,26 +144,26 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
     rt(page, val, right, y, b ? 12 : 9, f, b ? ACCENT : INK);
     y -= b ? 18 : 15;
   };
-  totalRow("Subtotal", money(data.subtotal));
-  if (data.discount > 0) totalRow("Discount", `-${money(data.discount)}`);
-  if (data.taxTotal > 0) totalRow("Tax", money(data.taxTotal));
+  totalRow(L.subtotal, money(data.subtotal));
+  if (data.discount > 0) totalRow(L.discount, `-${money(data.discount)}`);
+  if (data.taxTotal > 0) totalRow(L.tax, money(data.taxTotal));
   // grand-total rule — confined to the totals column, with space above and below
   // so it never strikes through the (taller) Total text.
   y -= 6;
   page.drawLine({ start: { x: tx, y }, end: { x: right, y }, thickness: 1, color: INK });
   y -= 14;
   if (data.paid && data.paid > 0) {
-    totalRow("Total", money(data.total));
-    totalRow("Paid", `-${money(data.paid)}`);
-    totalRow("Balance due", money(Math.max(data.total - data.paid, 0)), true);
+    totalRow(L.total, money(data.total));
+    totalRow(L.paid, `-${money(data.paid)}`);
+    totalRow(L.balanceDue, money(Math.max(data.total - data.paid, 0)), true);
   } else {
-    totalRow("Total", money(data.total), true);
+    totalRow(data.docType === "estimate" ? L.total : L.totalDue, money(data.total), true);
   }
 
   // payment link (+ scannable QR) / notes / terms
   y -= 12;
   if (data.paymentLink) {
-    page.drawText("Pay online", { x: M, y, size: 9, font: bold, color: ACCENT });
+    page.drawText(L.payOnline, { x: M, y, size: 9, font: bold, color: ACCENT });
     y = drawLines(page, [data.paymentLink], M, y - 12, 8, font, INK2);
     try {
       const qr = await embedDataUrl(pdf, await qrDataUrl(data.paymentLink, 220));
@@ -142,8 +171,8 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
     } catch { /* QR is best-effort */ }
     y -= 6;
   }
-  if (data.notes) { page.drawText("Notes", { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(data.notes, 90), M, y - 12, 8, font, INK2); y -= 6; }
-  if (data.terms) { page.drawText("Terms", { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(data.terms, 90), M, y - 12, 8, font, INK2); }
+  if (data.notes) { page.drawText(L.notes, { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(data.notes, 90), M, y - 12, 8, font, INK2); y -= 6; }
+  if (data.terms) { page.drawText(L.terms, { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(data.terms, 90), M, y - 12, 8, font, INK2); }
 
   return pdf.save();
 }

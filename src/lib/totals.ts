@@ -80,10 +80,11 @@ export function computeTotals(input: ComputeInput): Totals {
   return { subtotal, taxTotal, discount, total, lineAmounts };
 }
 
-/** Format a number as currency for display (uses Intl). */
-export function formatMoney(value: number, currency: string): string {
+/** Format a number as currency for display (uses Intl). Pass a locale to match
+ * the target language's grouping/decimal separators (auto-translate). */
+export function formatMoney(value: number, currency: string, locale?: string): string {
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
       minimumFractionDigits: currencyDecimals(currency),

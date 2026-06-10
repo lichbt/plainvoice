@@ -65,11 +65,21 @@ export interface Invoice {
   terms?: string;
   template?: string; // template id (see lib/templates.ts)
   accentColor?: string; // optional accent override (hex)
+  // Auto-translate cache: per target-language translated free text + the source
+  // signature it was produced from (so an edit invalidates a stale language).
+  translations?: Record<string, InvoiceTranslation>;
   publicToken?: string; // Phase 2 tracked link only
   viewedAt?: string;
   paidAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface InvoiceTranslation {
+  sig: string; // signature of the source content this was translated from
+  lineDescriptions: string[]; // aligned 1:1 with the invoice's lines
+  notes?: string;
+  terms?: string;
 }
 
 export interface Payment {
