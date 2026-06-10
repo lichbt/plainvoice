@@ -10,9 +10,14 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   // Canonical site URL — drives <link rel="canonical">, og:url and the sitemap.
   site: 'https://plainvoice.co',
-  // Only the marketing homepage is real content; /new, /app, /invoice, /estimate
-  // are blank local-first app shells, so keep them out of the sitemap.
-  integrations: [react(), sitemap({ filter: (page) => new URL(page).pathname === '/' })],
+  // Index the marketing homepage + blog; keep the blank local-first app shells
+  // (/new, /app, /invoice, /estimate) out of the sitemap.
+  integrations: [react(), sitemap({
+    filter: (page) => {
+      const p = new URL(page).pathname;
+      return p === '/' || p === '/blog/' || p.startsWith('/blog/');
+    },
+  })],
 
   vite: {
     plugins: [tailwindcss()],

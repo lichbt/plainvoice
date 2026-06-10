@@ -1,25 +1,46 @@
 ---
 import "../styles/global.css";
-interface Props { title?: string; description?: string; noindex?: boolean }
+interface Props {
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+  ogType?: "website" | "article";
+  publishedTime?: string; // ISO, for article OG
+  modifiedTime?: string;
+}
 const {
   title = "Plainvoice — invoicing that's actually free",
   description = "Unlimited invoices, clients and estimates — free, forever, no caps. AI is the only thing you ever pay for, and only when you want it.",
   noindex = false,
+  ogType = "website",
+  publishedTime,
+  modifiedTime,
 } = Astro.props;
 
 const siteName = "Plainvoice";
 // Astro.site is set in astro.config; canonical = site + current path.
 const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : Astro.url.href;
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: siteName,
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web, iOS, Android",
-  description,
-  url: Astro.site?.href ?? canonical,
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-};
+const jsonLd = ogType === "article"
+  ? {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: title,
+      description,
+      url: canonical,
+      datePublished: publishedTime,
+      dateModified: modifiedTime ?? publishedTime,
+      publisher: { "@type": "Organization", name: siteName },
+    }
+  : {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: siteName,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web, iOS, Android",
+      description,
+      url: Astro.site?.href ?? canonical,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    };
 ---
 <!doctype html>
 <html lang="en">
@@ -32,18 +53,21 @@ const jsonLd = {
     <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
 
     <!-- Open Graph (LinkedIn, Slack, iMessage, Facebook) -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content="en_US" />
+    {ogType === "article" && publishedTime && <meta property="article:published_time" content={publishedTime} />}
+    {ogType === "article" && (modifiedTime || publishedTime) && <meta property="article:modified_time" content={modifiedTime ?? publishedTime} />}
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
 
+    <link rel="alternate" type="application/rss+xml" title="Plainvoice blog" href="/rss.xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#1E5B41" />
     <link rel="apple-touch-icon" href="/icon.svg" />

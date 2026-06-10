@@ -1,0 +1,14 @@
+---
+import Logo from "./Logo.astro";
+// Minimal top bar for content pages (blog). The landing page has its own nav.
+---
+<nav class="site site-static">
+  <div class="nav-in">
+    <a href="/" aria-label="Plainvoice home"><Logo /></a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/blog">Blog</a>
+      <a class="btn btn-primary btn-sm" href="/new">Try the editor</a>
+    </div>
+  </div>
+</nav>
