@@ -19,7 +19,7 @@ export interface ScriptFontFiles {
 export const PDF_FONTS: Record<Exclude<PdfFontKind, "builtin">, ScriptFontFiles> = {
   latinx: { regular: "/fonts/NotoSans-Regular.ttf", bold: "/fonts/NotoSans-Bold.ttf" },
   thai: { regular: "/fonts/NotoSansThai-Regular.ttf", bold: "/fonts/NotoSansThai-Bold.ttf" },
-  cjk: { regular: "/fonts/NotoSansCJK-Regular.ttf" }, // one face; bold reuses regular
+  cjk: { regular: "/fonts/NotoSansCJK-Regular.otf" }, // OTF/CFF; one face; bold reuses regular
 };
 
 /** Which font a language needs in the PDF. */
