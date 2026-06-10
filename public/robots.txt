@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# TODO: update host when the custom domain is chosen (matches astro.config `site`)
+Sitemap: https://plainvoice.pages.dev/sitemap-index.xml

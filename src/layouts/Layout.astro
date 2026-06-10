@@ -1,21 +1,53 @@
 ---
 import "../styles/global.css";
-interface Props { title?: string; description?: string }
+interface Props { title?: string; description?: string; noindex?: boolean }
 const {
   title = "Plainvoice — invoicing that's actually free",
   description = "Unlimited invoices, clients and estimates — free, forever, no caps. AI is the only thing you ever pay for, and only when you want it.",
+  noindex = false,
 } = Astro.props;
+
+const siteName = "Plainvoice";
+// Astro.site is set in astro.config; canonical = site + current path.
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : Astro.url.href;
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: siteName,
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web, iOS, Android",
+  description,
+  url: Astro.site?.href ?? canonical,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+};
 ---
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
+
+    <!-- Open Graph (LinkedIn, Slack, iMessage, Facebook) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#1E5B41" />
     <link rel="apple-touch-icon" href="/icon.svg" />
-    <title>{title}</title>
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
     <slot />
