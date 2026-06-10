@@ -314,6 +314,9 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
   border:1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius:var(--r-sm); padding:.9rem 1rem; margin:.2rem 0 1rem}
 .buy-pack-n{font-weight:700; font-size:1.05rem; color:var(--ink)}
 .buy-pack-sub{font-size:.74rem; color:var(--ink-faint); margin-top:.1rem}
+.buy-note{font-size:.76rem; line-height:1.5; color:var(--ink-soft,var(--ink-faint)); background:var(--paper-2);
+  border:1px solid var(--line); border-radius:var(--r-sm); padding:.6rem .75rem; margin:.2rem 0 .6rem}
+.buy-done .buy-note{margin:.4rem 0 1rem; text-align:left}
 .buy-foot{font-size:.72rem; color:var(--ink-faint); margin-top:.2rem}
 .buy-done{text-align:center; padding:1rem .5rem}
 .buy-done-tick{width:48px; height:48px; margin:0 auto .7rem; border-radius:999px; background:var(--accent-wash);
