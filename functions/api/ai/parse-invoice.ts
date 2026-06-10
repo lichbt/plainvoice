@@ -21,7 +21,7 @@ interface Env {
   AI_KV?: KV; // optional KV binding for rate-limit + daily budget cap (fail-open if absent)
 }
 
-const MAX_INPUT = 2000;
+const MAX_INPUT = 8000; // allow pasting a whole chat/email thread, not just a sentence
 // Free OpenRouter model. MUST support tool/function calling (we force tool_choice
 // below). Override per-deploy with the AI_MODEL secret if you want a paid/stronger one.
 const DEFAULT_MODEL = "openai/gpt-oss-120b:free";
@@ -45,11 +45,16 @@ async function withinLimits(env: Env, ip: string): Promise<{ ok: boolean; reason
 }
 
 const SYSTEM = [
-  "You turn a freelancer's plain-language description of work into invoice line items.",
+  "You convert a freelancer's notes — or a pasted client chat/email thread — into invoice line items.",
+  "The input may be long and messy: greetings, scheduling, small talk, multiple messages.",
+  "Ignore everything that isn't agreed billable work.",
   "Extract each billable item as quantity × unit-rate.",
   "Put the PER-UNIT price in `rate` — NEVER the multiplied line total.",
-  "If only a total is given for a multi-unit item, set qty=1 and rate=that amount.",
-  "Do not invent items, do not compute sums or totals, do not add tax.",
+  "Examples: '3 hours at $120/hr' → qty 3, rate 120; '5 logos at $50 each' → qty 5, rate 50;",
+  "'$500 setup fee' → qty 1, rate 500. If only a lump sum is given for an item, set qty 1 and rate that sum.",
+  "If a price was negotiated or changed during the chat, use the FINAL agreed price.",
+  "Merge duplicate mentions of the same item — never list one item twice.",
+  "Do not invent items, do not compute sums or totals, do not add tax or discounts.",
   "If a client/customer is named, set clientName. If a payment term like 'net 30' or",
   "'due in 2 weeks' is stated, set dueInDays. Use the draft_invoice function only.",
 ].join(" ");
@@ -128,7 +133,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
         messages: [{ role: "system", content: SYSTEM }, { role: "user", content: userMsg }],
         tools: [TOOL],
         tool_choice: { type: "function", function: { name: "draft_invoice" } },
-        max_tokens: 600,
+        max_tokens: 2000, // room for many line items from a long paste
         temperature: 0.2,
       }),
     });

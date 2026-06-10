@@ -171,6 +171,46 @@ test("chat-to-invoice: AI draft maps to lines, totals computed in code, uses dec
   await expect(page.locator(".ai-uses")).toHaveText("9 AI uses left");
 });
 
+test("chat-to-invoice: paste a long chat → many line items mapped", async ({ page }) => {
+  // The endpoint does the extraction; here we assert the client maps a many-item
+  // result from a long multi-line paste and recomputes the total in code.
+  let sentText = "";
+  await page.route("**/api/ai/parse-invoice", (route) => {
+    sentText = (route.request().postDataJSON() as { text: string }).text;
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ draft: { currency: "USD", lines: [
+      { description: "Discovery call", qty: 1, rate: 0 },        // rate 0 is valid (free item)
+      { description: "Brand strategy", qty: 1, rate: 1500 },
+      { description: "Logo design", qty: 1, rate: 800 },
+      { description: "Consulting hours", qty: 6, rate: 120 },     // qty × rate
+      { description: "Revisions", qty: 2, rate: 90 },
+    ] } }) });
+  });
+
+  await page.goto("/new");
+  const chat = [
+    "Hey! Thanks for hopping on the call earlier 🙏",
+    "So to recap what we agreed:",
+    "- discovery call (no charge, on me)",
+    "- brand strategy doc — $1,500",
+    "- logo design, let's say $800",
+    "- you'll need about 6 hours of consulting at $120/hr",
+    "- and 2 rounds of revisions at $90 each",
+    "Sound good? Can you send the invoice to Acme?",
+  ].join("\n");
+  await page.getByLabel("Describe the invoice").fill(chat);
+  await page.getByRole("button", { name: /Draft it/ }).click();
+
+  // all five items land, in order
+  const rows = page.locator(".li");
+  await expect(rows).toHaveCount(5);
+  await expect(rows.nth(1).getByPlaceholder("Item or service")).toHaveValue("Brand strategy");
+  await expect(rows.nth(3).getByLabel("Quantity")).toHaveValue("6");
+  // total recomputed in code: 0 + 1500 + 800 + 6*120 + 2*90 = 3200
+  await expect(page.locator(".pv-tot .r.g .v")).toHaveText(/3,200\.00/);
+  // the full multi-line paste was sent (not truncated to a single line)
+  expect(sentText).toContain("6 hours of consulting");
+});
+
 test("chat-to-invoice: graceful message when AI isn't configured (503)", async ({ page }) => {
   await page.route("**/api/ai/parse-invoice", (route) => route.fulfill({ status: 503, contentType: "application/json", body: '{"error":"ai_not_configured"}' }));
   await page.goto("/new");
