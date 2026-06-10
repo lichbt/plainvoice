@@ -11,6 +11,7 @@ import Logo from "../components/Logo.astro";
         <a href="#switch">Switch</a>
         <a href="#languages">Languages</a>
         <a href="#ai">AI</a>
+        <a href="#app">App</a>
         <a class="btn btn-primary btn-sm" href="/new">Try the editor</a>
       </div>
     </div>
@@ -165,6 +166,38 @@ import Logo from "../components/Logo.astro";
     </div>
   </section>
 
+  <section id="app">
+    <div class="wrap feature-split">
+      <div class="reveal">
+        <div class="sec-eyebrow">Works offline · no app store</div>
+        <h2 class="sec">Install it on your phone in two taps.</h2>
+        <p class="sec-lead">Plainvoice is a Progressive Web App — add it to your home screen and it opens full-screen like a native app, even with no signal. Everything stays on your device: nothing to sync, no account to create. Invoice a client from the job site, on the train, anywhere.</p>
+        <div class="pwa-cta">
+          <button id="pwa-install" type="button" class="btn btn-primary">📲 Install the app</button>
+          <a class="btn btn-ghost" href="/new">Or just use it in the browser →</a>
+        </div>
+        <div id="pwa-hint" class="pwa-hint" hidden></div>
+      </div>
+      <div class="reveal pwa-visual">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="home-tile">
+              <img src="/icon.svg" alt="Plainvoice app icon" width="56" height="56" />
+              <span>Plainvoice</span>
+            </div>
+            <div class="home-dots"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="pwa-badges">
+          <span class="pill pill-accent">⚡ Offline-ready</span>
+          <span class="pill">🔒 On-device</span>
+          <span class="pill">🆓 No signup</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <footer class="site">
     <div class="wrap foot-in">
       <Logo size={26} />
@@ -219,5 +252,53 @@ import Logo from "../components/Logo.astro";
       });
       apply("ja"); // default to the Japanese view the static markup showed
     }
+  </script>
+
+  <!-- PWA install: use the native prompt where the browser offers it, else show
+       platform-specific Add-to-Home-Screen instructions. -->
+  <script is:inline>
+    (() => {
+      const btn = document.getElementById("pwa-install");
+      const hint = document.getElementById("pwa-hint");
+      if (!btn || !hint) return;
+
+      const ua = navigator.userAgent || "";
+      const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const installed = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+      let deferred = null;
+
+      const showHint = (html) => { hint.innerHTML = html; hint.hidden = false; };
+
+      if (installed) {
+        btn.textContent = "✓ App installed";
+        btn.disabled = true;
+        return;
+      }
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferred = e;
+      });
+      window.addEventListener("appinstalled", () => {
+        btn.textContent = "✓ App installed";
+        btn.disabled = true;
+        hint.hidden = true;
+      });
+
+      btn.addEventListener("click", async () => {
+        if (deferred) {
+          deferred.prompt();
+          const { outcome } = await deferred.userChoice;
+          deferred = null;
+          if (outcome !== "accepted") showHint("No worries — you can install anytime from your browser menu.");
+          return;
+        }
+        if (isIOS) {
+          showHint("On iPhone &amp; iPad: tap the <strong>Share</strong> button, then <strong>Add to Home Screen</strong>.");
+        } else {
+          showHint("Open this page on your phone, then choose <strong>Add to Home Screen</strong> (or <strong>Install app</strong>) from the browser menu.");
+        }
+      });
+    })();
   </script>
 </Layout>
