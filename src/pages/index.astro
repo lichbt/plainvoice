@@ -142,17 +142,18 @@ import Logo from "../components/Logo.astro";
     <div class="wrap feature-split">
       <div class="chase reveal">
         <span class="tag">Auto-translate · the one feature nobody copies</span>
-        <div style="display:flex; gap:.4rem; flex-wrap:wrap; margin:.3rem 0 1rem">
+        <div id="tr-chips" class="tr-chips" data-date="2026-06-24">
+          <!-- chips are rendered + made interactive by the script below -->
           <span class="pill pill-accent">日本語</span>
           <span class="pill">Tiếng Việt</span>
           <span class="pill">ไทย</span>
           <span class="pill">Español</span>
           <span class="pill">+9 more</span>
         </div>
-        <div class="inv-row"><span>Invoice</span><span class="mono">→ 請求書</span></div>
-        <div class="inv-row"><span>Billed to</span><span class="mono">→ 請求先</span></div>
-        <div class="inv-row"><span>Total due</span><span class="mono">→ ご請求額</span></div>
-        <div class="inv-row" style="border:none; font-weight:600"><span>Jun 24, 2026</span><span class="mono">→ 2026年6月24日</span></div>
+        <div class="inv-row"><span>Invoice</span><span class="mono">→ <span data-k="docInvoice">請求書</span></span></div>
+        <div class="inv-row"><span>Billed to</span><span class="mono">→ <span data-k="billedTo">請求先</span></span></div>
+        <div class="inv-row"><span>Total due</span><span class="mono">→ <span data-k="totalDue">ご請求額</span></span></div>
+        <div class="inv-row" style="border:none; font-weight:600"><span>Jun 24, 2026</span><span class="mono">→ <span data-k="date">2026年6月24日</span></span></div>
         <div style="font-size:.74rem; color:var(--ink-faint); margin-top:.5rem">Labels &amp; dates: free &amp; instant · only your own words use AI</div>
       </div>
       <div class="reveal">
@@ -179,5 +180,44 @@ import Logo from "../components/Logo.astro";
     document.querySelectorAll(".reveal:not(.in)").forEach((el) => io.observe(el));
     const nav = document.getElementById("nav");
     addEventListener("scroll", () => nav?.classList.toggle("scrolled", scrollY > 10));
+  </script>
+
+  <!-- Interactive auto-translate demo: chips swap the labels + date live, using
+       the SAME dictionary the product ships with (so the demo can't drift). -->
+  <script>
+    import { LANGS, getLabels, formatDateFor, getLang } from "../lib/i18n/labels";
+
+    const root = document.getElementById("tr-chips");
+    if (root) {
+      const iso = root.getAttribute("data-date") || "2026-06-24";
+      const card = root.closest(".chase");
+      const out = (k) => card?.querySelector(`[data-k="${k}"]`);
+      // Source language first (English shows the "original"), then the rest.
+      const order = ["en", ...LANGS.map((l) => l.code).filter((c) => c !== "en")];
+
+      const apply = (code) => {
+        const labels = getLabels(code);
+        const locale = getLang(code).locale;
+        const set = (k, v) => { const el = out(k); if (el) el.textContent = v; };
+        set("docInvoice", labels.docInvoice);
+        set("billedTo", labels.billedTo);
+        set("totalDue", labels.totalDue);
+        set("date", formatDateFor(iso, locale));
+        root.querySelectorAll(".tr-chip").forEach((b) =>
+          b.classList.toggle("pill-accent", b.getAttribute("data-lang") === code));
+      };
+
+      root.innerHTML = order
+        .map((code) => {
+          const name = code === "en" ? "English" : getLang(code).name;
+          return `<button type="button" class="pill tr-chip" data-lang="${code}">${name}</button>`;
+        })
+        .join("");
+      root.addEventListener("click", (e) => {
+        const btn = e.target.closest(".tr-chip");
+        if (btn) apply(btn.getAttribute("data-lang"));
+      });
+      apply("ja"); // default to the Japanese view the static markup showed
+    }
   </script>
 </Layout>
