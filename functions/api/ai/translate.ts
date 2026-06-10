@@ -111,7 +111,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
       headers: {
         Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
         "content-type": "application/json",
-        "HTTP-Referer": "https://plainvoice.pages.dev",
+        "HTTP-Referer": "https://plainvoices.com",
         "X-Title": "Plainvoice",
       },
       body: JSON.stringify({

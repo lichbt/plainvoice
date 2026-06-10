@@ -9,7 +9,7 @@ import sitemap from '@astrojs/sitemap';
 // https://astro.build/config
 export default defineConfig({
   // Canonical site URL — drives <link rel="canonical">, og:url and the sitemap.
-  site: 'https://plainvoice.co',
+  site: 'https://plainvoices.com',
   // Index the marketing homepage + blog; keep the blank local-first app shells
   // (/new, /app, /invoice, /estimate) out of the sitemap.
   integrations: [react(), sitemap({
