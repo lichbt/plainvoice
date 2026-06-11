@@ -140,6 +140,9 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   try { parsed = JSON.parse(call); } catch { return json({ error: "unparseable_tool_args" }, 502); }
 
   let out: string[] = Array.isArray(parsed?.translations) ? parsed.translations.map((s: unknown) => String(s ?? "")) : [];
+  // Total failure (model returned nothing) → error so the client doesn't spend a
+  // use on untranslated text. The free model occasionally flakes the tool call.
+  if (out.length === 0) return json({ error: "translation_failed" }, 502);
   // Guard the 1:1 contract: pad with originals / trim overflow so the client can
   // always zip translations back onto its source array by index.
   if (out.length < strings.length) out = out.concat(strings.slice(out.length));
