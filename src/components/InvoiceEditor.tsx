@@ -407,16 +407,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
             </div>
           </div>
           <div className="app-actions">
-            <div className="bar-pop">
-              <button className="btn btn-ghost btn-sm" aria-label="More actions" onClick={() => setBarMenu(barMenu === "more" ? null : "more")}>⋯</button>
-              {barMenu === "more" && (
-                <div className="bar-menu" style={{ right: 0 }}>
-                  {isEstimate
-                    ? <button className="bar-menu-item" onClick={() => { setBarMenu(null); convertToInvoice(); }}>Convert to invoice</button>
-                    : <button className="bar-menu-item" onClick={() => { setBarMenu(null); setShowPayment(true); }}>Record payment</button>}
-                </div>
-              )}
-            </div>
+            {isEstimate && <button className="btn btn-ghost btn-sm" onClick={convertToInvoice}>Convert to invoice</button>}
             <button className="btn btn-ghost btn-sm" onClick={handlePdf}>Download PDF</button>
             <button className="btn btn-primary btn-sm" onClick={openSend}>Send</button>
           </div>
@@ -526,6 +517,11 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
                 <div className="tot-row grand"><span>{isEstimate ? "Total" : "Total due"}</span><span className="mono v">{fmt(totals.total, currency)}</span></div>
               )}
             </div>
+            {!isEstimate && (
+              <button type="button" className="record-pay" onClick={() => setShowPayment(true)}>
+                ＋ {paid > 0 ? "Record another payment" : "Record a payment"}
+              </button>
+            )}
           </div>
         </div>
 
