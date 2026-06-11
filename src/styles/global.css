@@ -528,6 +528,11 @@ table.pv-tbl td{padding:.55rem .3rem; border-bottom:1px solid var(--line)}
    base editor/list/table rules (equal specificity → later wins).
    ============================================================ */
 @media(max-width:720px){
+  /* iOS Safari auto-zooms when a focused field's text is < 16px — tap a dropdown
+     and the page nudges in. Forcing 16px on all form controls stops it without
+     disabling pinch-to-zoom (which hurts accessibility and iOS often ignores). */
+  input, select, textarea{font-size:16px !important}
+
   /* app bar: left row full-width, actions wrap neatly below */
   .app-bar-in{flex-wrap:wrap; padding:.7rem 16px; gap:.55rem}
   .app-bar .left{width:100%; justify-content:space-between; gap:.6rem}
