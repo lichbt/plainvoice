@@ -10,12 +10,14 @@ export function AiDraftBar({
   defaultCurrency,
   usesLeft,
   onDrafted,
+  onPhoto,
   autoFocus,
 }: {
   knownClients: string[];
   defaultCurrency: string;
   usesLeft: number;
   onDrafted: (draft: AiInvoiceDraft) => void;
+  onPhoto: () => void;
   autoFocus?: boolean;
 }) {
   const [text, setText] = useState("");
@@ -63,7 +65,7 @@ export function AiDraftBar({
     <div className="ai-bar">
       <div className="ai-bar-head">
         <span className="ai-pill">✨ AI</span>
-        <span className="ai-bar-title">Describe it or paste a chat — get a draft</span>
+        <span className="ai-bar-title">Start faster — describe it, or snap a photo</span>
       </div>
       {out ? (
         <div className="ai-out">
@@ -84,11 +86,14 @@ export function AiDraftBar({
               aria-label="Describe the invoice"
             />
             <div className="ai-bar-foot">
-              <span className={`ai-uses${out ? " out" : ""}`}>{usesLeft} AI use{usesLeft === 1 ? "" : "s"} left</span>
-              {low && <button type="button" className="ai-buy-link" onClick={() => setBuyOpen(true)}>Buy more</button>}
-              <button className="btn btn-primary btn-sm" onClick={draft} disabled={busy || text.trim().length < 3}>
-                {busy ? "Drafting…" : "Draft it ✨"}
-              </button>
+              <button type="button" className="ai-photo-btn" onClick={onPhoto}>📷 Snap a photo</button>
+              <div className="ai-foot-right">
+                <span className={`ai-uses${out ? " out" : ""}`}>{usesLeft} AI use{usesLeft === 1 ? "" : "s"} left</span>
+                {low && <button type="button" className="ai-buy-link" onClick={() => setBuyOpen(true)}>Buy more</button>}
+                <button className="btn btn-primary btn-sm" onClick={draft} disabled={busy || text.trim().length < 3}>
+                  {busy ? "Drafting…" : "Draft it ✨"}
+                </button>
+              </div>
             </div>
           </div>
           <div className="ai-hint">Paste a messy thread — greetings and small talk are ignored. <kbd>⌘/Ctrl</kbd>+<kbd>Enter</kbd> to draft.</div>
