@@ -386,6 +386,9 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .tot-row{display:flex; justify-content:space-between; font-size:.9rem; padding:.28rem 0; color:var(--ink-soft)}
 .tot-row.grand{margin-top:.5rem; padding-top:.7rem; border-top:1px solid var(--line-strong); color:var(--ink)}
 .tot-row.grand .v{font-family:var(--display); font-size:1.45rem; font-weight:600}
+.record-pay{margin-top:.9rem; width:100%; font-family:inherit; font-size:.84rem; font-weight:600; color:var(--accent);
+  background:var(--paper-3); border:1px dashed var(--line); border-radius:var(--r-sm); padding:.55rem; cursor:pointer; transition:border-color .15s, background .15s}
+.record-pay:hover{border-color:var(--accent); background:var(--accent-wash)}
 
 /* template picker */
 .tpl-grid{display:grid; grid-template-columns:1fr 1fr; gap:.6rem}

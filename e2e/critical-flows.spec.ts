@@ -64,8 +64,7 @@ test("estimate: EST numbering + convert to invoice", async ({ page }) => {
 
   // add a line so the converted invoice has content, then convert
   await page.locator(".li").first().getByPlaceholder("Item or service").fill("Kitchen reno");
-  await page.getByRole("button", { name: "More actions" }).click();
-  await page.locator(".bar-menu-item", { hasText: "Convert to invoice" }).click();
+  await page.getByRole("button", { name: "Convert to invoice" }).click();
 
   await expect(page).toHaveURL(/\/invoice\?id=/);
   await expect(page.locator(".pv-inv-no .big")).toContainText("Invoice #INV-");
@@ -258,6 +257,12 @@ test("photo import: 'Snap a photo' in the AI card opens the photo modal", async 
   await page.goto("/new");
   await page.locator(".ai-photo-btn", { hasText: "Snap a photo" }).click();
   await expect(page.locator(".modal", { hasText: "Load from a photo" })).toBeVisible();
+});
+
+test("record payment: button under the totals opens the payment modal", async ({ page }) => {
+  await page.goto("/new");
+  await page.locator(".record-pay").click();
+  await expect(page.locator(".modal", { hasText: "Record a payment" })).toBeVisible();
 });
 
 test("buy AI uses: server-verified claim grants uses (no key to paste)", async ({ page }) => {
