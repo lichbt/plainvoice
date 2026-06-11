@@ -10,8 +10,12 @@ Tick them off when shipping for real.
 
 ## When the AI layer (Phase 2) ships
 - [ ] **OpenRouter API key** set as a Pages secret (`OPENROUTER_API_KEY`) — never in client.
-- [ ] Default **model id** is `openai/gpt-oss-120b:free` (free, supports tool calling).
-      Override per-deploy with the `AI_MODEL` secret if you want a paid/stronger one.
+- [ ] Default **text model** is `openai/gpt-oss-120b:free` (chat-to-invoice + translate).
+      Override with the `AI_MODEL` var for a paid/stronger one.
+- [ ] **Photo "Read with AI" uses a VISION model** (`AI_VISION_MODEL`, default
+      `openai/gpt-4o-mini` — PAID, ~$0.001–0.005/photo since the free text model can't
+      see images). Trivial vs the $0.10/use price, but it IS a real per-use cost. Override
+      via the `AI_VISION_MODEL` var; the free OCR read stays free + on-device.
 - [ ] Decide the **free AI allowance** (suggested: 3 / month, no account).
 - [ ] Verify the **MoR provider onboards Vietnam-based sellers** with a Wise/Payoneer
       payout **before** writing billing code (spec §15 blocker).
