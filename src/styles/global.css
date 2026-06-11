@@ -223,6 +223,9 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 
 /* ========== BLOG ========== */
 .site-static{border-bottom:1px solid var(--line)}
+/* blog header + footer align to the 760px article column, not the wide 1120 site grid */
+.site-static .nav-in{max-width:760px}
+.blog-foot{max-width:760px; margin:0 auto; padding:0 28px}
 .blog-wrap,.post-wrap{max-width:760px; margin:0 auto; padding:2.5rem 28px 1rem}
 .blog-head{margin-bottom:2.2rem}
 .blog-h1{font-family:var(--display); font-size:clamp(2rem,5vw,2.8rem); font-weight:600; line-height:1.1; margin:.3rem 0 .6rem}
