@@ -4,10 +4,9 @@ Living list of placeholders and config that must be set for production.
 Tick them off when shipping for real.
 
 ## Must-do before launch
-- [ ] **Real donate / tip URL** — replace the placeholder in `src/lib/links.ts`
-      (`DONATE_URL = "https://www.buymeacoffee.com/plainvoice"`) with your actual
-      Buy Me a Coffee / Ko-fi / GitHub Sponsors page. Powers the "Leave a tip"
-      button in the post-send donate prompt (Flow 4) and any footer link.
+- [x] **Real donate / tip URL** — set to `https://ko-fi.com/plainvoices` (Ko-fi,
+      PayPal payout for Vietnam). Powers the "Leave a tip" button in the post-send
+      donate prompt (Flow 4).
 
 ## When the AI layer (Phase 2) ships
 - [ ] **OpenRouter API key** set as a Pages secret (`OPENROUTER_API_KEY`) — never in client.

@@ -1,6 +1,5 @@
-// Outbound links the user controls. Replace DONATE_URL with your real tip page
-// (Buy Me a Coffee / Ko-fi / GitHub Sponsors) before launch.
-export const DONATE_URL = "https://www.buymeacoffee.com/plainvoice";
+// Outbound links the user controls.
+export const DONATE_URL = "https://ko-fi.com/plainvoices";
 
 // Lemon Squeezy hosted checkout for the "50 AI uses · $5" pack. The app appends
 // ?embed=1 so it opens as the in-page overlay.
