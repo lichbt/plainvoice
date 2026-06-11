@@ -253,6 +253,15 @@ async function stubOverlay(page: import("@playwright/test").Page) {
   });
 }
 
+test("blog post: 'More from the blog' lists other recent posts, not itself", async ({ page }) => {
+  await page.goto("/blog/welcome-to-plainvoice");
+  const more = page.locator(".more-posts");
+  await expect(more).toBeVisible();
+  await expect(more.locator("li")).not.toHaveCount(0);
+  await expect(more.locator('a[href$="/blog/welcome-to-plainvoice"]')).toHaveCount(0); // never links to itself
+  await expect(more.locator('a[href*="/blog/invoice-in-your-clients-language"]')).toBeVisible();
+});
+
 test("photo import: 'Snap a photo' in the AI card opens the photo modal", async ({ page }) => {
   await page.goto("/new");
   await page.locator(".ai-photo-btn", { hasText: "Snap a photo" }).click();
