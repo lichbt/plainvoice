@@ -337,17 +337,18 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .add-saved{font-size:.85rem; font-weight:600; color:var(--accent); background:none; border:1px solid var(--line-strong); border-radius:999px; padding:.35rem .7rem; cursor:pointer}
 
 /* chat-to-invoice (AI) bar */
-.ai-bar{background:var(--accent-wash); border:1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius:var(--r-sm); padding:.7rem .8rem; margin-bottom:1rem}
-.ai-bar-head{display:flex; align-items:center; gap:.5rem; margin-bottom:.55rem}
+.ai-bar{background:var(--accent-wash); border:1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius:var(--r-sm); padding:1rem 1.1rem; margin-bottom:1rem}
+.ai-bar-head{display:flex; align-items:center; gap:.5rem; margin-bottom:.8rem; flex-wrap:wrap}
 .ai-pill{font-size:.7rem; font-weight:700; letter-spacing:.02em; color:#fff; background:var(--accent); border-radius:999px; padding:.15rem .5rem}
 .ai-bar-title{font-size:.82rem; font-weight:600; color:var(--ink)}
 .ai-uses{margin-left:auto; font-size:.74rem; font-weight:600; color:var(--accent)}
 .ai-uses.out{color:var(--red)}
-.ai-bar-row{display:flex; gap:.5rem; align-items:flex-start}
-.ai-bar-row input,.ai-textarea{flex:1; min-width:0; font-family:inherit; font-size:.9rem; color:var(--ink); background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm); padding:.55rem .7rem}
+/* stack the input and the button: textarea full-width, button on its own line */
+.ai-bar-row{display:flex; flex-direction:column; gap:.7rem; align-items:stretch}
+.ai-bar-row input,.ai-textarea{width:100%; min-width:0; font-family:inherit; font-size:.9rem; color:var(--ink); background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm); padding:.6rem .75rem}
 .ai-bar-row input:focus,.ai-textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
-.ai-textarea{resize:vertical; line-height:1.45; min-height:2.6rem; overflow:auto}
-.ai-bar-row .btn{flex:none; white-space:nowrap}
+.ai-textarea{resize:vertical; line-height:1.5; min-height:3.4rem; overflow:auto}
+.ai-bar-row .btn{align-self:flex-end; white-space:nowrap}
 .ai-hint{margin-top:.45rem; font-size:.72rem; color:var(--ink-faint)}
 .ai-hint kbd{font-family:var(--mono,monospace); font-size:.68rem; background:var(--paper-2); border:1px solid var(--line); border-radius:4px; padding:0 .25rem}
 .ai-error{margin-top:.5rem; font-size:.8rem; color:var(--red)}
