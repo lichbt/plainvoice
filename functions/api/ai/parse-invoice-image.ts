@@ -1,15 +1,13 @@
 // POST /api/ai/parse-invoice-image — read a PHOTO of an invoice with a vision
-// model and return structured line primitives. This is the paid "Read with AI"
-// path for photo import; it reads the image directly (handles layout, messy
-// receipts, even handwriting) far better than on-device OCR.
+// model and return structured line primitives. The paid "Read with AI" path for
+// photo import; reads the image directly (layout, messy receipts, handwriting),
+// far better than on-device OCR.
 //
-// Hard rules honoured:
-//  · API key never leaves the server (env secret OPENROUTER_API_KEY).
-//  · Returns line PRIMITIVES only (qty, unit-rate) — never totals. Client recomputes.
-//  · Graceful degrade: no key → 503 so the UI can fall back to the free OCR read.
+// Uses a plain JSON-output prompt (NOT forced tool-calling) so it works with the
+// free vision models on OpenRouter, which mostly don't support tools.
 //
-// Privacy: unlike the OCR path, this DOES send the photo to the model. The client
-// downscales it first and tells the user before sending.
+// Hard rules: key stays server-side · returns line PRIMITIVES only (qty, rate),
+// never totals · 503 when no key so the UI falls back to the free OCR read.
 
 interface KV {
   get(key: string): Promise<string | null>;
@@ -21,8 +19,12 @@ interface Env {
   AI_KV?: KV;
 }
 
-const DEFAULT_VISION_MODEL = "openai/gpt-4o-mini"; // reliable vision + tool calling, cheap
-const MAX_IMAGE_CHARS = 7_000_000; // ~5MB base64 — client downscales well below this
+// Vision needs a PAID model + OpenRouter credits — free vision models have been
+// retired on OpenRouter. gpt-4o-mini is cheap (~$0.001–0.005/photo) and reliable.
+// Override with AI_VISION_MODEL. With no credits this 404s and the UI falls back
+// to the free on-device OCR read.
+const DEFAULT_VISION_MODEL = "openai/gpt-4o-mini";
+const MAX_IMAGE_CHARS = 7_000_000;
 const IP_DAILY = 20;
 const GLOBAL_DAILY = 500;
 
@@ -42,44 +44,26 @@ async function withinLimits(env: Env, ip: string): Promise<{ ok: boolean; reason
 
 const SYSTEM = [
   "You read a photo of an invoice or receipt and extract its billable line items.",
-  "Return each line as quantity × unit-rate. Put the PER-UNIT price in `rate`, never the line total.",
-  "If a line shows only a total for several units, set qty=1 and rate=that amount.",
-  "Ignore subtotals, tax, totals, balances, headers and addresses — line items only.",
-  "Do not invent items or compute sums. If the client/customer name is visible, set clientName.",
-  "If a currency symbol/code is visible, set currency. Use the draft_invoice function only.",
+  "Reply with ONLY a JSON object, no prose, no markdown fences, of this exact shape:",
+  '{"currency": string optional, "clientName": string optional, "notes": string optional,',
+  '"lines": [{"description": string, "qty": number, "rate": number}]}',
+  "rate is the PER-UNIT price, never the line total. If a line shows only a total for",
+  "several units, set qty=1 and rate=that amount. Ignore subtotals, tax, totals,",
+  "balances, headers and addresses — line items only. Do not invent items or compute sums.",
 ].join(" ");
-
-const TOOL = {
-  type: "function",
-  function: {
-    name: "draft_invoice",
-    description: "Return the structured invoice draft extracted from the image.",
-    parameters: {
-      type: "object",
-      properties: {
-        currency: { type: "string", description: "ISO 4217 code only if visible" },
-        clientName: { type: "string", description: "the client/customer name if visible" },
-        notes: { type: "string", description: "any non-line note worth keeping" },
-        lines: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              description: { type: "string" },
-              qty: { type: "number" },
-              rate: { type: "number", description: "unit price; never the line total" },
-            },
-            required: ["description", "rate"],
-          },
-        },
-      },
-      required: ["lines"],
-    },
-  },
-};
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+}
+
+// pull a JSON object out of a model reply (may be wrapped in ```json fences / prose)
+function extractJson(text: string): any | null {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1] : text;
+  const start = candidate.indexOf("{");
+  const end = candidate.lastIndexOf("}");
+  if (start === -1 || end === -1 || end < start) return null;
+  try { return JSON.parse(candidate.slice(start, end + 1)); } catch { return null; }
 }
 
 export const onRequestPost = async (context: { request: Request; env: Env }): Promise<Response> => {
@@ -106,49 +90,54 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
     (knownClients.length ? `Known clients (match exactly if one fits): ${knownClients.join(", ")}. ` : "") +
     (defaultCurrency ? `Default currency if none is visible: ${defaultCurrency}.` : "");
 
-  let resp: Response;
   try {
-    resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
-        "content-type": "application/json",
-        "HTTP-Referer": "https://plainvoices.com",
-        "X-Title": "Plainvoice",
-      },
-      body: JSON.stringify({
-        model: env.AI_VISION_MODEL || DEFAULT_VISION_MODEL,
-        messages: [
-          { role: "system", content: SYSTEM },
-          {
-            role: "user",
-            content: [
-              { type: "text", text: `Extract the invoice line items from this photo. ${hint}` },
-              { type: "image_url", image_url: { url: image } },
-            ],
-          },
-        ],
-        tools: [TOOL],
-        tool_choice: { type: "function", function: { name: "draft_invoice" } },
-        max_tokens: 1500,
-        temperature: 0.1,
-      }),
-    });
-  } catch {
-    return json({ error: "upstream_unreachable" }, 502);
+    let resp: Response;
+    try {
+      resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+          "content-type": "application/json",
+          "HTTP-Referer": "https://plainvoices.com",
+          "X-Title": "Plainvoice",
+        },
+        body: JSON.stringify({
+          model: env.AI_VISION_MODEL || DEFAULT_VISION_MODEL,
+          messages: [
+            { role: "system", content: SYSTEM },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: `Extract the invoice line items from this photo as JSON. ${hint}` },
+                { type: "image_url", image_url: { url: image } },
+              ],
+            },
+          ],
+          max_tokens: 1500,
+          temperature: 0.1,
+        }),
+      });
+    } catch (e) {
+      console.log("vision.fetch_threw", String(e));
+      return json({ error: "upstream_unreachable" }, 502);
+    }
+
+    const bodyText = await resp.text();
+    if (!resp.ok) { console.log("vision.upstream_err", resp.status, bodyText.slice(0, 300)); return json({ error: "upstream_error", status: resp.status }, 502); }
+
+    let data: any;
+    try { data = JSON.parse(bodyText); } catch { return json({ error: "bad_upstream_json" }, 502); }
+    if (data?.usage) console.log("ai.parse-image usage", JSON.stringify(data.usage));
+
+    const content = data?.choices?.[0]?.message?.content;
+    const text = typeof content === "string" ? content
+      : Array.isArray(content) ? content.map((c: any) => c?.text ?? "").join("") : "";
+    const parsed = extractJson(text);
+    if (!parsed || !Array.isArray(parsed.lines)) { console.log("vision.no_json", text.slice(0, 300)); return json({ error: "no_result" }, 502); }
+
+    return json({ draft: parsed });
+  } catch (e) {
+    console.log("vision.handler_threw", String(e));
+    return json({ error: "server_error" }, 500);
   }
-
-  if (!resp.ok) return json({ error: "upstream_error", status: resp.status }, 502);
-
-  let data: any;
-  try { data = await resp.json(); } catch { return json({ error: "bad_upstream_json" }, 502); }
-  if (data?.usage) console.log("ai.parse-image usage", JSON.stringify(data.usage));
-
-  const call = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-  if (!call) return json({ error: "no_tool_call" }, 502);
-
-  let parsed: unknown;
-  try { parsed = JSON.parse(call); } catch { return json({ error: "unparseable_tool_args" }, 502); }
-
-  return json({ draft: parsed });
 };
