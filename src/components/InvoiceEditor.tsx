@@ -582,7 +582,16 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       {showItems && <ItemsModal currency={currency} onClose={() => setShowItems(false)} />}
       {showClients && <ClientsModal onClose={() => setShowClients(false)} />}
       {showCompanies && <CompaniesModal currency={currency} onClose={() => setShowCompanies(false)} />}
-      {showPhoto && <PhotoImportModal onClose={() => setShowPhoto(false)} onResult={onPhotoResult} />}
+      {showPhoto && (
+        <PhotoImportModal
+          onClose={() => setShowPhoto(false)}
+          onResult={onPhotoResult}
+          onAiDraft={onDrafted}
+          usesLeft={aiUsesLeft}
+          knownClients={clientList.map((c) => c.name)}
+          defaultCurrency={currency}
+        />
+      )}
       {showPayment && <RecordPaymentModal currency={currency} balanceDue={balance} onClose={() => setShowPayment(false)} onSave={recordPayment} />}
       {showSend && (
         <SendModal

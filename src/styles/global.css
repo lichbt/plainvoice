@@ -390,6 +390,9 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
   border:1px solid var(--line); border-radius:var(--r-sm); padding:.6rem .75rem; margin:.2rem 0 .6rem}
 .buy-done .buy-note{margin:.4rem 0 1rem; text-align:left}
 .buy-foot{font-size:.72rem; color:var(--ink-faint); margin-top:.2rem}
+/* photo import: the free / re-pick links under the AI button */
+.photo-alt{display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap; margin-top:.7rem; font-size:.82rem}
+.link-btn{font:inherit; font-size:.82rem; font-weight:600; background:none; border:none; padding:0; color:var(--accent); cursor:pointer; text-decoration:underline}
 .buy-done{text-align:center; padding:1rem .5rem}
 .buy-done-tick{width:48px; height:48px; margin:0 auto .7rem; border-radius:999px; background:var(--accent-wash);
   color:var(--accent); font-size:1.5rem; display:flex; align-items:center; justify-content:center}
