@@ -12,13 +12,12 @@ Tick them off when shipping for real.
 - [ ] **OpenRouter API key** set as a Pages secret (`OPENROUTER_API_KEY`) — never in client.
 - [ ] Default **text model** is `openai/gpt-oss-120b:free` (chat-to-invoice + translate).
       Override with the `AI_MODEL` var for a paid/stronger one.
-- [ ] **Photo "Read with AI" needs OpenRouter CREDITS** — it uses a vision model
-      (`AI_VISION_MODEL`, default `openai/gpt-4o-mini`). OpenRouter retired its free
-      vision models, so a vision read requires a small paid balance (~$5 covers thousands
-      of photos at ~$0.001–0.005 each — trivial vs your $0.10/use price). **Until you add
-      credits, "Read with AI" on photos fails gracefully and falls back to the free
-      on-device OCR read** (no use is charged on failure). Chat-to-invoice + translate
-      still run on the free text model.
+- [x] **Photo "Read with AI" — vision model = `qwen/qwen2.5-vl-72b-instruct`** (set via
+      `AI_VISION_MODEL` default). Needs OpenRouter CREDITS (free vision models retired).
+      Verified working: reads a test invoice perfectly at **~$0.0002/photo** (vs $0.10/use
+      price → ~99.8% margin). On failure it falls back to the free on-device OCR (no use
+      charged). NOTE: OpenAI *and* Google vision models are geo-blocked (403) in Vietnam on
+      OpenRouter — use open-weight models (Qwen/Mistral/Llama), which are served globally.
 - [ ] Decide the **free AI allowance** (suggested: 3 / month, no account).
 - [ ] Verify the **MoR provider onboards Vietnam-based sellers** with a Wise/Payoneer
       payout **before** writing billing code (spec §15 blocker).

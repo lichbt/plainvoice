@@ -19,11 +19,12 @@ interface Env {
   AI_KV?: KV;
 }
 
-// Vision needs a PAID model + OpenRouter credits — free vision models have been
-// retired on OpenRouter. gpt-4o-mini is cheap (~$0.001–0.005/photo) and reliable.
-// Override with AI_VISION_MODEL. With no credits this 404s and the UI falls back
-// to the free on-device OCR read.
-const DEFAULT_VISION_MODEL = "openai/gpt-4o-mini";
+// Vision needs a PAID model + OpenRouter credits (free vision models retired).
+// NOTE: OpenAI *and* Google models are geo-restricted (403) in some regions incl.
+// Vietnam. Open-weight models (Qwen/Mistral/Llama) are served by global providers
+// and aren't region-locked. Qwen2.5-VL is strong at document/OCR extraction.
+// Override with AI_VISION_MODEL.
+const DEFAULT_VISION_MODEL = "qwen/qwen2.5-vl-72b-instruct";
 const MAX_IMAGE_CHARS = 7_000_000;
 const IP_DAILY = 20;
 const GLOBAL_DAILY = 500;
