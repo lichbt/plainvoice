@@ -64,8 +64,6 @@ export function AiDraftBar({
       <div className="ai-bar-head">
         <span className="ai-pill">✨ AI</span>
         <span className="ai-bar-title">Describe it or paste a chat — get a draft</span>
-        <span className={`ai-uses${out ? " out" : ""}`}>{usesLeft} AI use{usesLeft === 1 ? "" : "s"} left</span>
-        {low && <button type="button" className="ai-buy-link" onClick={() => setBuyOpen(true)}>Buy more</button>}
       </div>
       {out ? (
         <div className="ai-out">
@@ -85,9 +83,13 @@ export function AiDraftBar({
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); draft(); } }}
               aria-label="Describe the invoice"
             />
-            <button className="btn btn-primary btn-sm" onClick={draft} disabled={busy || text.trim().length < 3}>
-              {busy ? "Drafting…" : "Draft it ✨"}
-            </button>
+            <div className="ai-bar-foot">
+              <span className={`ai-uses${out ? " out" : ""}`}>{usesLeft} AI use{usesLeft === 1 ? "" : "s"} left</span>
+              {low && <button type="button" className="ai-buy-link" onClick={() => setBuyOpen(true)}>Buy more</button>}
+              <button className="btn btn-primary btn-sm" onClick={draft} disabled={busy || text.trim().length < 3}>
+                {busy ? "Drafting…" : "Draft it ✨"}
+              </button>
+            </div>
           </div>
           <div className="ai-hint">Paste a messy thread — greetings and small talk are ignored. <kbd>⌘/Ctrl</kbd>+<kbd>Enter</kbd> to draft.</div>
           {error && <div className="ai-error">{error}</div>}
