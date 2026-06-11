@@ -88,7 +88,7 @@ export function AiDraftBar({
             <div className="ai-bar-foot">
               <button type="button" className="ai-photo-btn" onClick={onPhoto}>📷 Snap a photo</button>
               <div className="ai-foot-right">
-                <span className={`ai-uses${out ? " out" : ""}`}>{usesLeft} AI use{usesLeft === 1 ? "" : "s"} left</span>
+                <button type="button" className={`ai-uses${out ? " out" : ""}`} onClick={() => setBuyOpen(true)} title="Buy more AI uses">{usesLeft} AI use{usesLeft === 1 ? "" : "s"} left</button>
                 {low && <button type="button" className="ai-buy-link" onClick={() => setBuyOpen(true)}>Buy more</button>}
                 <button className="btn btn-primary btn-sm" onClick={draft} disabled={busy || text.trim().length < 3}>
                   {busy ? "Drafting…" : "Draft it ✨"}
