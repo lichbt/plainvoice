@@ -348,7 +348,9 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .ai-bar-row input,.ai-textarea{width:100%; min-width:0; font-family:inherit; font-size:.9rem; color:var(--ink); background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm); padding:.6rem .75rem}
 .ai-bar-row input:focus,.ai-textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
 .ai-textarea{resize:vertical; line-height:1.5; min-height:3.4rem; overflow:auto}
-.ai-bar-row .btn{align-self:flex-end; white-space:nowrap}
+/* footer row under the textarea: uses count on the left, Draft button on the right */
+.ai-bar-foot{display:flex; align-items:center; gap:.6rem}
+.ai-bar-foot .btn{margin-left:auto; white-space:nowrap}
 .ai-hint{margin-top:.45rem; font-size:.72rem; color:var(--ink-faint)}
 .ai-hint kbd{font-family:var(--mono,monospace); font-size:.68rem; background:var(--paper-2); border:1px solid var(--line); border-radius:4px; padding:0 .25rem}
 .ai-error{margin-top:.5rem; font-size:.8rem; color:var(--red)}
