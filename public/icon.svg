@@ -1,8 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="96" fill="#1E5B41"/>
-  <rect x="150" y="96" width="212" height="320" rx="28" fill="#FBF8F0" stroke="#211F18" stroke-width="14"/>
-  <line x1="194" y1="170" x2="318" y2="170" stroke="#8B8678" stroke-width="16" stroke-linecap="round"/>
-  <line x1="194" y1="222" x2="318" y2="222" stroke="#8B8678" stroke-width="16" stroke-linecap="round"/>
-  <line x1="194" y1="274" x2="270" y2="274" stroke="#8B8678" stroke-width="16" stroke-linecap="round"/>
-  <path d="M196 318 L240 362 L330 254" fill="none" stroke="#1E5B41" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="154" y="82" width="205" height="328" rx="40" fill="#FBF8F0" stroke="#211F18" stroke-width="18"/>
+  <line x1="194" y1="159" x2="317" y2="159" stroke="#8B8678" stroke-width="18" stroke-linecap="round"/>
+  <line x1="194" y1="205" x2="282" y2="205" stroke="#8B8678" stroke-width="18" stroke-linecap="round"/>
+  <path d="M205 271 C169 271 169 343 205 343 C241 343 261 271 297 271 C333 271 333 343 297 343 C261 343 241 271 205 271 Z" fill="none" stroke="#1E5B41" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
