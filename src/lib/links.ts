@@ -2,9 +2,9 @@
 // (Buy Me a Coffee / Ko-fi / GitHub Sponsors) before launch.
 export const DONATE_URL = "https://www.buymeacoffee.com/plainvoice";
 
-// Lemon Squeezy hosted checkout for the "50 AI uses · $5" pack. Replace with your
-// real checkout URL (Store → Products → Share → checkout link) before launch.
-export const BUY_USES_URL = "https://plainvoice.lemonsqueezy.com/buy/REPLACE-WITH-VARIANT-ID";
+// Lemon Squeezy hosted checkout for the "50 AI uses · $5" pack. The app appends
+// ?embed=1 so it opens as the in-page overlay.
+export const BUY_USES_URL = "https://plainvoices.lemonsqueezy.com/checkout/buy/15adbdd0-b42a-4ae4-9885-c1d797521619";
 
 export const USES_PER_PACK = 50;
 export const PACK_PRICE = "$5";
