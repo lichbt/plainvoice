@@ -115,7 +115,7 @@ button{font-family:inherit; cursor:pointer}
 .chase [data-k]{transition:opacity .12s}
 
 /* ---------- logo ---------- */
-.logo{display:flex; align-items:center; gap:.6rem; font-family:var(--display);
+.logo{display:flex; align-items:center; gap:.2rem; font-family:var(--display);
   font-weight:600; font-style:italic; font-size:1.32rem; letter-spacing:-.01em; text-decoration:none}
 .logo svg{width:34px; height:34px; flex:none}
 .logo .doc{fill:var(--paper-3); stroke:var(--ink); stroke-width:3.2}
