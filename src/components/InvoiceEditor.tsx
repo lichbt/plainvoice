@@ -408,10 +408,9 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           </div>
           <div className="app-actions">
             <div className="bar-pop">
-              <button className="btn btn-ghost btn-sm" onClick={() => setBarMenu(barMenu === "more" ? null : "more")}>⋯ More</button>
+              <button className="btn btn-ghost btn-sm" aria-label="More actions" onClick={() => setBarMenu(barMenu === "more" ? null : "more")}>⋯</button>
               {barMenu === "more" && (
                 <div className="bar-menu" style={{ right: 0 }}>
-                  <button className="bar-menu-item" onClick={() => { setBarMenu(null); setShowPhoto(true); }}>📷 From photo</button>
                   {isEstimate
                     ? <button className="bar-menu-item" onClick={() => { setBarMenu(null); convertToInvoice(); }}>Convert to invoice</button>
                     : <button className="bar-menu-item" onClick={() => { setBarMenu(null); setShowPayment(true); }}>Record payment</button>}
@@ -478,6 +477,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               defaultCurrency={currency}
               usesLeft={aiUsesLeft}
               onDrafted={onDrafted}
+              onPhoto={() => setShowPhoto(true)}
               autoFocus={aiAutoFocus}
             />
             <div className="li-head"><span>Description</span><span>Qty</span><span>Rate</span><span style={{ textAlign: "right" }}>Amount</span><span></span></div>
