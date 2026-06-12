@@ -52,6 +52,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   try {
     const resp = await fetch(`https://api.lemonsqueezy.com/v1/orders/${encodeURIComponent(orderId)}`, {
       headers: { Accept: "application/vnd.api+json", Authorization: `Bearer ${env.LS_API_KEY}` },
+      signal: AbortSignal.timeout(15_000),
     });
     if (resp.status === 404) return json({ ok: false, error: "invalid" }, 400);
     if (!resp.ok) return json({ ok: false, error: "upstream_error" }, 502);
@@ -66,7 +67,9 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   if (attrs.status !== "paid" || attrs.refunded === true) return json({ ok: false, error: "not_paid" }, 400);
 
   // Unguessable identifier must match the one the buyer's browser received.
-  if (identifier && attrs.identifier && identifier !== attrs.identifier) {
+  // REQUIRED whenever LS returns one — omitting it from the request must fail,
+  // or a guessed/leaked numeric order id alone would be enough to claim.
+  if (attrs.identifier && identifier !== attrs.identifier) {
     return json({ ok: false, error: "mismatch" }, 400);
   }
   // Must be our store / product (when configured).
