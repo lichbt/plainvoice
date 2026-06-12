@@ -140,6 +140,15 @@ export const invoices = {
     }));
 
     await db.transaction("rw", db.invoices, db.invoiceLines, async () => {
+      // First save only: another tab may have minted the same auto-number in
+      // the meantime. Re-mint inside the transaction so numbers stay unique.
+      // Custom (non INV-/EST-####) numbers are the user's choice — left alone.
+      if (!existing) {
+        const clash = await db.invoices.where("number").equals(invoice.number).first();
+        if (clash && clash.id !== id && /^(INV|EST)-\d+$/.test(invoice.number)) {
+          invoice.number = await invoices.nextNumber(invoice.docType);
+        }
+      }
       await db.invoices.put(invoice);
       await db.invoiceLines.where("invoiceId").equals(id).delete();
       await db.invoiceLines.bulkPut(lines);

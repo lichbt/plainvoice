@@ -1,11 +1,11 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { invoices, clients, today } from "../db/repos";
 import type { Invoice, Client, InvoiceStatus, DocType } from "../db/types";
 import { formatMoney, isOverdue } from "../lib/totals";
 import Logo from "./LogoReact";
 import { ImportCsvModal } from "./ImportCsvModal";
-import { exportInvoicesCsv, exportClientsCsv, exportAllInvoicesPdf } from "../lib/export";
+import { exportInvoicesCsv, exportClientsCsv, exportAllInvoicesPdf, exportBackupJson, importBackupJson } from "../lib/export";
 
 const INVOICE_FILTERS: Array<InvoiceStatus | "all"> = ["all", "draft", "sent", "viewed", "paid", "overdue"];
 const ESTIMATE_FILTERS: Array<InvoiceStatus | "all"> = ["all", "draft", "sent", "accepted", "declined"];
@@ -30,6 +30,18 @@ export default function InvoiceList() {
     setExportOpen(false);
     const n = await fn();
     flash(n === 0 ? "Nothing to export yet." : `✓ Exported ${n} ${label}`);
+  }
+  const restoreRef = useRef<HTMLInputElement>(null);
+  async function onRestoreFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    try {
+      const res = await importBackupJson(await f.text());
+      flash(`✓ Restored ${res.invoices} invoice${res.invoices === 1 ? "" : "s"}, ${res.clients} client${res.clients === 1 ? "" : "s"}`);
+    } catch (err) {
+      flash(err instanceof Error ? err.message : "Couldn't read that backup file.");
+    }
   }
   const clientName = (id?: string) => clientList.find((c) => c.id === id)?.name ?? "—";
 
@@ -81,9 +93,13 @@ export default function InvoiceList() {
                   <button style={menuItem} onClick={() => doExport(exportInvoicesCsv, "invoices to CSV")}>Invoices (CSV)</button>
                   <button style={menuItem} onClick={() => doExport(exportClientsCsv, "clients to CSV")}>Clients (CSV)</button>
                   <button style={menuItem} onClick={() => doExport(exportAllInvoicesPdf, "invoices to PDF")}>All invoices (PDF)</button>
+                  <div style={menuRule} />
+                  <button style={menuItem} onClick={() => doExport(exportBackupJson, "records to a backup file")}>Full backup (JSON)</button>
+                  <button style={menuItem} onClick={() => { setExportOpen(false); restoreRef.current?.click(); }}>Restore a backup…</button>
                 </div>
               )}
             </div>
+            <input ref={restoreRef} type="file" accept="application/json,.json" style={{ display: "none" }} onChange={onRestoreFile} />
             <a className="btn btn-primary btn-sm" href={isEstimate ? "/new?type=estimate" : "/new"}>＋ New {isEstimate ? "estimate" : "invoice"}</a>
           </div>
         </div>
@@ -158,3 +174,4 @@ const menuItem: React.CSSProperties = {
   display: "block", width: "100%", textAlign: "left", padding: ".5rem .7rem",
   fontSize: ".85rem", color: "var(--ink)", background: "none", border: "none", borderRadius: 6, cursor: "pointer",
 };
+const menuRule: React.CSSProperties = { height: 1, background: "var(--line)", margin: "4px 6px" };

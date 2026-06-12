@@ -162,6 +162,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       lines: lines.map((l) => ({ id: l.id, description: l.description, qty: num(l.qty), rate: num(l.rate), taxRate: taxNum })),
     });
     if (!id) { setId(invoice.id); window.history.replaceState(null, "", `/${docType === "estimate" ? "estimate" : "invoice"}?id=${invoice.id}`); }
+    // save() re-mints the number if another tab took it — reflect that here
+    if (invoice.number !== number) setNumber(invoice.number);
     return invoice.id;
   }, [id, clientId, businessId, number, docType, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
 
@@ -174,9 +176,29 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   useEffect(() => {
     if (!loaded || isEmptyNew) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => { void persist(); }, 600);
+    saveTimer.current = setTimeout(() => { saveTimer.current = null; void persist(); }, 600);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [loaded, isEmptyNew, persist]);
+
+  // Closing/backgrounding the tab inside the debounce window must not lose the
+  // edit — flush the pending save immediately. (IndexedDB writes queued during
+  // pagehide/visibility-hidden complete even as the page goes away.)
+  useEffect(() => {
+    const flush = () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+        void persist();
+      }
+    };
+    const onVis = () => { if (document.visibilityState === "hidden") flush(); };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [persist]);
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(null), 2600); }
 

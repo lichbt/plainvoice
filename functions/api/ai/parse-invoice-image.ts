@@ -117,6 +117,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
           max_tokens: 1500,
           temperature: 0.1,
         }),
+        signal: AbortSignal.timeout(30_000),
       });
     } catch (e) {
       console.log("vision.fetch_threw", String(e));
@@ -124,7 +125,14 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
     }
 
     const bodyText = await resp.text();
-    if (!resp.ok) { console.log("vision.upstream_err", resp.status, bodyText.slice(0, 300)); return json({ error: "upstream_error", status: resp.status }, 502); }
+    if (!resp.ok) {
+      // Log the provider's structured error only — never the raw body, which
+      // can echo request content (the user's invoice photo data).
+      let upstreamMsg = "";
+      try { upstreamMsg = String(JSON.parse(bodyText)?.error?.message ?? "").slice(0, 120); } catch { /* non-JSON body — drop it */ }
+      console.log("vision.upstream_err", resp.status, upstreamMsg);
+      return json({ error: "upstream_error", status: resp.status }, 502);
+    }
 
     let data: any;
     try { data = JSON.parse(bodyText); } catch { return json({ error: "bad_upstream_json" }, 502); }
@@ -134,7 +142,8 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
     const text = typeof content === "string" ? content
       : Array.isArray(content) ? content.map((c: any) => c?.text ?? "").join("") : "";
     const parsed = extractJson(text);
-    if (!parsed || !Array.isArray(parsed.lines)) { console.log("vision.no_json", text.slice(0, 300)); return json({ error: "no_result" }, 502); }
+    // log only the reply length — the text itself is the user's invoice content
+    if (!parsed || !Array.isArray(parsed.lines)) { console.log("vision.no_json", "reply_len", text.length); return json({ error: "no_result" }, 502); }
 
     return json({ draft: parsed });
   } catch (e) {

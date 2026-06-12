@@ -86,7 +86,9 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   let strings: string[] = [], targetLang = "";
   try {
     const body = (await request.json()) as { strings?: unknown; targetLang?: string };
-    strings = Array.isArray(body.strings) ? body.strings.map((s) => String(s ?? "")) : [];
+    // accept real strings only (no toString() coercion of objects); keep array
+    // length intact so translations still map back by index
+    strings = Array.isArray(body.strings) ? body.strings.map((s) => (typeof s === "string" ? s : "")) : [];
     targetLang = String(body.targetLang ?? "");
   } catch {
     return json({ error: "bad_request" }, 400);
@@ -122,6 +124,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
         max_tokens: 1500,
         temperature: 0.1,
       }),
+      signal: AbortSignal.timeout(30_000),
     });
   } catch {
     return json({ error: "upstream_unreachable" }, 502);
