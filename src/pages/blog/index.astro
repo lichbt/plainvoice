@@ -9,6 +9,8 @@ const posts = (await getCollection("blog", ({ data }) => import.meta.env.PROD ? 
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
 const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+// Ledger numbering: oldest post is ENTRY № 01.
+const entryNo = (i: number) => String(posts.length - i).padStart(2, "0");
 ---
 <Layout
   title="Blog — Plainvoice"
@@ -16,29 +18,28 @@ const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month:
 >
   <SiteHeader />
   <main class="blog-wrap">
-    <header class="blog-head">
-      <div class="sec-eyebrow">The Plainvoice blog</div>
-      <h1 class="blog-h1">Notes on invoicing &amp; freelancing</h1>
-      <p class="blog-lead">Product updates, freelancing tips, and the thinking behind a genuinely free invoice app.</p>
+    <header class="bl-head">
+      <div class="bl-kicker mono">The Plainvoice ledger</div>
+      <h1 class="bl-h1">Notes on invoicing<br />&amp; honest software.</h1>
+      <p class="bl-lead">Product updates, cross-border freelancing tips, and the thinking behind a genuinely free invoice app.</p>
     </header>
 
     {posts.length === 0 ? (
-      <p class="blog-empty">No posts yet — check back soon.</p>
+      <p class="blog-empty">No entries yet — check back soon.</p>
     ) : (
-      <ul class="post-list">
+      <ul class="bl-list">
         {posts.map((post, i) => (
-          <li class={`post-row${i === 0 ? " featured" : ""}`}>
+          <li class={`bl-row${i === 0 ? " featured" : ""}`}>
             <a href={`/blog/${post.id}`}>
-              <div class="post-meta">
+              <div class="bl-meta mono">
+                <span class="bl-no">Entry № {entryNo(i)}</span>
+                <span class="bl-dots"></span>
                 <time datetime={post.data.pubDate.toISOString()}>{fmt(post.data.pubDate)}</time>
                 {post.data.draft && <span class="post-draft">Draft</span>}
               </div>
               <h2>{post.data.title}</h2>
               <p>{post.data.description}</p>
-              {post.data.tags.length > 0 && (
-                <div class="post-tags">{post.data.tags.map((t) => <span class="pill">{t}</span>)}</div>
-              )}
-              <span class="post-more">Read <span aria-hidden="true">→</span></span>
+              <span class="bl-read mono">Read the entry →</span>
             </a>
           </li>
         ))}
@@ -47,9 +48,15 @@ const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month:
   </main>
 
   <footer class="site">
-    <div class="blog-foot foot-in">
-      <Logo size={26} />
-      <div class="foot-note">Unlimited free core · your data stays on your device</div>
+    <div class="blog-foot lp-foot">
+      <div class="lp-foot-brand">
+        <Logo size={26} />
+        <div class="foot-note">Unlimited free core · your data stays on your device</div>
+      </div>
+      <div class="lp-foot-links mono">
+        <a href="/">HOME</a>
+        <a href="/new">OPEN THE EDITOR</a>
+      </div>
     </div>
   </footer>
 </Layout>

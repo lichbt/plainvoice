@@ -253,9 +253,9 @@ async function stubOverlay(page: import("@playwright/test").Page) {
   });
 }
 
-test("blog post: 'More from the blog' lists other recent posts, not itself", async ({ page }) => {
+test("blog post: 'More from the ledger' lists other recent posts, not itself", async ({ page }) => {
   await page.goto("/blog/welcome-to-plainvoice");
-  const more = page.locator(".more-posts");
+  const more = page.locator(".bl-more");
   await expect(more).toBeVisible();
   await expect(more.locator("li")).not.toHaveCount(0);
   await expect(more.locator('a[href$="/blog/welcome-to-plainvoice"]')).toHaveCount(0); // never links to itself

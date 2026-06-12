@@ -14,11 +14,17 @@ const { Content } = await render(post);
 const { title, description, pubDate, updatedDate, tags, author } = post.data;
 const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
-// Recent articles (newest first, excluding this one).
-const recent = (await getCollection("blog", ({ data }) => import.meta.env.PROD ? !data.draft : true))
+const all = (await getCollection("blog", ({ data }) => import.meta.env.PROD ? !data.draft : true))
+  .sort((a, b) => a.data.pubDate.getTime() - b.data.pubDate.getTime());
+// Ledger numbering: oldest post is ENTRY № 01.
+const entryNo = String(all.findIndex((p) => p.id === post.id) + 1).padStart(2, "0");
+
+// Recent entries (newest first, excluding this one).
+const recent = [...all]
+  .reverse()
   .filter((p) => p.id !== post.id)
-  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
   .slice(0, 3);
+const recentNo = (p: (typeof all)[number]) => String(all.findIndex((x) => x.id === p.id) + 1).padStart(2, "0");
 ---
 <Layout
   title={`${title} — Plainvoice`}
@@ -29,10 +35,12 @@ const recent = (await getCollection("blog", ({ data }) => import.meta.env.PROD ?
 >
   <SiteHeader />
   <main class="post-wrap">
-    <a class="post-back" href="/blog">← All posts</a>
+    <a class="bl-back mono" href="/blog">← The ledger</a>
     <article>
-      <header class="post-header">
-        <div class="post-meta">
+      <header class="bl-post-head">
+        <div class="bl-meta mono">
+          <span class="bl-no">Entry № {entryNo}</span>
+          <span class="bl-dots"></span>
           <time datetime={pubDate.toISOString()}>{fmt(pubDate)}</time>
           <span>· {author}</span>
           {updatedDate && <span>· updated {fmt(updatedDate)}</span>}
@@ -49,18 +57,22 @@ const recent = (await getCollection("blog", ({ data }) => import.meta.env.PROD ?
     </article>
 
     {recent.length > 0 && (
-      <section class="more-posts">
-        <div class="more-posts-head">
-          <h2>More from the blog</h2>
-          <a href="/blog">All posts →</a>
+      <section class="bl-more">
+        <div class="bl-more-head">
+          <h2 class="mono">More from the ledger</h2>
+          <a class="mono" href="/blog">All entries →</a>
         </div>
-        <ul>
+        <ul class="bl-list">
           {recent.map((p) => (
-            <li>
+            <li class="bl-row bl-row-sm">
               <a href={`/blog/${p.id}`}>
-                <time datetime={p.data.pubDate.toISOString()}>{fmt(p.data.pubDate)}</time>
-                <span class="mp-title">{p.data.title}</span>
-                <span class="mp-desc">{p.data.description}</span>
+                <div class="bl-meta mono">
+                  <span class="bl-no">Entry № {recentNo(p)}</span>
+                  <span class="bl-dots"></span>
+                  <time datetime={p.data.pubDate.toISOString()}>{fmt(p.data.pubDate)}</time>
+                </div>
+                <h2>{p.data.title}</h2>
+                <p>{p.data.description}</p>
               </a>
             </li>
           ))}
@@ -68,17 +80,25 @@ const recent = (await getCollection("blog", ({ data }) => import.meta.env.PROD ?
       </section>
     )}
 
-    <div class="post-cta">
-      <h3>Ready to send an invoice?</h3>
-      <p>Unlimited invoices, real PDF export, no signup.</p>
-      <a class="btn btn-primary" href="/new">Create an invoice — free</a>
+    <div class="bl-cta">
+      <div>
+        <h3>Ready to send an invoice?</h3>
+        <p>Unlimited invoices, real PDF export, no signup — free forever.</p>
+      </div>
+      <a class="btn btn-cream" href="/new">Create an invoice →</a>
     </div>
   </main>
 
   <footer class="site">
-    <div class="blog-foot foot-in">
-      <Logo size={26} />
-      <div class="foot-note">Unlimited free core · your data stays on your device</div>
+    <div class="blog-foot lp-foot">
+      <div class="lp-foot-brand">
+        <Logo size={26} />
+        <div class="foot-note">Unlimited free core · your data stays on your device</div>
+      </div>
+      <div class="lp-foot-links mono">
+        <a href="/">HOME</a>
+        <a href="/new">OPEN THE EDITOR</a>
+      </div>
     </div>
   </footer>
 </Layout>
