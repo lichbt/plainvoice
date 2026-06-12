@@ -1,7 +1,7 @@
 // Plainvoice service worker — hand-rolled (vite-plugin-pwa doesn't yet support Astro 6).
 // Strategy: runtime caching of same-origin GET requests so the app works offline after
 // the first visit. The data itself is local-first (IndexedDB) and never touches the SW.
-const CACHE = "plainvoice-v3";
+const CACHE = "plainvoice-v4";
 const APP_SHELL = ["/new", "/app", "/", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
