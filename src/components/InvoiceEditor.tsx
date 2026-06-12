@@ -25,6 +25,7 @@ import { ACCENTS, DEFAULT_TEMPLATE } from "../lib/templates";
 import { DONATE_URL } from "../lib/links";
 import { AiDraftBar } from "./AiDraftBar";
 import type { AiInvoiceDraft } from "../lib/aiInvoice";
+import { useEscape } from "../lib/useEscape";
 
 interface LineState { id: string; description: string; qty: string; rate: string }
 const blankLine = (): LineState => ({ id: crypto.randomUUID(), description: "", qty: "1", rate: "0" });
@@ -93,6 +94,9 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
+  // rail preview is a scaled proof copy — click opens the full-size sheet
+  const [showPreviewFull, setShowPreviewFull] = useState(false);
+  useEscape(() => setShowPreviewFull(false), showPreviewFull);
   // first-run guidance: shown once, on a brand-new doc, until dismissed
   const [showQuickstart, setShowQuickstart] = useState(false);
   const dismissQuickstart = () => { setShowQuickstart(false); try { localStorage.setItem("pv-quickstart-done", "1"); } catch { /* private mode */ } };
@@ -471,9 +475,10 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       </div>
       {barMenu && <div className="bar-backdrop" onClick={() => setBarMenu(null)} />}
 
-      <div className="editor">
-        {/* form */}
-        <div>
+      {/* "The Sheet" — the document IS the editor. One paper sheet, typed on
+          directly; a slim rail keeps the exact-PDF proof copy + style controls. */}
+      <div className="desk">
+        <div className="desk-main">
           {showQuickstart && (
             <div className="quickstart" role="note">
               <button type="button" className="qs-x" aria-label="Dismiss" onClick={dismissQuickstart}>×</button>
@@ -485,51 +490,53 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               </ul>
             </div>
           )}
-          <div className="panel">
-            <h3>№ 01 — Details</h3>
-            <div className="row2">
-              <div className="fld"><label>Invoice #</label><input value={number} onChange={(e) => setNumber(e.target.value)} /></div>
-              <div className="fld"><label>Currency</label>
-                <select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                  {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+
+          <div className="sheet">
+            {/* document head: doc type + number left, dates + currency right */}
+            <div className="sh-head">
+              <div className="sh-title">
+                <div className="sh-doc mono">{isEstimate ? "Estimate" : "Invoice"}</div>
+                <input className="sh-no" value={number} aria-label="Invoice #" onChange={(e) => setNumber(e.target.value)} />
+              </div>
+              <div className="sh-meta">
+                <div className="fld sh-m"><label>Issued</label><input type="date" aria-label="Issue date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
+                <div className="fld sh-m"><label>Due</label><input type="date" aria-label="Due date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
+                <div className="fld sh-m sh-ccy"><label>Currency</label>
+                  <select value={currency} aria-label="Currency" onChange={(e) => setCurrency(e.target.value)}>
+                    {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* the two address blocks, like a real invoice */}
+            <div className="sh-parties">
+              <div className="fld">
+                <div className="fld-head">
+                  <label>From (your company)</label>
+                  <button type="button" className="fld-link" onClick={() => setShowCompanies(true)}>Saved companies{businessList.length ? ` (${businessList.length})` : ""}</button>
+                </div>
+                <select value={businessId ?? ""} aria-label="From (your company)"
+                  onChange={(e) => { if (e.target.value === "__new__") { setProfileEdit("new"); return; } setBusinessId(e.target.value || undefined); }}>
+                  {businessList.length === 0 ? <option value="">— No company —</option> : null}
+                  {businessList.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  <option value="__new__">+ Add company…</option>
+                </select>
+              </div>
+              <div className="fld">
+                <div className="fld-head">
+                  <label>Bill to</label>
+                  <button type="button" className="fld-link" onClick={() => setShowClients(true)}>Saved clients{clientList.length ? ` (${clientList.length})` : ""}</button>
+                </div>
+                <select value={clientId ?? ""} aria-label="Client"
+                  onChange={(e) => { if (e.target.value === "__new__") { setClientModal("new"); return; } setClientId(e.target.value || undefined); }}>
+                  <option value="">— No client —</option>
+                  {clientList.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <option value="__new__">+ Add new client…</option>
                 </select>
               </div>
             </div>
-            <div className="row2">
-              <div className="fld"><label>Issue date</label><input type="date" aria-label="Issue date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
-              <div className="fld"><label>Due date</label><input type="date" aria-label="Due date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
-            </div>
-            <div className="fld">
-              <div className="fld-head">
-                <label>From (your company)</label>
-                <button type="button" className="fld-link" onClick={() => setShowCompanies(true)}>Saved companies{businessList.length ? ` (${businessList.length})` : ""}</button>
-              </div>
-              <select value={businessId ?? ""} aria-label="From (your company)"
-                onChange={(e) => { if (e.target.value === "__new__") { setProfileEdit("new"); return; } setBusinessId(e.target.value || undefined); }}>
-                {businessList.length === 0 ? <option value="">— No company —</option> : null}
-                {businessList.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                <option value="__new__">+ Add company…</option>
-              </select>
-            </div>
-            <div className="fld">
-              <div className="fld-head">
-                <label>Client</label>
-                <button type="button" className="fld-link" onClick={() => setShowClients(true)}>Saved clients{clientList.length ? ` (${clientList.length})` : ""}</button>
-              </div>
-              <select value={clientId ?? ""} aria-label="Client"
-                onChange={(e) => { if (e.target.value === "__new__") { setClientModal("new"); return; } setClientId(e.target.value || undefined); }}>
-                <option value="">— No client —</option>
-                {clientList.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                <option value="__new__">+ Add new client…</option>
-              </select>
-            </div>
-          </div>
 
-          <div className="panel" style={{ marginTop: "1.2rem" }}>
-            <h3>
-              <span>№ 02 — Line items <span style={{ fontWeight: 400, color: "var(--ink-faint)" }}>· qty × rate</span></span>
-              <button className="add-li" style={{ margin: 0 }} onClick={() => setShowItems(true)}>Saved items{itemList.length ? ` (${itemList.length})` : ""}</button>
-            </h3>
             <AiDraftBar
               knownClients={clientList.map((c) => c.name)}
               defaultCurrency={currency}
@@ -538,63 +545,79 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               onPhoto={() => setShowPhoto(true)}
               autoFocus={aiAutoFocus}
             />
-            <div className="li-head"><span>Description</span><span>Qty</span><span>Rate</span><span style={{ textAlign: "right" }}>Amount</span><span></span></div>
-            {lines.map((l, i) => (
-              <div className="li" key={l.id}>
-                <input value={l.description} placeholder="Item or service" aria-label="Description" onChange={(e) => changeDescription(i, e.target.value)} />
-                <div className="li-field"><span className="li-lab">Qty</span>
-                  <input type="number" value={l.qty} aria-label="Quantity" onChange={(e) => setLine(i, { qty: e.target.value })} /></div>
-                <div className="li-field"><span className="li-lab">Rate</span>
-                  <input type="number" value={l.rate} aria-label="Rate" onChange={(e) => setLine(i, { rate: e.target.value })} /></div>
-                <span className="amt">{totals.lineAmounts[i] !== undefined ? new Intl.NumberFormat(undefined, { style: "currency", currency }).format(totals.lineAmounts[i]) : ""}</span>
-                <div className="li-actions">
-                  <button className="save" title="Save to your items" aria-label="Save to your items" disabled={!l.description.trim()} onClick={() => saveLineToCatalog(l)}>＋</button>
-                  <button className="del" aria-label="Remove line" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : ls))}>×</button>
+
+            {/* line table, on the paper */}
+            <div className="sh-table">
+              <div className="li-head"><span>Description</span><span>Qty</span><span>Rate</span><span style={{ textAlign: "right" }}>Amount</span><span></span></div>
+              {lines.map((l, i) => (
+                <div className="li" key={l.id}>
+                  <input value={l.description} placeholder="Item or service" aria-label="Description" onChange={(e) => changeDescription(i, e.target.value)} />
+                  <div className="li-field"><span className="li-lab">Qty</span>
+                    <input type="number" value={l.qty} aria-label="Quantity" onChange={(e) => setLine(i, { qty: e.target.value })} /></div>
+                  <div className="li-field"><span className="li-lab">Rate</span>
+                    <input type="number" value={l.rate} aria-label="Rate" onChange={(e) => setLine(i, { rate: e.target.value })} /></div>
+                  <span className="amt">{totals.lineAmounts[i] !== undefined ? new Intl.NumberFormat(undefined, { style: "currency", currency }).format(totals.lineAmounts[i]) : ""}</span>
+                  <div className="li-actions">
+                    <button className="save" title="Save to your items" aria-label="Save to your items" disabled={!l.description.trim()} onClick={() => saveLineToCatalog(l)}>＋</button>
+                    <button className="del" aria-label="Remove line" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : ls))}>×</button>
+                  </div>
                 </div>
+              ))}
+              <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                <button className="add-li" onClick={() => setLines((ls) => [...ls, blankLine()])}>＋ Add line item</button>
+                {itemList.length > 0 && (
+                  <select className="add-saved" value="" aria-label="Insert a saved item"
+                    onChange={(e) => { if (e.target.value) { insertSavedItem(e.target.value); e.target.value = ""; } }}>
+                    <option value="">+ Insert saved item ▾</option>
+                    {itemList.map((it) => <option key={it.id} value={it.id}>{it.name} · {fmt(it.defaultRate, currency)}</option>)}
+                  </select>
+                )}
+                <button className="add-li" style={{ marginLeft: "auto" }} onClick={() => setShowItems(true)}>Saved items{itemList.length ? ` (${itemList.length})` : ""}</button>
               </div>
-            ))}
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-              <button className="add-li" onClick={() => setLines((ls) => [...ls, blankLine()])}>＋ Add line item</button>
-              {itemList.length > 0 && (
-                <select className="add-saved" value="" aria-label="Insert a saved item"
-                  onChange={(e) => { if (e.target.value) { insertSavedItem(e.target.value); e.target.value = ""; } }}>
-                  <option value="">+ Insert saved item ▾</option>
-                  {itemList.map((it) => <option key={it.id} value={it.id}>{it.name} · {fmt(it.defaultRate, currency)}</option>)}
-                </select>
-              )}
             </div>
 
-            <div className="row2" style={{ marginTop: "1.1rem" }}>
-              <div className="fld"><label>Tax %</label><input type="number" aria-label="Tax %" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} /></div>
-              <div className="fld"><label>Discount</label><input type="number" aria-label="Discount" value={discount} onChange={(e) => setDiscount(e.target.value)} /></div>
+            {/* document foot: notes left, the till-receipt totals right */}
+            <div className="sh-bottom">
+              <div className="fld sh-notes"><label>Notes / terms</label><textarea rows={4} aria-label="Notes / terms" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Thanks for your business! Payment due within 14 days." /></div>
+              <div className="sh-totals">
+                <div className="row2">
+                  <div className="fld"><label>Tax %</label><input type="number" aria-label="Tax %" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} /></div>
+                  <div className="fld"><label>Discount</label><input type="number" aria-label="Discount" value={discount} onChange={(e) => setDiscount(e.target.value)} /></div>
+                </div>
+                <div className="totals">
+                  <div className="tot-row"><span>Subtotal</span><span className="mono">{fmt(totals.subtotal, currency)}</span></div>
+                  {totals.taxTotal > 0 ? <div className="tot-row"><span>Tax</span><span className="mono">{fmt(totals.taxTotal, currency)}</span></div> : null}
+                  {totals.discount > 0 ? <div className="tot-row"><span>Discount</span><span className="mono">−{fmt(totals.discount, currency)}</span></div> : null}
+                  {paid > 0 ? (
+                    <>
+                      <div className="tot-row"><span>Total</span><span className="mono">{fmt(totals.total, currency)}</span></div>
+                      <div className="tot-row"><span>Paid</span><span className="mono">−{fmt(paid, currency)}</span></div>
+                      <div className="tot-row grand"><span>Balance due</span><span className="mono v">{fmt(balance, currency)}</span></div>
+                    </>
+                  ) : (
+                    <div className="tot-row grand"><span>{isEstimate ? "Total" : "Total due"}</span><span className="mono v">{fmt(totals.total, currency)}</span></div>
+                  )}
+                </div>
+                {!isEstimate && (
+                  <button type="button" className="record-pay" onClick={() => setShowPayment(true)}>
+                    ＋ {paid > 0 ? "Record another payment" : "Record a payment"}
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="fld"><label>Notes / terms</label><textarea rows={2} aria-label="Notes / terms" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Thanks for your business! Payment due within 14 days." /></div>
-
-            <div className="totals">
-              <div className="tot-row"><span>Subtotal</span><span className="mono">{fmt(totals.subtotal, currency)}</span></div>
-              {totals.taxTotal > 0 ? <div className="tot-row"><span>Tax</span><span className="mono">{fmt(totals.taxTotal, currency)}</span></div> : null}
-              {totals.discount > 0 ? <div className="tot-row"><span>Discount</span><span className="mono">−{fmt(totals.discount, currency)}</span></div> : null}
-              {paid > 0 ? (
-                <>
-                  <div className="tot-row"><span>Total</span><span className="mono">{fmt(totals.total, currency)}</span></div>
-                  <div className="tot-row"><span>Paid</span><span className="mono">−{fmt(paid, currency)}</span></div>
-                  <div className="tot-row grand"><span>Balance due</span><span className="mono v">{fmt(balance, currency)}</span></div>
-                </>
-              ) : (
-                <div className="tot-row grand"><span>{isEstimate ? "Total" : "Total due"}</span><span className="mono v">{fmt(totals.total, currency)}</span></div>
-              )}
-            </div>
-            {!isEstimate && (
-              <button type="button" className="record-pay" onClick={() => setShowPayment(true)}>
-                ＋ {paid > 0 ? "Record another payment" : "Record a payment"}
-              </button>
-            )}
           </div>
         </div>
 
-        {/* live preview */}
-        <div className="preview-wrap">
-          <InvoicePreview data={preview} />
+        {/* rail: exact-PDF proof copy + style controls */}
+        <aside className="desk-rail">
+          <div className="rail-lab mono">Exact PDF — what they receive</div>
+          <div className="rail-zoom" role="button" tabIndex={0} aria-label="Enlarge the PDF preview"
+            onClick={() => setShowPreviewFull(true)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setShowPreviewFull(true); } }}>
+            <InvoicePreview data={preview} />
+          </div>
+          <div className="rail-hint mono">CLICK TO ENLARGE</div>
+
           <div className="preview-theme">
             <span className="preview-theme-lab">Template</span>
             <div className="accent-row">
@@ -630,8 +653,17 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
             )}
             {transError && <span className="lang-note lang-err">{transError}</span>}
           </div>
-        </div>
+        </aside>
       </div>
+
+      {showPreviewFull && (
+        <div className="overlay" onClick={() => setShowPreviewFull(false)}>
+          <div className="pv-full" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="pv-full-x" onClick={() => setShowPreviewFull(false)} aria-label="Close">×</button>
+            <InvoicePreview data={preview} />
+          </div>
+        </div>
+      )}
 
       {clientModal && (
         <ClientModal initial={clientModal === "edit" ? client : undefined}

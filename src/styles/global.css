@@ -348,6 +348,76 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
   display:grid; grid-template-columns:1fr 1.05fr; gap:1.8rem; align-items:start}
 .editor>*{min-width:0} /* let grid columns shrink instead of overflowing to content width */
 @media(max-width:940px){.editor{grid-template-columns:1fr}}
+
+/* ===== "The Sheet" — the document IS the editor ===== */
+.desk{max-width:1220px; margin:0 auto; padding:1.8rem 28px 4rem;
+  display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:2.2rem; align-items:start}
+.desk-main{min-width:0}
+.sheet{background:var(--paper-3); border:1px solid var(--line); border-radius:6px;
+  box-shadow:var(--shadow-lg); padding:2.6rem 2.8rem 2.4rem; position:relative}
+/* on-paper inputs: quiet dashes that wake up when touched */
+.sheet .fld{margin-bottom:0; min-width:0}
+.sheet .fld input, .sheet .fld select, .sheet .fld textarea{
+  background:transparent; border:1px solid transparent; border-bottom:1px dashed var(--line);
+  border-radius:6px 6px 0 0; padding:.45rem .45rem .4rem .3rem}
+.sheet .fld input:hover, .sheet .fld select:hover, .sheet .fld textarea:hover{
+  border-bottom-color:var(--line-strong); background:var(--paper-2)}
+.sheet .fld input:focus, .sheet .fld select:focus, .sheet .fld textarea:focus{
+  outline:none; border-color:transparent; border-bottom:1px dashed var(--accent);
+  box-shadow:none; background:var(--accent-wash)}
+.sheet .fld select{background-color:transparent}
+/* line-item inputs go quiet on the paper too */
+.sheet .li input{background:transparent; border:1px solid transparent; border-bottom:1px dashed var(--line); border-radius:6px 6px 0 0}
+.sheet .li input:hover{border-bottom-color:var(--line-strong); background:var(--paper-2)}
+.sheet .li input:focus{outline:none; border-color:transparent; border-bottom:1px dashed var(--accent); box-shadow:none; background:var(--accent-wash)}
+/* document head */
+.sh-head{display:flex; justify-content:space-between; align-items:flex-end; gap:2rem;
+  padding-bottom:1.5rem; border-bottom:2px solid var(--ink); margin-bottom:1.6rem}
+.sh-doc{font-size:.64rem; font-weight:700; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); margin-bottom:.2rem}
+.sheet .sh-no{font-family:var(--display); font-size:1.85rem; font-weight:600; color:var(--ink);
+  width:11ch; min-width:0; background:transparent; border:1px solid transparent;
+  border-bottom:1px dashed transparent; border-radius:6px 6px 0 0; padding:0 .1rem}
+.sheet .sh-no:hover{border-bottom-color:var(--line-strong)}
+.sheet .sh-no:focus{outline:none; border-bottom-color:var(--accent); background:var(--accent-wash)}
+.sh-meta{display:flex; gap:1.1rem; align-items:flex-end}
+.sh-m{width:8.6rem}
+.sh-ccy{width:6.2rem}
+/* address blocks */
+.sh-parties{display:grid; grid-template-columns:1fr 1fr; gap:2.4rem; margin-bottom:1.5rem}
+/* line table */
+.sh-table{margin-top:1.4rem}
+/* document foot: notes left, receipt totals right */
+.sh-bottom{display:grid; grid-template-columns:1.05fr .95fr; gap:2.6rem; align-items:start;
+  margin-top:1.8rem; padding-top:1.5rem; border-top:1px dashed var(--line-strong)}
+.sh-notes textarea{min-height:6.5rem; width:100%}
+.sh-totals .row2{margin-bottom:.4rem}
+/* the rail: proof copy + style controls */
+.desk-rail{position:sticky; top:86px; min-width:0}
+.rail-lab{font-size:.6rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:.6rem}
+.rail-zoom{zoom:.36; cursor:zoom-in; border-radius:14px; transition:box-shadow .2s}
+.rail-zoom .preview{pointer-events:none}
+.rail-zoom:hover{box-shadow:0 0 0 6px var(--accent-wash)}
+.rail-zoom:focus-visible{outline:4px solid var(--accent); outline-offset:4px}
+.rail-hint{font-size:.56rem; letter-spacing:.18em; color:var(--ink-faint); text-align:center; margin-top:.5rem}
+/* full-size preview overlay */
+.pv-full{position:relative; width:min(800px,94vw); max-height:92vh; overflow:auto; border-radius:var(--r)}
+.pv-full-x{position:absolute; top:.6rem; right:.6rem; z-index:2; width:34px; height:34px; font-size:1.2rem;
+  display:grid; place-items:center; background:var(--paper-2); color:var(--ink); border:1px solid var(--line);
+  border-radius:50%; cursor:pointer; box-shadow:var(--shadow)}
+@media(max-width:1020px){
+  .desk{grid-template-columns:1fr}
+  .desk-rail{position:static; max-width:520px}
+}
+@media(max-width:720px){
+  .desk{padding:1.2rem 14px 3rem}
+  .sheet{padding:1.5rem 1.1rem 1.4rem}
+  .sh-head{flex-direction:column; align-items:stretch; gap:1rem}
+  .sh-meta{flex-wrap:wrap; gap:.7rem}
+  .sh-m{width:calc(50% - .35rem)}
+  .sh-ccy{width:calc(50% - .35rem)}
+  .sh-parties, .sh-bottom{grid-template-columns:1fr; gap:1.2rem}
+  .rail-zoom{zoom:.45}
+}
 .preview{max-width:100%}
 .panel{background:var(--paper-2); border:1px solid var(--line); border-radius:var(--r); padding:1.4rem}
 /* ledger-style panel headers — mono, tracked, numbered in the markup */
