@@ -253,10 +253,18 @@ const faqLd = {
   <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
 
   <section class="final-cta">
-    <div class="wrap reveal">
-      <h2 class="sec">Your next invoice is two minutes away.</h2>
-      <p class="final-cta-sub">No signup, no credit card, no caps — it just works.</p>
-      <a class="btn btn-primary btn-lg" href="/new">Create an invoice — free, forever</a>
+    <div class="wrap">
+      <div class="cta-panel reveal">
+        <div class="cta-copy">
+          <div class="cta-eyebrow">Free forever · no signup</div>
+          <h2>Your next invoice is<br />two minutes away.</h2>
+          <p>No account, no credit card, no caps. Open the editor and start typing — it autosaves on your device.</p>
+        </div>
+        <div class="cta-act">
+          <a class="btn btn-cream btn-lg" href="/new">Create an invoice →</a>
+          <span class="cta-note">Works offline · export anytime</span>
+        </div>
+      </div>
     </div>
   </section>
 
