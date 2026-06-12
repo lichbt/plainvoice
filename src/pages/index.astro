@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Logo from "../components/Logo.astro";
+import { DONATE_URL } from "../lib/links";
 
 // FAQ — drives both the visible section AND the FAQPage schema (must match).
 const faqs = [
@@ -21,182 +22,289 @@ const faqLd = {
     acceptedAnswer: { "@type": "Answer", text: f.a },
   })),
 };
+
+// the receipt — pricing as a literal till receipt. Every row is the truth.
+const receiptRows = [
+  ["Unlimited invoices", "$0.00"],
+  ["Unlimited clients & estimates", "$0.00"],
+  ["Real PDF export", "$0.00"],
+  ["Get-paid links — 0% fee", "$0.00"],
+  ["13 languages, auto-formatted", "$0.00"],
+  ["Works offline, on your device", "$0.00"],
+  ["Your logo, your colours", "$0.00"],
+  ["CSV import · full data export", "$0.00"],
+];
 ---
 <Layout>
   <nav class="site" id="nav">
     <div class="nav-in">
       <Logo />
       <div class="nav-links">
+        <a href="#racket">Why</a>
+        <a href="#receipt">Pricing</a>
         <a href="#promise">Promise</a>
-        <a href="#switch">Switch</a>
-        <a href="#languages">Languages</a>
-        <a href="#ai">AI</a>
-        <a href="#app">App</a>
+        <a href="#demos">Demos</a>
         <a href="#faq">FAQ</a>
         <a href="/blog">Blog</a>
-        <a class="btn btn-primary btn-sm" href="/new">Try the editor</a>
+        <a class="btn btn-primary btn-sm" href="/new">Open the editor</a>
       </div>
     </div>
   </nav>
 
-  <header class="hero">
-    <div class="wrap hero-grid">
-      <div>
-        <div class="eyebrow reveal in">Free forever · no caps · no surprises</div>
-        <h1 class="head reveal in">Invoicing that's<br><em>actually</em> free.</h1>
-        <p class="sub reveal in">Unlimited invoices and clients, real PDF export, get-paid links — none of it behind a wall. AI is the only thing you ever pay for, and only when you want it.</p>
-        <div class="hero-cta reveal in">
-          <a class="btn btn-primary" href="/new">Create an invoice — no signup</a>
-          <a class="btn btn-ghost" href="#switch">See how switching works</a>
+  <!-- ① Manifesto hero -->
+  <header class="lp-hero">
+    <div class="wrap lp-hero-grid">
+      <div class="lp-hero-copy">
+        <div class="lp-kicker reveal in">Plainvoice — the honest invoice app</div>
+        <h1 class="reveal in">Paperwork is not<br /><em>a subscription.</em></h1>
+        <p class="lp-sub reveal in">
+          Unlimited invoices, real PDFs, get-paid links — <strong>free forever</strong>.
+          No account, no trial clock, no “Pro” tier holding your own logo hostage.
+          The only thing that ever costs money is AI doing the typing — and only when you ask it to.
+        </p>
+        <div class="lp-cta reveal in">
+          <a class="btn btn-primary btn-lg" href="/new">Start an invoice — nothing to sign up for</a>
+          <a class="lp-ghostlink" href="#promise">Read the pricing promise ↓</a>
         </div>
-        <div class="hero-note reveal in">↳ The average freelancer is set up in under 60 seconds.</div>
+        <div class="lp-price-line reveal in mono">$0 today · $0 in five years · in writing ↓</div>
       </div>
-      <div class="float-card reveal in">
-        <div class="stamp pill pill-accent">● Paid</div>
-        <div class="inv-card">
-          <div class="ic-top">
+
+      <div class="lp-hero-doc reveal in" aria-hidden="true">
+        <div class="lp-doc">
+          <div class="lp-doc-stamp">PAID</div>
+          <div class="lp-doc-head">
             <div>
-              <div class="ic-co">Maple &amp; Co.</div>
-              <div style="font-size:.74rem;color:var(--ink-faint)">Invoice #0042</div>
+              <div class="lp-doc-co">Maple &amp; Co.</div>
+              <div class="lp-doc-meta mono">INVOICE Nº 0042</div>
             </div>
-            <div class="ic-meta">Issued Jun 1<br>Due Jun 15<br>USD</div>
+            <div class="lp-doc-meta mono" style="text-align:right">ISSUED JUN 01<br />DUE JUN 15</div>
           </div>
-          <div class="inv-row"><span>Brand identity design</span><span class="mono">$1,800.00</span></div>
-          <div class="inv-row"><span>Web mockups · 6h</span><span class="mono">$720.00</span></div>
-          <div class="inv-row"><span>Revisions</span><span class="mono">$240.00</span></div>
-          <div class="inv-total">
-            <span class="lbl">Total due</span>
-            <span class="amt mono">$2,760.00</span>
-          </div>
+          <div class="lp-doc-row"><span>Brand identity design</span><span class="mono">$1,800.00</span></div>
+          <div class="lp-doc-row"><span>Web mockups · 6h</span><span class="mono">$720.00</span></div>
+          <div class="lp-doc-row"><span>Revisions</span><span class="mono">$240.00</span></div>
+          <div class="lp-doc-total"><span>Total due</span><span class="mono">$2,760.00</span></div>
+          <div class="lp-doc-foot mono">MADE WITH PLAINVOICE — FREE, LIKE PAPERWORK SHOULD BE</div>
         </div>
+      </div>
+    </div>
+
+    <!-- ticker -->
+    <div class="lp-ticker" aria-hidden="true">
+      <div class="lp-ticker-track">
+        {[0, 1].map(() => (
+          <span class="lp-ticker-seq mono">
+            UNLIMITED INVOICES <i>∞</i> NO SIGNUP <i>∞</i> NO TRIAL CLOCK <i>∞</i> 0% PAYMENT FEES <i>∞</i> WORKS OFFLINE <i>∞</i> YOUR DATA STAYS YOURS <i>∞</i> NO FEATURE CLAWBACKS <i>∞</i>&nbsp;
+          </span>
+        ))}
       </div>
     </div>
   </header>
 
-  <section id="why">
+  <!-- ② The racket -->
+  <section id="racket" class="lp-sec">
     <div class="wrap">
-      <div class="sec-eyebrow reveal">Why we exist</div>
-      <h2 class="sec reveal">You didn't churn. You were pushed.</h2>
-      <p class="sec-lead reveal">The popular invoice apps trained millions of small businesses to expect the rug-pull. We read their one-star reviews so you don't have to live them.</p>
-      <div class="vs">
-        <div class="vs-col vs-them reveal">
-          <h3>😤 The apps you're leaving</h3>
-          <div class="vs-item"><span class="mk">✕</span><div>Capped to 3 invoices a month, then a paywall<div class="vs-quote">"3 invoices a month was all I was allowed to create."</div></div></div>
-          <div class="vs-item"><span class="mk">✕</span><div>Surprise price hikes — $59 → $199 a year<div class="vs-quote">"forcing you to a $199 yearly subscription."</div></div></div>
-          <div class="vs-item"><span class="mk">✕</span><div>Features you had, removed and re-sold<div class="vs-quote">"minimizing the features… pay even more for a higher tier."</div></div></div>
-          <div class="vs-item"><span class="mk">✕</span><div>Quietly turned on payment skimming<div class="vs-quote">"enable a link to take payments… without the owner's permission."</div></div></div>
-        </div>
-        <div class="vs-col vs-you reveal">
-          <h3>🌿 Plainvoice</h3>
-          <div class="vs-item"><span class="mk">✓</span><div>Unlimited invoices, clients &amp; estimates. We never count.</div></div>
-          <div class="vs-item"><span class="mk">✓</span><div>One honest price for AI. Existing users are grandfathered, always.</div></div>
-          <div class="vs-item"><span class="mk">✓</span><div>Every core feature stays free. We never take one back.</div></div>
-          <div class="vs-item"><span class="mk">✓</span><div>We never touch the money your clients pay you. 0% fee.</div></div>
+      <div class="lp-no mono reveal">№ 01 — WHY WE EXIST</div>
+      <h2 class="lp-h2 reveal">You didn't churn.<br />You were pushed.</h2>
+      <p class="lp-lead reveal">
+        The popular invoice apps trained millions of freelancers to expect the rug-pull.
+        These are from their own one-star reviews — we read them so you don't have to live them.
+      </p>
+
+      <div class="lp-reviews">
+        <figure class="lp-review reveal">
+          <div class="lp-stars" aria-hidden="true">★☆☆☆☆</div>
+          <blockquote>“3 invoices a month was all I was allowed to create.”</blockquote>
+          <figcaption class="mono">THE CAP — free until you actually use it</figcaption>
+        </figure>
+        <figure class="lp-review reveal">
+          <div class="lp-stars" aria-hidden="true">★☆☆☆☆</div>
+          <blockquote>“…forcing you to a $199 yearly subscription.”</blockquote>
+          <figcaption class="mono">THE HIKE — $59 → $199, take it or leave your data</figcaption>
+        </figure>
+        <figure class="lp-review reveal">
+          <div class="lp-stars" aria-hidden="true">★☆☆☆☆</div>
+          <blockquote>“…minimizing the features so you pay even more for a higher tier.”</blockquote>
+          <figcaption class="mono">THE CLAWBACK — features you had, re-sold to you</figcaption>
+        </figure>
+        <figure class="lp-review reveal">
+          <div class="lp-stars" aria-hidden="true">★☆☆☆☆</div>
+          <blockquote>“…enabled a link to take payments… without the owner's permission.”</blockquote>
+          <figcaption class="mono">THE SKIM — a cut of your money, switched on quietly</figcaption>
+        </figure>
+      </div>
+
+      <div class="lp-math reveal">
+        <span class="mono">THE MATH:</span> a “starter” plan at $19/month is
+        <strong class="mono">$1,140 over five years</strong> — to generate PDFs.
+        Your invoice app shouldn't be a line item on your own books.
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ The receipt — pricing, on ink -->
+  <section id="receipt" class="lp-ink">
+    <div class="wrap lp-ink-grid">
+      <div class="lp-ink-copy">
+        <div class="lp-no mono reveal" style="color:#9CC4AC">№ 02 — THE PRICE</div>
+        <h2 class="lp-h2 reveal">Here's your receipt.</h2>
+        <p class="lp-lead reveal" style="color:rgba(244,240,230,.72)">
+          Not a pricing table with three columns and a “most popular” badge.
+          A receipt — because this is everything we'll ever ring up for the core app.
+          There is no Pro tier. There is nothing to upgrade to.
+        </p>
+        <p class="lp-lead reveal" style="color:rgba(244,240,230,.72)">
+          The one thing that costs money is optional: AI that types the invoice for you —
+          from a sentence, a photo, or into another language. It costs us real compute,
+          so it costs you a real (small) price. That's the whole business model.
+        </p>
+        <a class="btn btn-cream reveal" href="/new" style="margin-top:.6rem">Take it — it's free →</a>
+      </div>
+
+      <div class="lp-receipt-wrap reveal">
+        <div class="lp-receipt mono" role="img" aria-label="A till receipt where every core feature costs $0.00, forever">
+          <div class="lp-r-head">PLAINVOICE</div>
+          <div class="lp-r-sub">— EVERYTHING INCLUDED —</div>
+          <div class="lp-r-rule">··········································</div>
+          {receiptRows.map(([item, price]) => (
+            <div class="lp-r-row"><span>{item}</span><span class="lp-r-dots"></span><span>{price}</span></div>
+          ))}
+          <div class="lp-r-rule">··········································</div>
+          <div class="lp-r-row"><span>SUBTOTAL</span><span class="lp-r-dots"></span><span>$0.00</span></div>
+          <div class="lp-r-row"><span>HIDDEN FEES</span><span class="lp-r-dots"></span><span>$0.00</span></div>
+          <div class="lp-r-row lp-r-total"><span>TOTAL — TODAY</span><span class="lp-r-dots"></span><span>$0.00</span></div>
+          <div class="lp-r-row lp-r-total"><span>TOTAL — IN 5 YEARS</span><span class="lp-r-dots"></span><span>$0.00</span></div>
+          <div class="lp-r-rule">··········································</div>
+          <div class="lp-r-row lp-r-opt"><span>OPTIONAL · 50 AI USES</span><span class="lp-r-dots"></span><span>$5.00</span></div>
+          <div class="lp-r-note">AI ONLY EVER CHARGED WHEN YOU USE IT</div>
+          <div class="lp-r-barcode" aria-hidden="true"></div>
+          <div class="lp-r-note">NO SIGNUP REQUIRED · KEEP YOUR MONEY</div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="promise">
+  <!-- ④ The promise — a signed document -->
+  <section id="promise" class="lp-sec">
+    <div class="wrap lp-promise-grid">
+      <div>
+        <div class="lp-no mono reveal">№ 03 — THE PROMISE</div>
+        <h2 class="lp-h2 reveal">Don't trust us.<br />Hold us to it.</h2>
+        <p class="lp-lead reveal">
+          Every app says “free”. So we wrote ours down like a contract — specific enough
+          that you'd notice the day we broke it. It ships with the product and it doesn't have an expiry date.
+        </p>
+      </div>
+      <div class="lp-contract reveal">
+        <div class="lp-c-head mono">PRICING PROMISE · Nº 001 · IN EFFECT PERMANENTLY</div>
+        <ol class="lp-clauses">
+          <li>Unlimited invoices, clients and estimates — free, forever. We never count.</li>
+          <li>Your data is yours. One-click export, any time. No hostages.</li>
+          <li>AI is the only paid feature. What's free is stated before you start — and stays free.</li>
+          <li>If a price ever changes, existing users keep theirs. And we tell you first.</li>
+          <li>We never remove a feature you already have.</li>
+          <li>We never touch the money your clients pay you. 0%, and payment links only exist if you turn them on.</li>
+        </ol>
+        <div class="lp-signature">
+          <span class="lp-sign">Plainvoice</span>
+          <span class="mono lp-sign-meta">SIGNED IN THE PRODUCT, NOT A PRESS RELEASE · 2026</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ Demos -->
+  <section id="demos" class="lp-sec lp-sec-tint">
     <div class="wrap">
-      <div class="promise reveal">
-        <div class="sec-eyebrow">The Pricing Promise</div>
-        <h2 class="sec" style="margin-bottom:1.2rem">In writing. Permanently.</h2>
-        <ul class="promise-list">
-          <li><span class="ck">✓</span> Unlimited invoices, clients and estimates — free, forever, no counting.</li>
-          <li><span class="ck">✓</span> Your data is yours. One-click export, any time. No hostages.</li>
-          <li><span class="ck">✓</span> AI is the only paid feature. You always know what's free before you sign up.</li>
-          <li><span class="ck">✓</span> Change a price? Existing users keep theirs, and we tell you first.</li>
-          <li><span class="ck">✓</span> We never remove a feature you already have.</li>
-          <li><span class="ck">✓</span> We never enable payment collection without you turning it on.</li>
-        </ul>
-      </div>
+      <div class="lp-no mono reveal">№ 04 — SEE IT WORK</div>
+      <h2 class="lp-h2 reveal">The fastest way to an invoice<br />is to stop typing them.</h2>
     </div>
-  </section>
 
-  <section id="switch" style="background:var(--paper-2); border-top:1px solid var(--line); border-bottom:1px solid var(--line)">
-    <div class="wrap feature-split">
-      <div class="reveal">
-        <div class="sec-eyebrow">Switching</div>
-        <h2 class="sec">Bring your old invoices in one photo.</h2>
-        <p class="sec-lead">Snap a picture of a printed invoice — yours or the app you're leaving — and we rebuild it as an editable draft. Reads right on your device, costs nothing, no account needed.</p>
-        <div style="display:flex; gap:.7rem; flex-wrap:wrap; align-items:center">
-          <a class="btn btn-primary" href="/new?photo=1">Try photo import →</a>
-          <a class="btn btn-ghost" href="/app?import=1">Coming from another app? Import a CSV</a>
-        </div>
-      </div>
-      <div class="mini-shot reveal">
-        <div class="snap">
-          <div class="ph">🧾</div>
-          <div class="arrow">→</div>
-          <div style="flex:1">
-            <div style="font-weight:600; font-size:.9rem">Editable invoice draft</div>
-            <div style="font-size:.78rem; color:var(--ink-faint)">client · line items · totals, filled in</div>
-          </div>
-        </div>
-        <div style="font-size:.78rem; color:var(--ink-faint); margin-top:.9rem; display:flex; gap:.4rem; align-items:center">
-          <span class="pill pill-accent">on-device</span> Printed invoices are read free, right on your phone.
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="ai">
-    <div class="wrap feature-split">
-      <div class="chase reveal">
-        <span class="tag">Chat-to-invoice · AI</span>
-        <div class="bubble" style="border-radius:12px 12px 4px 12px; margin-left:auto; max-width:90%">“2h consulting at $120 and a $500 setup fee for Acme, due in 30 days”</div>
-        <div style="font-size:.72rem; color:var(--ink-faint); margin:.7rem 0 .3rem">↓ becomes an editable draft</div>
-        <div class="inv-row"><span>Consulting · 2</span><span class="mono">$240.00</span></div>
-        <div class="inv-row"><span>Setup fee</span><span class="mono">$500.00</span></div>
-        <div class="inv-row" style="border:none; font-weight:600"><span>Total</span><span class="mono">$740.00</span></div>
-        <div style="font-size:.74rem; color:var(--ink-faint); margin-top:.4rem">You edit before sending · totals always computed, never guessed</div>
-      </div>
-      <div class="reveal">
-        <div class="sec-eyebrow">The only thing we charge for</div>
-        <h2 class="sec">AI that does the typing — not a wall.</h2>
-        <p class="sec-lead">Describe a job in a sentence and get an editable invoice. Snap a messy receipt, or chase an overdue invoice with a tone-perfect reminder. Your first AI uses are free; after that, simple packs — 50 uses for $5. Making invoices by hand is always free.</p>
+    <!-- 04a chat-to-invoice -->
+    <div class="wrap lp-demo" id="ai">
+      <div class="lp-demo-copy reveal">
+        <div class="lp-demo-tag mono">04a — DESCRIBE IT</div>
+        <h3>Paste the chat. Get the invoice.</h3>
+        <p>
+          “2h consulting at $120 and a $500 setup fee for Acme, due in 30 days” — or the whole messy
+          client thread. The AI pulls out items, prices and the client; you get an editable draft.
+          Totals are always computed in code, never guessed.
+        </p>
         <a class="btn btn-primary" href="/new?ai=1">Describe an invoice →</a>
       </div>
+      <div class="lp-democard reveal">
+        <div class="lp-bubble">“2h consulting at $120 and a $500 setup fee for Acme, due in 30 days”</div>
+        <div class="lp-becomes mono">↓ BECOMES</div>
+        <div class="lp-doc-row"><span>Consulting · 2h</span><span class="mono">$240.00</span></div>
+        <div class="lp-doc-row"><span>Setup fee</span><span class="mono">$500.00</span></div>
+        <div class="lp-doc-total"><span>Total</span><span class="mono">$740.00</span></div>
+      </div>
     </div>
-  </section>
 
-  <section id="languages" style="background:var(--paper-2); border-top:1px solid var(--line); border-bottom:1px solid var(--line)">
-    <div class="wrap feature-split">
-      <div class="chase reveal">
-        <span class="tag">Auto-translate · the one feature nobody copies</span>
+    <!-- 04b photo -->
+    <div class="wrap lp-demo lp-demo-flip" id="switch">
+      <div class="lp-demo-copy reveal">
+        <div class="lp-demo-tag mono">04b — SNAP IT</div>
+        <h3>Leaving another app? Bring a photo.</h3>
+        <p>
+          Snap a printed invoice — yours, or from the app you're escaping — and it's rebuilt
+          as an editable draft. The free read happens on your device; the photo never leaves your phone.
+        </p>
+        <a class="btn btn-primary" href="/new?photo=1">Try photo import →</a>
+        <a class="lp-ghostlink" href="/app?import=1">Or import a CSV</a>
+      </div>
+      <div class="lp-democard reveal">
+        <div class="lp-snapline"><span class="lp-snap-ph">🧾</span><span class="lp-snap-arrow mono">→</span>
+          <div>
+            <div style="font-weight:600">Editable draft</div>
+            <div class="lp-faint">client · line items · totals, filled in</div>
+          </div>
+        </div>
+        <div class="lp-pill-row"><span class="pill pill-accent">on-device</span><span class="lp-faint">free read, right on your phone</span></div>
+      </div>
+    </div>
+
+    <!-- 04c languages (interactive — keep ids/data-k for the live script) -->
+    <div class="wrap lp-demo" id="languages">
+      <div class="lp-demo-copy reveal">
+        <div class="lp-demo-tag mono">04c — TRANSLATE IT</div>
+        <h3>Invoice in your client's language.</h3>
+        <p>
+          One tap and the whole invoice switches — labels, dates, currency formatting — the way your
+          client in Tokyo or Hanoi actually reads them. Standard terms are free and instant from a
+          built-in dictionary; only your own words ever use AI. <strong>Try it — tap a language:</strong>
+        </p>
+        <a class="btn btn-primary" href="/new">Translate an invoice →</a>
+      </div>
+      <div class="lp-democard reveal">
         <div id="tr-chips" class="tr-chips" data-date="2026-06-24">
-          <!-- chips are rendered + made interactive by the script below -->
           <span class="pill pill-accent">日本語</span>
           <span class="pill">Tiếng Việt</span>
           <span class="pill">ไทย</span>
           <span class="pill">Español</span>
-          <span class="pill">+9 more</span>
         </div>
-        <div class="inv-row"><span>Invoice</span><span class="mono">→ <span data-k="docInvoice">請求書</span></span></div>
-        <div class="inv-row"><span>Billed to</span><span class="mono">→ <span data-k="billedTo">請求先</span></span></div>
-        <div class="inv-row"><span>Total due</span><span class="mono">→ <span data-k="totalDue">ご請求額</span></span></div>
-        <div class="inv-row" style="border:none; font-weight:600"><span>Jun 24, 2026</span><span class="mono">→ <span data-k="date">2026年6月24日</span></span></div>
-        <div style="font-size:.74rem; color:var(--ink-faint); margin-top:.5rem">Labels &amp; dates: free &amp; instant · only your own words use AI</div>
-      </div>
-      <div class="reveal">
-        <div class="sec-eyebrow">Built for cross-border freelancers</div>
-        <h2 class="sec">Invoice in your client's language.</h2>
-        <p class="sec-lead">Pick a language and the whole invoice switches in one tap — labels, dates and currency, formatted the way your client reads them. The standard terms come from a built-in dictionary and are translated for free; only your own line descriptions and notes ever use AI. The competition localizes their buttons and makes you translate the rest. We translate the invoice.</p>
-        <a class="btn btn-primary" href="/new">Translate an invoice →</a>
+        <div class="lp-doc-row"><span>Invoice</span><span class="mono">→ <span data-k="docInvoice">請求書</span></span></div>
+        <div class="lp-doc-row"><span>Billed to</span><span class="mono">→ <span data-k="billedTo">請求先</span></span></div>
+        <div class="lp-doc-row"><span>Total due</span><span class="mono">→ <span data-k="totalDue">ご請求額</span></span></div>
+        <div class="lp-doc-row" style="border:none"><span>Jun 24, 2026</span><span class="mono">→ <span data-k="date">2026年6月24日</span></span></div>
+        <div class="lp-faint" style="margin-top:.5rem">labels &amp; dates free · only your own words use AI</div>
       </div>
     </div>
   </section>
 
-  <section id="app">
-    <div class="wrap feature-split">
-      <div class="reveal">
-        <div class="sec-eyebrow">Works offline · no app store</div>
-        <h2 class="sec">Install it on your phone in two taps.</h2>
-        <p class="sec-lead">Plainvoice is a Progressive Web App — add it to your home screen and it opens full-screen like a native app, even with no signal. Everything stays on your device: nothing to sync, no account to create. Invoice a client from the job site, on the train, anywhere.</p>
-        <div class="pwa-cta">
+  <!-- ⑥ App / offline -->
+  <section id="app" class="lp-sec">
+    <div class="wrap lp-demo">
+      <div class="lp-demo-copy reveal">
+        <div class="lp-no mono">№ 05 — IN YOUR POCKET</div>
+        <h3 style="font-family:var(--display); font-size:clamp(1.5rem,2.6vw,2rem); font-weight:600; margin:.4rem 0 .8rem">An app, without the app store.</h3>
+        <p>
+          Add Plainvoice to your home screen and it opens full-screen, works offline, and keeps
+          everything on your device. Invoice from the job site, the train, the dead zone.
+          Nothing syncs because nothing leaves.
+        </p>
+        <div class="lp-pwa-cta">
           <button id="pwa-install" type="button" class="btn btn-primary">📲 Install the app</button>
-          <a class="btn btn-ghost" href="/new">Or just use it in the browser →</a>
+          <a class="lp-ghostlink" href="/new">or just use the browser →</a>
         </div>
         <div id="pwa-hint" class="pwa-hint" hidden></div>
       </div>
@@ -236,14 +344,17 @@ const faqLd = {
     </div>
   </section>
 
-  <section id="faq">
-    <div class="wrap">
-      <div class="sec-eyebrow reveal">Questions</div>
-      <h2 class="sec reveal">No fine print. Ask away.</h2>
-      <div class="faq-list reveal">
-        {faqs.map((f) => (
-          <details class="faq-item">
-            <summary>{f.q}</summary>
+  <!-- ⑦ FAQ -->
+  <section id="faq" class="lp-sec lp-sec-tint">
+    <div class="wrap lp-faq-grid">
+      <div>
+        <div class="lp-no mono reveal">№ 06 — FINE PRINT</div>
+        <h2 class="lp-h2 reveal">There isn't any.<br />But ask anyway.</h2>
+      </div>
+      <div class="lp-faq reveal">
+        {faqs.map((f, i) => (
+          <details class="lp-q">
+            <summary><span class="mono lp-q-no">{String(i + 1).padStart(2, "0")}</span>{f.q}</summary>
             <p>{f.a}</p>
           </details>
         ))}
@@ -252,6 +363,7 @@ const faqLd = {
   </section>
   <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
 
+  <!-- ⑧ Close -->
   <section class="final-cta">
     <div class="wrap">
       <div class="cta-panel reveal">
@@ -269,11 +381,170 @@ const faqLd = {
   </section>
 
   <footer class="site">
-    <div class="wrap foot-in">
-      <Logo size={26} />
-      <div class="foot-note">Unlimited free core · your data stays on your device</div>
+    <div class="wrap lp-foot">
+      <div class="lp-foot-brand">
+        <Logo size={26} />
+        <div class="foot-note">Unlimited free core · your data stays on your device</div>
+      </div>
+      <div class="lp-foot-links mono">
+        <a href="/blog">BLOG</a>
+        <a href="#promise">THE PROMISE</a>
+        <a href={DONATE_URL} target="_blank" rel="noopener">LEAVE A TIP</a>
+      </div>
     </div>
   </footer>
+
+  <style is:global>
+    /* ===== landing v2 — "the honest ledger" ===== */
+    .mono{font-family:var(--mono)}
+    .lp-faint{font-size:.78rem; color:var(--ink-faint)}
+
+    /* hero */
+    .lp-hero{padding:6.5rem 0 0; position:relative; overflow:hidden}
+    .lp-hero-grid{display:grid; grid-template-columns:1.15fr .85fr; gap:4rem; align-items:center; padding-bottom:4.5rem}
+    .lp-kicker{font-family:var(--mono); font-size:.74rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin-bottom:1.4rem}
+    .lp-hero h1{font-family:var(--display); font-weight:600; font-size:clamp(2.7rem,6.2vw,4.8rem); line-height:1.02; letter-spacing:-.022em; color:var(--ink); margin:0 0 1.4rem}
+    .lp-hero h1 em{font-style:italic; color:var(--accent)}
+    .lp-sub{font-size:1.08rem; line-height:1.65; color:var(--ink-soft); max-width:34rem; margin:0 0 1.8rem}
+    .lp-sub strong{color:var(--ink)}
+    .lp-cta{display:flex; align-items:center; gap:1.4rem; flex-wrap:wrap}
+    .lp-ghostlink{font-size:.9rem; font-weight:600; color:var(--ink-soft); text-decoration:none; border-bottom:1px solid var(--line-strong); padding-bottom:1px}
+    .lp-ghostlink:hover{color:var(--accent); border-color:var(--accent)}
+    .lp-price-line{margin-top:1.3rem; font-size:.74rem; letter-spacing:.06em; color:var(--ink-faint)}
+
+    /* hero invoice document */
+    .lp-hero-doc{position:relative}
+    .lp-doc{background:var(--paper-3); border:1px solid var(--line); border-radius:6px; padding:1.8rem 1.7rem 1.2rem;
+      box-shadow:var(--shadow-lg); transform:rotate(1.6deg); position:relative}
+    .lp-doc-stamp{position:absolute; top:1rem; right:1.1rem; font-family:var(--mono); font-size:.72rem; font-weight:700; letter-spacing:.2em;
+      color:var(--accent); border:2px solid var(--accent); border-radius:4px; padding:.2rem .55rem; transform:rotate(7deg); opacity:.85}
+    .lp-doc-head{display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.3rem}
+    .lp-doc-co{font-family:var(--display); font-weight:600; font-size:1.15rem}
+    .lp-doc-meta{font-size:.66rem; color:var(--ink-faint); letter-spacing:.08em; line-height:1.6}
+    .lp-doc-row{display:flex; justify-content:space-between; gap:1rem; padding:.55rem 0; border-bottom:1px dashed var(--line); font-size:.88rem}
+    .lp-doc-total{display:flex; justify-content:space-between; padding:.9rem 0 .2rem; font-weight:700; font-size:1.02rem}
+    .lp-doc-total .mono{color:var(--accent); font-size:1.25rem}
+    .lp-doc-foot{margin-top:1.1rem; padding-top:.7rem; border-top:1px solid var(--line); font-size:.56rem; letter-spacing:.12em; color:var(--ink-faint); text-align:center}
+
+    /* ticker */
+    .lp-ticker{border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--paper-2); overflow:hidden; padding:.65rem 0}
+    .lp-ticker-track{display:flex; width:max-content; animation:lp-tick 36s linear infinite}
+    .lp-ticker-seq{font-size:.72rem; font-weight:600; letter-spacing:.18em; color:var(--ink-soft); white-space:nowrap}
+    .lp-ticker-seq i{font-style:normal; color:var(--accent); padding:0 .9rem}
+    @keyframes lp-tick{to{transform:translateX(-50%)}}
+    @media (prefers-reduced-motion: reduce){.lp-ticker-track{animation:none}}
+
+    /* sections */
+    .lp-sec{padding:6rem 0}
+    .lp-sec-tint{background:var(--paper-2); border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+    .lp-no{font-size:.72rem; font-weight:700; letter-spacing:.2em; color:var(--accent); margin-bottom:1.1rem}
+    .lp-h2{font-family:var(--display); font-weight:600; font-size:clamp(2rem,4.4vw,3.2rem); line-height:1.06; letter-spacing:-.018em; margin:0 0 1.2rem}
+    .lp-lead{font-size:1.02rem; line-height:1.65; color:var(--ink-soft); max-width:38rem; margin:0 0 1rem}
+
+    /* the racket — review wall */
+    .lp-reviews{display:grid; grid-template-columns:repeat(4,1fr); gap:1.1rem; margin:2.6rem 0 0}
+    .lp-review{background:var(--paper-3); border:1px solid var(--line); border-radius:4px; padding:1.3rem 1.2rem; margin:0;
+      box-shadow:var(--shadow); position:relative}
+    .lp-review:nth-child(odd){transform:rotate(-.7deg)}
+    .lp-review:nth-child(even){transform:rotate(.6deg)}
+    .lp-stars{color:var(--amber); font-size:.85rem; letter-spacing:.1em; margin-bottom:.7rem}
+    .lp-review blockquote{margin:0 0 .9rem; font-family:var(--display); font-style:italic; font-size:1.02rem; line-height:1.4; color:var(--ink)}
+    .lp-review figcaption{font-size:.62rem; letter-spacing:.1em; color:var(--ink-faint); line-height:1.5}
+    .lp-math{margin-top:2.4rem; background:var(--amber-wash); border:1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+      border-radius:var(--r-sm); padding:1.1rem 1.4rem; font-size:.95rem; color:var(--ink); max-width:46rem}
+    .lp-math .mono{font-size:.8rem; letter-spacing:.08em; color:var(--amber)}
+    .lp-math strong.mono{font-size:1rem; color:var(--ink)}
+
+    /* the receipt — ink section */
+    .lp-ink{background:var(--ink); color:var(--paper); padding:6.5rem 0}
+    .lp-ink-grid{display:grid; grid-template-columns:1.05fr .95fr; gap:4.5rem; align-items:center}
+    .lp-ink .lp-h2{color:var(--paper)}
+    .lp-receipt-wrap{display:flex; justify-content:center}
+    .lp-receipt{background:#FFFEFA; color:#2B2922; width:min(340px,100%); padding:1.9rem 1.5rem 1.6rem; font-size:.74rem; line-height:1.9;
+      box-shadow:0 30px 80px rgba(0,0,0,.45); transform:rotate(-1.2deg);
+      -webkit-mask:linear-gradient(#000 0 0) padding-box, radial-gradient(circle at 8px 100%, transparent 5px, #000 5.5px) bottom/16px 10px repeat-x padding-box;
+      mask:linear-gradient(#000 0 0), radial-gradient(circle at 8px 100%, transparent 5px, #000 5.5px) bottom/16px 10px repeat-x;
+      mask-composite:exclude}
+    .lp-r-head{text-align:center; font-weight:700; font-size:1.05rem; letter-spacing:.3em}
+    .lp-r-sub{text-align:center; font-size:.62rem; letter-spacing:.18em; color:#8B8678}
+    .lp-r-rule{text-align:center; color:#C9C2B0; overflow:hidden; white-space:nowrap}
+    .lp-r-row{display:flex; align-items:baseline; gap:.45rem; white-space:nowrap}
+    .lp-r-row span:first-child{overflow:hidden; text-overflow:ellipsis}
+    .lp-r-dots{flex:1; border-bottom:1.5px dotted #C9C2B0; transform:translateY(-3px)}
+    .lp-r-total{font-weight:700; font-size:.82rem}
+    .lp-r-opt{color:#1E5B41; font-weight:600}
+    .lp-r-note{text-align:center; font-size:.58rem; letter-spacing:.14em; color:#8B8678; margin-top:.4rem}
+    .lp-r-barcode{height:34px; margin:.9rem 1.4rem .3rem;
+      background:repeating-linear-gradient(90deg,#2B2922 0 2px,transparent 2px 4px,#2B2922 4px 7px,transparent 7px 8px,#2B2922 8px 9px,transparent 9px 13px)}
+
+    /* the promise — contract */
+    .lp-promise-grid{display:grid; grid-template-columns:.9fr 1.1fr; gap:4rem; align-items:start}
+    .lp-contract{background:var(--paper-3); border:1px solid var(--line-strong); border-radius:4px; padding:2.2rem 2.4rem;
+      box-shadow:var(--shadow-lg); position:relative}
+    .lp-contract::before{content:""; position:absolute; inset:10px; border:1px solid var(--line); border-radius:2px; pointer-events:none}
+    .lp-c-head{font-size:.66rem; font-weight:700; letter-spacing:.18em; color:var(--accent); padding-bottom:1rem; margin-bottom:1.2rem; border-bottom:1px solid var(--line)}
+    .lp-clauses{margin:0; padding:0 0 0 1.4rem; display:grid; gap:.85rem; counter-reset:clause}
+    .lp-clauses li{font-size:.93rem; line-height:1.55; color:var(--ink); padding-left:.3rem}
+    .lp-clauses li::marker{font-family:var(--mono); font-size:.78rem; font-weight:700; color:var(--accent)}
+    .lp-signature{margin-top:1.8rem; padding-top:1.2rem; border-top:1px solid var(--line); display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap}
+    .lp-sign{font-family:var(--display); font-style:italic; font-weight:500; font-size:1.7rem; color:var(--ink); transform:rotate(-2deg)}
+    .lp-sign-meta{font-size:.6rem; letter-spacing:.12em; color:var(--ink-faint)}
+
+    /* demos */
+    .lp-demo{display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center; padding:3.2rem 28px}
+    .lp-demo-flip > .lp-demo-copy{order:2}
+    .lp-demo-flip > .lp-democard{order:1}
+    .lp-demo-tag{font-size:.68rem; font-weight:700; letter-spacing:.18em; color:var(--accent); margin-bottom:.7rem}
+    .lp-demo-copy h3{font-family:var(--display); font-weight:600; font-size:clamp(1.5rem,2.6vw,2rem); margin:0 0 .8rem; letter-spacing:-.01em}
+    .lp-demo-copy p{font-size:.98rem; line-height:1.65; color:var(--ink-soft); margin:0 0 1.4rem; max-width:30rem}
+    .lp-demo-copy .lp-ghostlink{margin-left:1.1rem}
+    .lp-democard{background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm); padding:1.5rem 1.6rem; box-shadow:var(--shadow)}
+    .lp-bubble{background:var(--accent-wash); border:1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+      border-radius:12px 12px 4px 12px; padding:.8rem 1rem; font-size:.9rem; margin-left:auto; max-width:92%}
+    .lp-becomes{font-size:.62rem; letter-spacing:.16em; color:var(--ink-faint); margin:.8rem 0 .4rem}
+    .lp-snapline{display:flex; align-items:center; gap:1rem}
+    .lp-snap-ph{font-size:2rem; background:var(--paper-2); border:1px solid var(--line); border-radius:10px; padding:.5rem .7rem}
+    .lp-snap-arrow{color:var(--accent); font-weight:700}
+    .lp-pill-row{display:flex; align-items:center; gap:.6rem; margin-top:1rem}
+    .tr-chips{display:flex; gap:.45rem; flex-wrap:wrap; margin-bottom:1rem}
+    .lp-pwa-cta{display:flex; align-items:center; gap:.4rem; flex-wrap:wrap}
+
+    /* faq */
+    .lp-faq-grid{display:grid; grid-template-columns:.8fr 1.2fr; gap:4rem; align-items:start}
+    .lp-faq{display:grid; gap:0}
+    .lp-q{border-bottom:1px solid var(--line)}
+    .lp-q summary{display:flex; align-items:baseline; gap:1.1rem; cursor:pointer; list-style:none; padding:1.1rem .2rem;
+      font-weight:600; font-size:1rem; color:var(--ink)}
+    .lp-q summary::-webkit-details-marker{display:none}
+    .lp-q summary::after{content:"+"; margin-left:auto; font-family:var(--mono); color:var(--ink-faint); transition:transform .2s}
+    .lp-q[open] summary::after{transform:rotate(45deg)}
+    .lp-q-no{font-size:.72rem; color:var(--accent); font-weight:700}
+    .lp-q p{margin:0 .2rem 1.2rem 2.6rem; font-size:.93rem; line-height:1.6; color:var(--ink-soft)}
+
+    /* footer */
+    .lp-foot{display:flex; align-items:center; justify-content:space-between; gap:1.5rem; flex-wrap:wrap}
+    .lp-foot-brand{display:flex; align-items:center; gap:1.2rem}
+    .lp-foot-links{display:flex; gap:1.8rem}
+    .lp-foot-links a{font-size:.66rem; font-weight:700; letter-spacing:.14em; color:var(--ink-faint); text-decoration:none}
+    .lp-foot-links a:hover{color:var(--accent)}
+
+    /* responsive */
+    @media (max-width: 900px){
+      .lp-hero{padding-top:4.5rem}
+      .lp-hero-grid,.lp-ink-grid,.lp-promise-grid,.lp-demo,.lp-faq-grid{grid-template-columns:1fr; gap:2.6rem}
+      .lp-demo-flip > .lp-demo-copy{order:1}
+      .lp-demo-flip > .lp-democard{order:2}
+      .lp-reviews{grid-template-columns:1fr 1fr}
+      .lp-sec,.lp-ink{padding:4rem 0}
+      .lp-hero-doc{max-width:420px}
+    }
+    @media (max-width: 560px){
+      .lp-reviews{grid-template-columns:1fr}
+      .lp-demo{padding:2.2rem 16px}
+      .lp-contract{padding:1.6rem 1.3rem}
+      .lp-q p{margin-left:.2rem}
+    }
+  </style>
 
   <script>
     const io = new IntersectionObserver(
@@ -293,15 +564,15 @@ const faqLd = {
     const root = document.getElementById("tr-chips");
     if (root) {
       const iso = root.getAttribute("data-date") || "2026-06-24";
-      const card = root.closest(".chase");
-      const out = (k) => card?.querySelector(`[data-k="${k}"]`);
+      const card = root.closest(".lp-democard");
+      const out = (k: string) => card?.querySelector(`[data-k="${k}"]`);
       // Source language first (English shows the "original"), then the rest.
       const order = ["en", ...LANGS.map((l) => l.code).filter((c) => c !== "en")];
 
-      const apply = (code) => {
+      const apply = (code: string) => {
         const labels = getLabels(code);
         const locale = getLang(code).locale;
-        const set = (k, v) => { const el = out(k); if (el) el.textContent = v; };
+        const set = (k: string, v: string) => { const el = out(k); if (el) el.textContent = v; };
         set("docInvoice", labels.docInvoice);
         set("billedTo", labels.billedTo);
         set("totalDue", labels.totalDue);
@@ -317,8 +588,8 @@ const faqLd = {
         })
         .join("");
       root.addEventListener("click", (e) => {
-        const btn = e.target.closest(".tr-chip");
-        if (btn) apply(btn.getAttribute("data-lang"));
+        const btn = (e.target as HTMLElement).closest(".tr-chip");
+        if (btn) apply(btn.getAttribute("data-lang") || "en");
       });
       apply("ja"); // default to the Japanese view the static markup showed
     }
