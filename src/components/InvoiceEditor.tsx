@@ -162,6 +162,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       lines: lines.map((l) => ({ id: l.id, description: l.description, qty: num(l.qty), rate: num(l.rate), taxRate: taxNum })),
     });
     if (!id) { setId(invoice.id); window.history.replaceState(null, "", `/${docType === "estimate" ? "estimate" : "invoice"}?id=${invoice.id}`); }
+    // save() re-mints the number if another tab took it — reflect that here
+    if (invoice.number !== number) setNumber(invoice.number);
     return invoice.id;
   }, [id, clientId, businessId, number, docType, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
 

@@ -66,18 +66,25 @@ export async function ensureSettings(): Promise<Settings> {
   return fresh;
 }
 
+// Counter updates run inside a single rw transaction: the read-modify-write
+// must be atomic or two tabs (or translate + draft at once) lose updates.
+
 /** Spend one AI use; returns the new remaining count. */
 export async function consumeAiUse(): Promise<number> {
-  const s = await ensureSettings();
-  const left = Math.max(0, (s.aiUsesLeft ?? FREE_AI_USES) - 1);
-  await db.settings.update("singleton", { aiUsesLeft: left });
-  return left;
+  return db.transaction("rw", db.settings, async () => {
+    const s = await ensureSettings();
+    const left = Math.max(0, (s.aiUsesLeft ?? FREE_AI_USES) - 1);
+    await db.settings.update("singleton", { aiUsesLeft: left });
+    return left;
+  });
 }
 
-/** Add purchased AI uses (after a redeemed license key); returns the new total. */
+/** Add purchased AI uses (after a verified purchase); returns the new total. */
 export async function grantAiUses(n: number): Promise<number> {
-  const s = await ensureSettings();
-  const total = (s.aiUsesLeft ?? FREE_AI_USES) + Math.max(0, Math.floor(n));
-  await db.settings.update("singleton", { aiUsesLeft: total });
-  return total;
+  return db.transaction("rw", db.settings, async () => {
+    const s = await ensureSettings();
+    const total = (s.aiUsesLeft ?? FREE_AI_USES) + Math.max(0, Math.floor(n));
+    await db.settings.update("singleton", { aiUsesLeft: total });
+    return total;
+  });
 }
