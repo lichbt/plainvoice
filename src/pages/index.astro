@@ -1,6 +1,26 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Logo from "../components/Logo.astro";
+
+// FAQ — drives both the visible section AND the FAQPage schema (must match).
+const faqs = [
+  { q: "Is Plainvoice really free?", a: "Yes. Unlimited invoices, clients and estimates — free, forever, with no caps. There's no trial that expires; the core stays free." },
+  { q: "Do I need to create an account?", a: "No. There's no signup and no login. Your data is stored locally on your own device, and you can export it any time." },
+  { q: "Will the price suddenly go up, or features disappear?", a: "No. Our Pricing Promise is in writing: existing users are grandfathered, we tell you before any change, and we never remove a feature you already have." },
+  { q: "What do I actually pay for?", a: "Only optional AI features — describing an invoice in a sentence, reading a photo of a printed invoice, or translating an invoice into your client's language. Making invoices by hand is always free." },
+  { q: "Do you take a cut of the payments my clients make?", a: "No — 0%. Plainvoice never touches the money your clients pay you. Get-paid links go straight to you." },
+  { q: "Can I invoice a client in another language?", a: "Yes. Pick a language and the whole invoice — labels, dates and currency — switches in one tap. The standard labels are free; only your own wording uses AI." },
+  { q: "Does it work on my phone and offline?", a: "Yes. Plainvoice is a Progressive Web App — add it to your home screen and it opens like an app and works offline. Everything runs on your device." },
+];
+const faqLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
 ---
 <Layout>
   <nav class="site" id="nav">
@@ -12,6 +32,7 @@ import Logo from "../components/Logo.astro";
         <a href="#languages">Languages</a>
         <a href="#ai">AI</a>
         <a href="#app">App</a>
+        <a href="#faq">FAQ</a>
         <a href="/blog">Blog</a>
         <a class="btn btn-primary btn-sm" href="/new">Try the editor</a>
       </div>
@@ -214,6 +235,22 @@ import Logo from "../components/Logo.astro";
       </div>
     </div>
   </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="sec-eyebrow reveal">Questions</div>
+      <h2 class="sec reveal">No fine print. Ask away.</h2>
+      <div class="faq-list reveal">
+        {faqs.map((f) => (
+          <details class="faq-item">
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+  <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
 
   <footer class="site">
     <div class="wrap foot-in">
