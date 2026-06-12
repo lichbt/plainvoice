@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useEscape } from "../lib/useEscape";
 import { formatMoney } from "../lib/totals";
-import { buildInvoicePdf } from "../lib/pdf";
 import type { PreviewData } from "./InvoicePreview";
+
+// pdf-lib is ~1.3MB — pulled in only when the PDF is actually built
+const buildInvoicePdf = async (data: PreviewData) => (await import("../lib/pdf")).buildInvoicePdf(data);
 
 // Send via the user's own channels — Flow 4. No server, nothing routed through us:
 //  • Mobile (navigator.canShare with files) → native share sheet with the PDF attached.

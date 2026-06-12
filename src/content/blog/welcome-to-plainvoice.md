@@ -29,3 +29,5 @@ photo of a paper invoice. Making invoices by hand is always free.
 That's the whole model. No surprises, in writing, permanently.
 
 [Create your first invoice →](/new)
+
+*More on how it works: the [pricing promise](/#promise), [invoicing in your client's language](/blog/invoice-in-your-clients-language/), and the [FAQ](/#faq).*

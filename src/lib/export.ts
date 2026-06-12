@@ -1,12 +1,10 @@
 // Full export — the trust promise: "one-click export, any time, no hostages."
 // Never gated. Produces a CSV of invoices + clients, and a merged PDF of every invoice.
 import Papa from "papaparse";
-import { PDFDocument } from "pdf-lib";
 import { db } from "../db/db";
 import { today as todayStr } from "../db/repos";
 import { isOverdue } from "./totals";
 import { buildPreviewData } from "./invoiceView";
-import { buildInvoicePdf } from "./pdf";
 
 function download(filename: string, data: BlobPart, type: string) {
   const blob = new Blob([data], { type });
@@ -146,6 +144,8 @@ export async function exportAllInvoicesPdf(): Promise<number> {
   const byClient = new Map(clients.map((c) => [c.id, c]));
   const today = todayStr();
 
+  // pdf-lib (~1.3MB) loads on demand — only when this export actually runs
+  const [{ buildInvoicePdf }, { PDFDocument }] = await Promise.all([import("./pdf"), import("pdf-lib")]);
   const master = await PDFDocument.create();
   for (const inv of invoices.sort((a, b) => a.number.localeCompare(b.number))) {
     const [lines, pays] = await Promise.all([
