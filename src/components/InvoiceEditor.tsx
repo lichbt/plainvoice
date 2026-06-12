@@ -62,8 +62,10 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [issueDate, setIssueDate] = useState(today());
   const [dueDate, setDueDate] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [poNumber, setPoNumber] = useState("");
   const [taxRate, setTaxRate] = useState("0");
   const [discount, setDiscount] = useState("0");
+  const [shipping, setShipping] = useState("0");
   const [notes, setNotes] = useState("");
   const [terms, setTerms] = useState("");
   const [template, setTemplate] = useState<string>(DEFAULT_TEMPLATE.id);
@@ -121,8 +123,10 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           setIssueDate(invoice.issueDate);
           setDueDate(invoice.dueDate ?? "");
           setCurrency(invoice.currency);
+          setPoNumber(invoice.poNumber ?? "");
           setTaxRate(String(ls[0]?.taxRate ?? 0));
           setDiscount(String(invoice.discount));
+          setShipping(String(invoice.shipping ?? 0));
           setNotes(invoice.notes ?? "");
           setTerms(invoice.terms ?? "");
           setTemplate(invoice.template ?? DEFAULT_TEMPLATE.id);
@@ -169,15 +173,16 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     [lines, taxNum],
   );
   const totals = useMemo(
-    () => computeTotals({ currency, discount: num(discount), lines: computeLines }),
-    [currency, discount, computeLines],
+    () => computeTotals({ currency, discount: num(discount), shipping: num(shipping), lines: computeLines }),
+    [currency, discount, shipping, computeLines],
   );
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const persist = useCallback(async (): Promise<string> => {
     const { invoice } = await invoices.save({
       id, clientId, businessId, number, docType, status, issueDate,
-      dueDate: dueDate || undefined, currency, discount: num(discount),
+      dueDate: dueDate || undefined, poNumber: poNumber.trim() || undefined,
+      currency, discount: num(discount), shipping: num(shipping),
       notes: notes || undefined, terms: terms || undefined,
       template, accentColor: accentColor || undefined,
       lines: lines.map((l) => ({ id: l.id, description: l.description, qty: num(l.qty), rate: num(l.rate), taxRate: taxNum })),
@@ -186,12 +191,12 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     // save() re-mints the number if another tab took it — reflect that here
     if (invoice.number !== number) setNumber(invoice.number);
     return invoice.id;
-  }, [id, clientId, businessId, number, docType, status, issueDate, dueDate, currency, discount, notes, terms, template, accentColor, lines, taxNum]);
+  }, [id, clientId, businessId, number, docType, status, issueDate, dueDate, poNumber, currency, discount, shipping, notes, terms, template, accentColor, lines, taxNum]);
 
   // A brand-new, untouched invoice is "empty" — don't autosave it (avoids
   // littering the list with $0 draft rows just from opening /new).
   const isEmptyNew =
-    !id && !clientId && num(discount) === 0 &&
+    !id && !clientId && num(discount) === 0 && num(shipping) === 0 && !poNumber.trim() &&
     lines.every((l) => !l.description.trim() && num(l.rate) === 0);
 
   useEffect(() => {
@@ -304,9 +309,10 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const preview: PreviewData = {
     business: business ? { name: business.name, logoDataUrl: business.logoDataUrl, address: business.address, email: business.email, taxId: business.taxId } : undefined,
     client: client ? { name: client.name, email: client.email, address: client.address } : undefined,
-    number, docType, status: displayStatus, issueDate, dueDate: dueDate || undefined, currency,
+    number, docType, status: displayStatus, issueDate, dueDate: dueDate || undefined,
+    poNumber: poNumber.trim() || undefined, currency,
     lines: lines.map((l, i) => ({ description: tx?.lineDescriptions[i] ?? l.description, qty: num(l.qty), rate: num(l.rate), amount: totals.lineAmounts[i] })),
-    subtotal: totals.subtotal, taxTotal: totals.taxTotal, discount: totals.discount, total: totals.total,
+    subtotal: totals.subtotal, taxTotal: totals.taxTotal, discount: totals.discount, shipping: totals.shipping, total: totals.total,
     paid: isEstimate ? undefined : (paid > 0 ? paid : undefined),
     notes: (tx?.notes ?? notes) || undefined, terms: (tx?.terms ?? terms) || undefined,
     paymentLink: isEstimate ? undefined : business?.paymentLink, // estimates aren't payable
@@ -364,6 +370,8 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     if (d.currency) setCurrency(d.currency);
     if (d.dueInDays) setDueDate(addDays(issueDate, d.dueInDays));
     if (d.notes) setNotes((n) => (n ? n : d.notes!));
+    if (d.poNumber) setPoNumber((p) => (p ? p : d.poNumber!));
+    if (d.shipping) setShipping((s) => (num(s) > 0 ? s : String(d.shipping)));
     if (d.clientName) {
       const match = clientList.find((c) => c.name.toLowerCase() === d.clientName!.toLowerCase());
       if (match) setClientId(match.id);
@@ -501,6 +509,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
               <div className="sh-meta">
                 <div className="fld sh-m"><label>Issued</label><input type="date" aria-label="Issue date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
                 <div className="fld sh-m"><label>Due</label><input type="date" aria-label="Due date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
+                <div className="fld sh-m sh-po"><label>PO number</label><input aria-label="PO number" placeholder="—" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} /></div>
                 <div className="fld sh-m sh-ccy"><label>Currency</label>
                   <select value={currency} aria-label="Currency" onChange={(e) => setCurrency(e.target.value)}>
                     {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -583,11 +592,13 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
                 <div className="row2">
                   <div className="fld"><label>Tax %</label><input type="number" aria-label="Tax %" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} /></div>
                   <div className="fld"><label>Discount</label><input type="number" aria-label="Discount" value={discount} onChange={(e) => setDiscount(e.target.value)} /></div>
+                  <div className="fld"><label>Shipping</label><input type="number" aria-label="Shipping" value={shipping} onChange={(e) => setShipping(e.target.value)} /></div>
                 </div>
                 <div className="totals">
                   <div className="tot-row"><span>Subtotal</span><span className="mono">{fmt(totals.subtotal, currency)}</span></div>
                   {totals.taxTotal > 0 ? <div className="tot-row"><span>Tax</span><span className="mono">{fmt(totals.taxTotal, currency)}</span></div> : null}
                   {totals.discount > 0 ? <div className="tot-row"><span>Discount</span><span className="mono">−{fmt(totals.discount, currency)}</span></div> : null}
+                  {totals.shipping > 0 ? <div className="tot-row"><span>Shipping</span><span className="mono">{fmt(totals.shipping, currency)}</span></div> : null}
                   {paid > 0 ? (
                     <>
                       <div className="tot-row"><span>Total</span><span className="mono">{fmt(totals.total, currency)}</span></div>

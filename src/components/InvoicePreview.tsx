@@ -32,11 +32,13 @@ export interface PreviewData {
   status: string;
   issueDate: string;
   dueDate?: string;
+  poNumber?: string;
   currency: string;
   lines: PreviewLine[];
   subtotal: number;
   taxTotal: number;
   discount: number;
+  shipping?: number;
   total: number;
   paid?: number; // sum of recorded payments
   notes?: string;
@@ -75,6 +77,7 @@ export function InvoicePreview({ data }: { data: PreviewData }) {
         <span className="big">{docNoun} #{data.number}</span>
         {L.issued} {d(data.issueDate)}
         {data.dueDate ? <><br />{L.due} {d(data.dueDate)}</> : null}
+        {data.poNumber ? <><br />{L.po} {data.poNumber}</> : null}
       </div>
     </div>
   );
@@ -125,6 +128,7 @@ export function InvoicePreview({ data }: { data: PreviewData }) {
         <div className="r"><span>{L.subtotal}</span><span className="mono">{m(data.subtotal)}</span></div>
         {data.taxTotal > 0 ? <div className="r"><span>{L.tax}</span><span className="mono">{m(data.taxTotal)}</span></div> : null}
         {data.discount > 0 ? <div className="r"><span>{L.discount}</span><span className="mono">−{m(data.discount)}</span></div> : null}
+        {data.shipping && data.shipping > 0 ? <div className="r"><span>{L.shipping}</span><span className="mono">{m(data.shipping)}</span></div> : null}
         {data.paid && data.paid > 0 ? (
           <>
             <div className="r"><span>{L.total}</span><span className="mono">{m(data.total)}</span></div>

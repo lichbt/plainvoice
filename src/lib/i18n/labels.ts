@@ -10,7 +10,7 @@ export type LabelKey =
   | "docInvoice" | "docEstimate"
   | "issued" | "due" | "billedTo" | "status"
   | "description" | "qty" | "rate" | "amount"
-  | "subtotal" | "tax" | "discount" | "total" | "totalDue" | "paid" | "balanceDue"
+  | "subtotal" | "tax" | "discount" | "shipping" | "total" | "totalDue" | "paid" | "balanceDue" | "po"
   | "payOnline" | "notes" | "terms" | "noLines"
   | "st_draft" | "st_sent" | "st_viewed" | "st_paid" | "st_overdue" | "st_accepted" | "st_declined";
 
@@ -58,6 +58,7 @@ const EN: Record<LabelKey, string> = {
   payOnline: "Pay online", notes: "Notes", terms: "Terms", noLines: "No line items yet",
   st_draft: "Draft", st_sent: "Sent", st_viewed: "Viewed", st_paid: "Paid",
   st_overdue: "Overdue", st_accepted: "Accepted", st_declined: "Declined",
+    po: "PO number", shipping: "Shipping",
 };
 
 type Partial = { [K in LabelKey]?: string };
@@ -73,6 +74,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "Pagar en línea", notes: "Notas", terms: "Condiciones", noLines: "Sin líneas todavía",
     st_draft: "Borrador", st_sent: "Enviada", st_viewed: "Vista", st_paid: "Pagada",
     st_overdue: "Vencida", st_accepted: "Aceptado", st_declined: "Rechazado",
+    po: "Nº de pedido", shipping: "Envío",
   },
   fr: {
     docInvoice: "Facture", docEstimate: "Devis",
@@ -83,6 +85,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "Payer en ligne", notes: "Notes", terms: "Conditions", noLines: "Aucune ligne pour l’instant",
     st_draft: "Brouillon", st_sent: "Envoyée", st_viewed: "Vue", st_paid: "Payée",
     st_overdue: "En retard", st_accepted: "Accepté", st_declined: "Refusé",
+    po: "N° de commande", shipping: "Livraison",
   },
   de: {
     docInvoice: "Rechnung", docEstimate: "Angebot",
@@ -93,6 +96,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "Online bezahlen", notes: "Notizen", terms: "Bedingungen", noLines: "Noch keine Positionen",
     st_draft: "Entwurf", st_sent: "Gesendet", st_viewed: "Angesehen", st_paid: "Bezahlt",
     st_overdue: "Überfällig", st_accepted: "Angenommen", st_declined: "Abgelehnt",
+    po: "Bestellnummer", shipping: "Versand",
   },
   pt: {
     docInvoice: "Fatura", docEstimate: "Orçamento",
@@ -103,6 +107,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "Pagar online", notes: "Notas", terms: "Condições", noLines: "Ainda sem itens",
     st_draft: "Rascunho", st_sent: "Enviada", st_viewed: "Vista", st_paid: "Paga",
     st_overdue: "Vencida", st_accepted: "Aceite", st_declined: "Recusado",
+    po: "Nº de encomenda", shipping: "Envio",
   },
   it: {
     docInvoice: "Fattura", docEstimate: "Preventivo",
@@ -113,6 +118,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "Paga online", notes: "Note", terms: "Termini", noLines: "Ancora nessuna voce",
     st_draft: "Bozza", st_sent: "Inviata", st_viewed: "Vista", st_paid: "Pagata",
     st_overdue: "Scaduta", st_accepted: "Accettato", st_declined: "Rifiutato",
+    po: "N. ordine", shipping: "Spedizione",
   },
   nl: {
     docInvoice: "Factuur", docEstimate: "Offerte",
@@ -123,6 +129,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "Online betalen", notes: "Notities", terms: "Voorwaarden", noLines: "Nog geen regels",
     st_draft: "Concept", st_sent: "Verzonden", st_viewed: "Bekeken", st_paid: "Betaald",
     st_overdue: "Te laat", st_accepted: "Geaccepteerd", st_declined: "Afgewezen",
+    po: "PO-nummer", shipping: "Verzendkosten",
   },
   id: {
     docInvoice: "Faktur", docEstimate: "Penawaran",
@@ -133,6 +140,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "Bayar online", notes: "Catatan", terms: "Ketentuan", noLines: "Belum ada item",
     st_draft: "Draf", st_sent: "Terkirim", st_viewed: "Dilihat", st_paid: "Lunas",
     st_overdue: "Terlambat", st_accepted: "Diterima", st_declined: "Ditolak",
+    po: "No. PO", shipping: "Ongkos kirim",
   },
   vi: {
     docInvoice: "Hóa đơn", docEstimate: "Báo giá",
@@ -143,6 +151,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "Thanh toán trực tuyến", notes: "Ghi chú", terms: "Điều khoản", noLines: "Chưa có mục nào",
     st_draft: "Nháp", st_sent: "Đã gửi", st_viewed: "Đã xem", st_paid: "Đã thanh toán",
     st_overdue: "Quá hạn", st_accepted: "Đã chấp nhận", st_declined: "Đã từ chối",
+    po: "Số PO", shipping: "Phí vận chuyển",
   },
   ja: {
     docInvoice: "請求書", docEstimate: "見積書",
@@ -153,6 +162,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "オンライン支払い", notes: "備考", terms: "条件", noLines: "項目がありません",
     st_draft: "下書き", st_sent: "送信済", st_viewed: "閲覧済", st_paid: "支払済",
     st_overdue: "期限超過", st_accepted: "承認済", st_declined: "却下",
+    po: "注文書番号", shipping: "送料",
   },
   zh: {
     docInvoice: "发票", docEstimate: "报价单",
@@ -163,6 +173,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "在线支付", notes: "备注", terms: "条款", noLines: "暂无项目",
     st_draft: "草稿", st_sent: "已发送", st_viewed: "已查看", st_paid: "已付款",
     st_overdue: "逾期", st_accepted: "已接受", st_declined: "已拒绝",
+    po: "采购订单号", shipping: "运费",
   },
   ko: {
     docInvoice: "청구서", docEstimate: "견적서",
@@ -173,6 +184,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "온라인 결제", notes: "비고", terms: "약관", noLines: "항목이 없습니다",
     st_draft: "임시", st_sent: "발송됨", st_viewed: "열람됨", st_paid: "지급됨",
     st_overdue: "연체", st_accepted: "수락됨", st_declined: "거절됨",
+    po: "발주 번호", shipping: "배송비",
   },
   th: {
     docInvoice: "ใบแจ้งหนี้", docEstimate: "ใบเสนอราคา",
@@ -183,6 +195,7 @@ const DICT: Record<string, Partial> = {
     payOnline: "ชำระเงินออนไลน์", notes: "หมายเหตุ", terms: "เงื่อนไข", noLines: "ยังไม่มีรายการ",
     st_draft: "ร่าง", st_sent: "ส่งแล้ว", st_viewed: "เปิดดูแล้ว", st_paid: "ชำระแล้ว",
     st_overdue: "เกินกำหนด", st_accepted: "ยอมรับแล้ว", st_declined: "ปฏิเสธแล้ว",
+    po: "เลขที่ใบสั่งซื้อ", shipping: "ค่าจัดส่ง",
   },
 };
 

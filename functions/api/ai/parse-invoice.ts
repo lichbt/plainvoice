@@ -56,7 +56,9 @@ const SYSTEM = [
   "Merge duplicate mentions of the same item — never list one item twice.",
   "Do not invent items, do not compute sums or totals, do not add tax or discounts.",
   "If a client/customer is named, set clientName. If a payment term like 'net 30' or",
-  "'due in 2 weeks' is stated, set dueInDays. Use the draft_invoice function only.",
+  "'due in 2 weeks' is stated, set dueInDays. If a purchase-order / PO reference is",
+  "mentioned, set poNumber. If a separate shipping or delivery charge is stated, set",
+  "shipping to that amount (it is NOT a line item). Use the draft_invoice function only.",
 ].join(" ");
 
 const TOOL = {
@@ -71,6 +73,8 @@ const TOOL = {
         clientName: { type: "string", description: "the client/customer name if mentioned" },
         dueInDays: { type: "integer", description: "payment term in days if stated (e.g. net 30 -> 30)" },
         notes: { type: "string", description: "any non-line note the user wants on the invoice" },
+        poNumber: { type: "string", description: "purchase-order / PO reference if mentioned" },
+        shipping: { type: "number", description: "flat shipping/delivery charge if stated; not a line item" },
         lines: {
           type: "array",
           items: {
@@ -110,6 +114,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
   if (text.length > MAX_INPUT) return json({ error: "too_long" }, 413);
 
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  console.log("ai.parse-invoice kv_bound", !!env.AI_KV);
   const limit = await withinLimits(env, ip);
   if (!limit.ok) return json({ error: limit.reason }, 429);
 

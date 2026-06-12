@@ -35,6 +35,7 @@ export interface Totals {
   subtotal: number;
   taxTotal: number;
   discount: number;
+  shipping: number;
   total: number;
   lineAmounts: number[]; // recomputed amount per input line, in order
 }
@@ -43,6 +44,8 @@ export interface ComputeInput {
   lines: Pick<InvoiceLine, "qty" | "rate" | "taxRate">[];
   /** Absolute discount amount in currency units (applied to subtotal). */
   discount?: number;
+  /** Flat shipping/delivery cost — added after tax, never discounted or taxed. */
+  shipping?: number;
   currency: string;
 }
 
@@ -76,8 +79,11 @@ export function computeTotals(input: ComputeInput): Totals {
   });
   taxTotal = roundMoney(taxTotal, currency);
 
-  const total = roundMoney(subtotal - discount + taxTotal, currency);
-  return { subtotal, taxTotal, discount, total, lineAmounts };
+  const rawShipping = Number.isFinite(input.shipping) ? (input.shipping as number) : 0;
+  const shipping = roundMoney(Math.max(rawShipping, 0), currency);
+
+  const total = roundMoney(subtotal - discount + taxTotal + shipping, currency);
+  return { subtotal, taxTotal, discount, shipping, total, lineAmounts };
 }
 
 /** Format a number as currency for display (uses Intl). Pass a locale to match

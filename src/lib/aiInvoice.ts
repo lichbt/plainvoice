@@ -10,6 +10,8 @@ export interface AiInvoiceDraft {
   dueInDays?: number;
   currency?: string;
   notes?: string;
+  poNumber?: string;
+  shipping?: number;
 }
 
 const toNum = (v: unknown): number | null => {
@@ -47,6 +49,12 @@ export function parseAiDraft(raw: unknown): AiInvoiceDraft {
 
   const notes = typeof d.notes === "string" ? d.notes.trim() : "";
   if (notes) out.notes = notes;
+
+  const po = typeof d.poNumber === "string" ? d.poNumber.trim() : "";
+  if (po) out.poNumber = po.slice(0, 60);
+
+  const ship = toNum(d.shipping);
+  if (ship !== null && ship > 0) out.shipping = ship;
 
   return out;
 }
