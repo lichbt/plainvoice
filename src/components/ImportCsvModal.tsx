@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useEscape } from "../lib/useEscape";
 import { parseCsvFile, importClients, importInvoices } from "../lib/csvImport";
 
 type Kind = "clients" | "invoices";
@@ -6,6 +7,7 @@ type Kind = "clients" | "invoices";
 export function ImportCsvModal({ onClose, onDone }: { onClose: () => void; onDone: (msg: string) => void }) {
   const [kind, setKind] = useState<Kind>("clients");
   const [busy, setBusy] = useState(false);
+  useEscape(onClose, !busy);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -25,7 +27,7 @@ export function ImportCsvModal({ onClose, onDone }: { onClose: () => void; onDon
   return (
     <div className="overlay" onClick={busy ? undefined : onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        {!busy && <button className="x" onClick={onClose} aria-label="Close">×</button>}
+        {!busy && <button type="button" className="x" onClick={onClose} aria-label="Close">×</button>}
         <h3>Import from CSV</h3>
         <p className="m-lead">Bring clients or invoices in from a spreadsheet or another app. We map common column names automatically.</p>
 

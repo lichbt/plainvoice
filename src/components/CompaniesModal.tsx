@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEscape } from "../lib/useEscape";
 import { useLiveQuery } from "dexie-react-hooks";
 import { businesses as bizRepo } from "../db/repos";
 import { db, ensureSettings } from "../db/db";
@@ -7,6 +8,7 @@ import { BusinessProfileModal } from "./BusinessProfileModal";
 
 // Manager for the saved company list — view, add, edit, delete.
 export function CompaniesModal({ currency, onClose }: { currency: string; onClose: () => void }) {
+  useEscape(onClose);
   const list = useLiveQuery(() => bizRepo.all(), [], [] as Business[]);
   const [edit, setEdit] = useState<Business | "new" | null>(null);
 
@@ -24,7 +26,7 @@ export function CompaniesModal({ currency, onClose }: { currency: string; onClos
     <>
       <div className="overlay" onClick={onClose}>
         <div className="modal" onClick={(e) => e.stopPropagation()}>
-          <button className="x" onClick={onClose} aria-label="Close">×</button>
+          <button type="button" className="x" onClick={onClose} aria-label="Close">×</button>
           <h3>Saved companies</h3>
           <p className="m-lead">Your businesses. Pick which one issues each invoice.</p>
 

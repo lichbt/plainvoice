@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEscape } from "../lib/useEscape";
 import { useLiveQuery } from "dexie-react-hooks";
 import { items as itemRepo } from "../db/repos";
 import type { Item } from "../db/types";
@@ -7,6 +8,7 @@ import { formatMoney } from "../lib/totals";
 // Manage the saved item/service catalog (Spec §5: "client/item catalog").
 export function ItemsModal({ currency, onClose }: { currency: string; onClose: () => void }) {
   const list = useLiveQuery(() => itemRepo.all(), [], [] as Item[]);
+  useEscape(onClose);
   const [name, setName] = useState("");
   const [rate, setRate] = useState("");
 
@@ -20,7 +22,7 @@ export function ItemsModal({ currency, onClose }: { currency: string; onClose: (
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="x" onClick={onClose} aria-label="Close">×</button>
+        <button type="button" className="x" onClick={onClose} aria-label="Close">×</button>
         <h3>Saved items</h3>
         <p className="m-lead">Reusable products &amp; services. Pick them by name on any invoice to auto-fill the rate.</p>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useEscape } from "../lib/useEscape";
 import { grantAiUses } from "../db/db";
 import { BUY_USES_URL, USES_PER_PACK, PACK_PRICE } from "../lib/links";
 
@@ -34,6 +35,7 @@ function embedUrl(url: string): string {
 
 export function BuyUsesModal({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false);
+  useEscape(onClose, !busy);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState<number | null>(null);
 
@@ -101,7 +103,7 @@ export function BuyUsesModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="x" onClick={onClose} aria-label="Close">×</button>
+        <button type="button" className="x" onClick={onClose} aria-label="Close">×</button>
 
         {added !== null ? (
           <div className="buy-done">

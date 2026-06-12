@@ -85,6 +85,14 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [transCache, setTransCache] = useState<Record<string, CachedTranslation>>({});
   const pendingPdf = useRef(false);
   const pendingSend = useRef(false);
+  // quiet autosave feedback: "Saving…" while the debounce is pending/in-flight,
+  // a brief "✓ Saved" after it lands, then nothing.
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  // first-run guidance: shown once, on a brand-new doc, until dismissed
+  const [showQuickstart, setShowQuickstart] = useState(false);
+  const dismissQuickstart = () => { setShowQuickstart(false); try { localStorage.setItem("pv-quickstart-done", "1"); } catch { /* private mode */ } };
 
   const clientList = useLiveQuery(() => clients.all(), [], [] as Client[]);
   const itemList = useLiveQuery(() => items.all(), [], [] as Item[]);
@@ -138,6 +146,12 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("photo")) {
         setShowPhoto(true);
       }
+      // very first visit with an empty book → show the quickstart card once
+      try {
+        if (!localStorage.getItem("pv-quickstart-done") && (await db.invoices.count()) === 0) {
+          setShowQuickstart(true);
+        }
+      } catch { /* private mode */ }
     })();
   }, [initialId]);
 
@@ -176,7 +190,15 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   useEffect(() => {
     if (!loaded || isEmptyNew) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => { saveTimer.current = null; void persist(); }, 600);
+    setSaveState("saving");
+    saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
+      void persist().then(() => {
+        setSaveState("saved");
+        if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
+        savedFlashTimer.current = setTimeout(() => setSaveState("idle"), 1600);
+      });
+    }, 600);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [loaded, isEmptyNew, persist]);
 
@@ -377,8 +399,14 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
 
   async function handlePdf() {
     if (!business?.name) { pendingPdf.current = true; setProfileEdit("new"); return; }
-    await persist();
-    await exportInvoicePdf(preview);
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      await persist();
+      await exportInvoicePdf(preview);
+    } finally {
+      setPdfBusy(false);
+    }
   }
 
   async function convertToInvoice() {
@@ -429,8 +457,11 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
             </div>
           </div>
           <div className="app-actions">
+            <span className={`save-ind${saveState !== "idle" ? " show" : ""}`} aria-live="polite">
+              {saveState === "saving" ? "Saving…" : saveState === "saved" ? "✓ Saved" : ""}
+            </span>
             {isEstimate && <button className="btn btn-ghost btn-sm" onClick={convertToInvoice}>Convert to invoice</button>}
-            <button className="btn btn-ghost btn-sm" onClick={handlePdf}>Download PDF</button>
+            <button className="btn btn-ghost btn-sm" onClick={handlePdf} disabled={pdfBusy}>{pdfBusy ? "Preparing…" : "Download PDF"}</button>
             <button className="btn btn-primary btn-sm" onClick={openSend}>Send</button>
           </div>
         </div>
@@ -440,6 +471,17 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       <div className="editor">
         {/* form */}
         <div>
+          {showQuickstart && (
+            <div className="quickstart" role="note">
+              <button type="button" className="qs-x" aria-label="Dismiss" onClick={dismissQuickstart}>×</button>
+              <strong>👋 Your first {isEstimate ? "estimate" : "invoice"} — three ways to fill it:</strong>
+              <ul>
+                <li>✨ <b>Describe it</b> (or paste a client chat) in the AI box below — it drafts the lines for you</li>
+                <li>📷 <b>Snap a photo</b> of a past invoice and we'll rebuild it as a draft</li>
+                <li>✍️ Or fill it in by hand — everything autosaves on your device, no signup</li>
+              </ul>
+            </div>
+          )}
           <div className="panel">
             <h3>Details</h3>
             <div className="row2">
@@ -614,7 +656,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
           defaultCurrency={currency}
         />
       )}
-      {showPayment && <RecordPaymentModal currency={currency} balanceDue={balance} onClose={() => setShowPayment(false)} onSave={recordPayment} />}
+      {showPayment && <RecordPaymentModal currency={currency} balanceDue={balance} paidSoFar={paid} onClose={() => setShowPayment(false)} onSave={recordPayment} />}
       {showSend && (
         <SendModal
           to={client?.email ?? ""} number={number} total={totals.total} currency={currency}
