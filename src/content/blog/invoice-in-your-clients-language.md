@@ -35,3 +35,5 @@ Jakarta, this is the difference between a polished, local-feeling invoice and a
 wall of English. None of the big apps lead with it.
 
 [Try it on an invoice →](/new)
+
+*See the [interactive language demo](/#languages) on the homepage, or read [our pricing promise](/#promise) — the core app is free forever.*

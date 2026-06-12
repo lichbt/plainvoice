@@ -17,7 +17,10 @@ import { ItemsModal } from "./ItemsModal";
 import { ClientsModal } from "./ClientsModal";
 import { CompaniesModal } from "./CompaniesModal";
 import type { OcrLine } from "../lib/ocr";
-import { exportInvoicePdf } from "../lib/pdf";
+// pdf-lib (+fontkit) is ~1.3MB — loaded on demand the first time a PDF is
+// actually exported, not with the editor.
+const lazyExportPdf = async (data: import("./InvoicePreview").PreviewData) =>
+  (await import("../lib/pdf")).exportInvoicePdf(data);
 import { ACCENTS, DEFAULT_TEMPLATE } from "../lib/templates";
 import { DONATE_URL } from "../lib/links";
 import { AiDraftBar } from "./AiDraftBar";
@@ -403,7 +406,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     setPdfBusy(true);
     try {
       await persist();
-      await exportInvoicePdf(preview);
+      await lazyExportPdf(preview);
     } finally {
       setPdfBusy(false);
     }
@@ -422,7 +425,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     if (pendingPdf.current) {
       pendingPdf.current = false;
       await persist();
-      await exportInvoicePdf({ ...preview, business: { name: saved.name, logoDataUrl: saved.logoDataUrl, address: saved.address, email: saved.email, taxId: saved.taxId } });
+      await lazyExportPdf({ ...preview, business: { name: saved.name, logoDataUrl: saved.logoDataUrl, address: saved.address, email: saved.email, taxId: saved.taxId } });
     }
     if (pendingSend.current) { pendingSend.current = false; setShowSend(true); }
   }

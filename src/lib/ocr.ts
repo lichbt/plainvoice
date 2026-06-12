@@ -1,7 +1,9 @@
 // On-device OCR of a printed invoice photo (Spec §6) — free, runs in the browser
 // via Tesseract.js. Best-effort parse into editable line items; the user confirms
 // everything (Hard Rule #3: AI/extraction output is always an editable draft).
-import Tesseract from "tesseract.js";
+//
+// Tesseract is ~1.6MB, so it's dynamic-imported here — only users who actually
+// scan a photo download it, not everyone who opens the editor.
 
 export interface OcrLine { description: string; qty: number; rate: number }
 export interface OcrResult { lines: OcrLine[]; rawText: string }
@@ -14,6 +16,7 @@ export async function recognizeInvoice(
   file: File | Blob,
   onProgress?: (pct: number) => void,
 ): Promise<OcrResult> {
+  const Tesseract = (await import("tesseract.js")).default;
   const { data } = await Tesseract.recognize(file, "eng", {
     logger: (m) => { if (m.status === "recognizing text" && onProgress) onProgress(Math.round(m.progress * 100)); },
   });
