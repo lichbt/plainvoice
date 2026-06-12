@@ -3,5 +3,5 @@
   <rect x="154" y="82" width="205" height="328" rx="40" fill="#FBF8F0" stroke="#211F18" stroke-width="18"/>
   <line x1="194" y1="159" x2="317" y2="159" stroke="#8B8678" stroke-width="18" stroke-linecap="round"/>
   <line x1="194" y1="205" x2="282" y2="205" stroke="#8B8678" stroke-width="18" stroke-linecap="round"/>
-  <path d="M205 271 C169 271 169 343 205 343 C241 343 261 271 297 271 C333 271 333 343 297 343 C261 343 241 271 205 271 Z" fill="none" stroke="#1E5B41" stroke-width="23" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M188.5 314 C188.5 266 245.2 266 256.5 314 C267.8 362 324.5 362 324.5 314 C324.5 266 267.8 266 256.5 314 C245.2 362 188.5 362 188.5 314 Z" fill="none" stroke="#1E5B41" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
