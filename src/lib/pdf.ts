@@ -24,7 +24,7 @@ function hexToRgb(hex: string): RGB {
 
 export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
-  const page = pdf.addPage([A4.w, A4.h]);
+  let page = pdf.addPage([A4.w, A4.h]);
   const tpl = getTemplate(data.template);
   const ACCENT = hexToRgb(resolveAccent(tpl, data.accentColor));
   const ON = hexToRgb(ON_ACCENT);
@@ -122,24 +122,34 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
 
   y = Math.min(by, billTop - 34) - 16;
 
+  // Pagination: long invoices continue on extra pages — the table header is
+  // repeated, and totals/notes flow to wherever the lines end.
+  const BOTTOM = M + 28;
+  const newPage = () => { page = pdf.addPage([A4.w, A4.h]); y = A4.h - M; };
+  const ensure = (needed: number) => { if (y - needed < BOTTOM) newPage(); };
+
   // line table header
   const cols = { desc: M, qty: 330, rate: 400, amount: right };
-  page.drawText(up(L.description), { x: cols.desc, y, size: 8, font: bold, color: INK2 });
-  rt(page, up(L.qty), cols.qty, y, 8, bold, INK2);
-  rt(page, up(L.rate), cols.rate, y, 8, bold, INK2);
-  rt(page, up(L.amount), cols.amount, y, 8, bold, INK2);
-  y -= 6; hr(page, y); y -= 14;
+  const tableHeader = () => {
+    page.drawText(up(L.description), { x: cols.desc, y, size: 8, font: bold, color: INK2 });
+    rt(page, up(L.qty), cols.qty, y, 8, bold, INK2);
+    rt(page, up(L.rate), cols.rate, y, 8, bold, INK2);
+    rt(page, up(L.amount), cols.amount, y, 8, bold, INK2);
+    y -= 6; hr(page, y); y -= 14;
+  };
+  tableHeader();
 
   for (const l of data.lines) {
+    if (y - 22 < BOTTOM) { newPage(); tableHeader(); }
     page.drawText(t(trim(l.description || "—", 48)), { x: cols.desc, y, size: 9, font, color: INK });
     rt(page, String(l.qty), cols.qty, y, 9, font, INK);
     rt(page, money(l.rate), cols.rate, y, 9, font, INK);
     rt(page, money(l.amount), cols.amount, y, 9, font, INK);
     y -= 8; hr(page, y, LINE); y -= 14;
-    if (y < 160) break; // single-page guard for MVP
   }
 
-  // totals
+  // totals — keep the whole block on one page
+  ensure(132);
   y -= 6;
   const tx = right - 200;
   const totalRow = (label: string, val: string, b = false) => {
@@ -167,6 +177,7 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
   // payment link (+ scannable QR) / notes / terms
   y -= 12;
   if (data.paymentLink) {
+    ensure(110); // label + link + QR block
     page.drawText(L.payOnline, { x: M, y, size: 9, font: bold, color: ACCENT });
     y = drawLines(page, [t(data.paymentLink)], M, y - 12, 8, font, INK2);
     try {
@@ -175,8 +186,29 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
     } catch { /* QR is best-effort */ }
     y -= 6;
   }
-  if (data.notes) { page.drawText(L.notes, { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(t(data.notes), 90), M, y - 12, 8, font, INK2); y -= 6; }
-  if (data.terms) { page.drawText(L.terms, { x: M, y, size: 9, font: bold, color: INK }); y = drawLines(page, wrap(t(data.terms), 90), M, y - 12, 8, font, INK2); }
+  // long notes/terms flow across pages line by line
+  const textBlock = (label: string, body: string) => {
+    ensure(34);
+    page.drawText(label, { x: M, y, size: 9, font: bold, color: INK });
+    y -= 12;
+    for (const line of wrap(t(body), 90)) {
+      if (y < BOTTOM) newPage();
+      page.drawText(line, { x: M, y, size: 8, font, color: INK2 });
+      y -= 11;
+    }
+    y -= 6;
+  };
+  if (data.notes) textBlock(L.notes, data.notes);
+  if (data.terms) textBlock(L.terms, data.terms);
+
+  // page numbers, only when the invoice spans multiple pages
+  const pages = pdf.getPages();
+  if (pages.length > 1) {
+    pages.forEach((p, i) => {
+      const txt = `${i + 1} / ${pages.length}`;
+      p.drawText(txt, { x: A4.w - M - font.widthOfTextAtSize(txt, 8), y: M - 20, size: 8, font, color: INK2 });
+    });
+  }
 
   return pdf.save();
 }
