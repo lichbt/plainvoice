@@ -136,6 +136,7 @@ export const onRequestPost = async (context: { request: Request; env: Env }): Pr
         max_tokens: 2000, // room for many line items from a long paste
         temperature: 0.2,
       }),
+      signal: AbortSignal.timeout(30_000),
     });
   } catch {
     return json({ error: "upstream_unreachable" }, 502);

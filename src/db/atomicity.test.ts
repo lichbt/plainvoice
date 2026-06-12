@@ -38,7 +38,7 @@ describe("invoice number uniqueness", () => {
     number,
     issueDate: "2026-06-12",
     currency: "USD",
-    lines: [{ description: "Work", qty: 1, rate: 100 }],
+    lines: [{ description: "Work", qty: 1, rate: 100, taxRate: 0 }],
   });
 
   it("re-mints when two fresh invoices arrive with the same auto-number", async () => {
