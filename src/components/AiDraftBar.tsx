@@ -97,7 +97,14 @@ export function AiDraftBar({
             </div>
           </div>
           <div className="ai-hint">Paste a messy thread — greetings and small talk are ignored. <kbd>⌘/Ctrl</kbd>+<kbd>Enter</kbd> to draft.</div>
-          {error && <div className="ai-error">{error}</div>}
+          {error && (
+            <div className="ai-error">
+              {error}
+              {text.trim().length >= 3 && (
+                <button type="button" className="ai-retry" onClick={draft} disabled={busy}>Try again</button>
+              )}
+            </div>
+          )}
         </>
       )}
       {buyOpen && <BuyUsesModal onClose={() => setBuyOpen(false)} />}

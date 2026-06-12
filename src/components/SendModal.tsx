@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEscape } from "../lib/useEscape";
 import { formatMoney } from "../lib/totals";
 import { buildInvoicePdf } from "../lib/pdf";
 import type { PreviewData } from "./InvoicePreview";
@@ -51,6 +52,7 @@ export function SendModal({
     `\n\nThank you,\n${businessName}`;
   const [body, setBody] = useState(defaultBody);
   const [sending, setSending] = useState(false);
+  useEscape(onClose, !sending);
 
   async function makePdfFile(): Promise<File> {
     const bytes = await buildInvoicePdf(preview);
@@ -84,7 +86,7 @@ export function SendModal({
   return (
     <div className="overlay" onClick={sending ? undefined : onClose}>
       <div className="modal wide" onClick={(e) => e.stopPropagation()}>
-        {!sending && <button className="x" onClick={onClose} aria-label="Close">×</button>}
+        {!sending && <button type="button" className="x" onClick={onClose} aria-label="Close">×</button>}
         <h3>Send {noun}</h3>
         <p className="m-lead">
           {shareMode

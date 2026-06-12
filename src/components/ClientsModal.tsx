@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEscape } from "../lib/useEscape";
 import { useLiveQuery } from "dexie-react-hooks";
 import { clients as clientRepo } from "../db/repos";
 import type { Client } from "../db/types";
@@ -6,6 +7,7 @@ import { ClientModal } from "./ClientModal";
 
 // Manager for the saved client list — view, add, edit, delete (Spec §5 catalog).
 export function ClientsModal({ onClose }: { onClose: () => void }) {
+  useEscape(onClose);
   const list = useLiveQuery(() => clientRepo.all(), [], [] as Client[]);
   const [edit, setEdit] = useState<Client | "new" | null>(null);
 
@@ -18,7 +20,7 @@ export function ClientsModal({ onClose }: { onClose: () => void }) {
     <>
       <div className="overlay" onClick={onClose}>
         <div className="modal" onClick={(e) => e.stopPropagation()}>
-          <button className="x" onClick={onClose} aria-label="Close">×</button>
+          <button type="button" className="x" onClick={onClose} aria-label="Close">×</button>
           <h3>Saved clients</h3>
           <p className="m-lead">Reusable client details. Pick them on any invoice.</p>
 

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useEscape } from "../lib/useEscape";
 import { recognizeInvoice, type OcrLine } from "../lib/ocr";
 import { downscaleImage } from "../lib/imagePrep";
 import { parseAiDraft, type AiInvoiceDraft } from "../lib/aiInvoice";
@@ -33,6 +34,7 @@ export function PhotoImportModal({
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const outOfUses = usesLeft <= 0;
+  useEscape(onClose, !scanning && !aiBusy);
 
   async function run(file: File) {
     setScanning(true); setError(null); setOcrLines([]); setImageData(""); setStatus("Preparing photo…");
@@ -84,7 +86,7 @@ export function PhotoImportModal({
   return (
     <div className="overlay" onClick={scanning || aiBusy ? undefined : onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        {!scanning && !aiBusy && <button className="x" onClick={onClose} aria-label="Close">×</button>}
+        {!scanning && !aiBusy && <button type="button" className="x" onClick={onClose} aria-label="Close">×</button>}
         <h3>Load from a photo</h3>
         <p className="m-lead">Snap a printed invoice and we rebuild it as an editable draft. The free read happens <strong>on your device</strong>; reading with AI sends the photo for the best result (messy receipts, handwriting).</p>
 

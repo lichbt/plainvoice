@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEscape } from "../lib/useEscape";
 import { businesses } from "../db/repos";
 import { db, ensureSettings } from "../db/db";
 import type { Business } from "../db/types";
@@ -18,6 +19,7 @@ export function BusinessProfileModal({
   onSaved: (business: Business) => void;
   onDeleted?: (id: string) => void;
 }) {
+  useEscape(onClose);
   const [name, setName] = useState(initial?.name ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
   const [address, setAddress] = useState(initial?.address ?? "");
@@ -64,7 +66,7 @@ export function BusinessProfileModal({
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="x" onClick={onClose} aria-label="Close">×</button>
+        <button type="button" className="x" onClick={onClose} aria-label="Close">×</button>
         <h3>{initial ? "Edit company" : "Your company"}</h3>
         <p className="m-lead">Shown on the invoice. We only ask for what we need.</p>
         <div className="fld"><label>Business name</label><input aria-label="Business name" value={name} onChange={(e) => setName(e.target.value)} autoFocus /></div>

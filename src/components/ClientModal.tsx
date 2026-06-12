@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEscape } from "../lib/useEscape";
 import { clients } from "../db/repos";
 import type { Client } from "../db/types";
 
@@ -12,6 +13,7 @@ export function ClientModal({
   onClose: () => void;
   onSaved: (client: Client) => void;
 }) {
+  useEscape(onClose);
   const [name, setName] = useState(initial?.name ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
   const [address, setAddress] = useState(initial?.address ?? "");
@@ -32,7 +34,7 @@ export function ClientModal({
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="x" onClick={onClose} aria-label="Close">×</button>
+        <button type="button" className="x" onClick={onClose} aria-label="Close">×</button>
         <h3>{initial ? "Edit client" : "New client"}</h3>
         <p className="m-lead">Saved to your client list for next time.</p>
         <div className="fld"><label>Name</label><input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} autoFocus /></div>
