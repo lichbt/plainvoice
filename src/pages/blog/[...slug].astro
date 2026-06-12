@@ -12,9 +12,10 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 const { title, description, pubDate, updatedDate, tags, author } = post.data;
-const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+const section = tags[0] ?? "Feature";
 
-// Recent articles (newest first, excluding this one).
+// Other recent stories (newest first, excluding this one).
 const recent = (await getCollection("blog", ({ data }) => import.meta.env.PROD ? !data.draft : true))
   .filter((p) => p.id !== post.id)
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
@@ -28,57 +29,60 @@ const recent = (await getCollection("blog", ({ data }) => import.meta.env.PROD ?
   modifiedTime={updatedDate?.toISOString()}
 >
   <SiteHeader />
-  <main class="post-wrap">
-    <a class="post-back" href="/blog">← All posts</a>
+  <main class="gz-wrap gz-article">
+    <!-- mini masthead links back to the front page -->
+    <div class="gz-mini"><a class="mono" href="/blog">The Plainvoice Gazette</a></div>
+
     <article>
-      <header class="post-header">
-        <div class="post-meta">
-          <time datetime={pubDate.toISOString()}>{fmt(pubDate)}</time>
-          <span>· {author}</span>
-          {updatedDate && <span>· updated {fmt(updatedDate)}</span>}
-        </div>
+      <header class="gz-art-head">
+        <div class="gz-kicker mono">{section} · {fmt(pubDate)}</div>
         <h1>{title}</h1>
-        <p class="post-desc">{description}</p>
-        {tags.length > 0 && (
-          <div class="post-tags">{tags.map((t) => <span class="pill">{t}</span>)}</div>
-        )}
+        <p class="gz-standfirst">{description}</p>
+        <div class="gz-byline mono">
+          By {author}{updatedDate && <span> · updated {fmt(updatedDate)}</span>}
+        </div>
       </header>
-      <div class="prose">
+      <div class="prose gz-prose">
         <Content />
       </div>
     </article>
 
     {recent.length > 0 && (
-      <section class="more-posts">
-        <div class="more-posts-head">
-          <h2>More from the blog</h2>
-          <a href="/blog">All posts →</a>
-        </div>
-        <ul>
+      <section class="gz-more">
+        <div class="gz-more-head mono">Also in the Gazette</div>
+        <div class="gz-cols gz-cols-tight">
           {recent.map((p) => (
-            <li>
+            <article class="gz-story">
               <a href={`/blog/${p.id}`}>
-                <time datetime={p.data.pubDate.toISOString()}>{fmt(p.data.pubDate)}</time>
-                <span class="mp-title">{p.data.title}</span>
-                <span class="mp-desc">{p.data.description}</span>
+                <div class="gz-kicker mono">{fmt(p.data.pubDate)}</div>
+                <h3>{p.data.title}</h3>
+                <p>{p.data.description}</p>
+                <span class="gz-cont mono">Read →</span>
               </a>
-            </li>
+            </article>
           ))}
-        </ul>
+        </div>
       </section>
     )}
 
-    <div class="post-cta">
-      <h3>Ready to send an invoice?</h3>
-      <p>Unlimited invoices, real PDF export, no signup.</p>
-      <a class="btn btn-primary" href="/new">Create an invoice — free</a>
-    </div>
+    <a class="gz-ad gz-ad-wide" href="/new">
+      <div class="gz-ad-lab mono">Advertisement</div>
+      <div class="gz-ad-h">Send an invoice in two minutes.</div>
+      <p>No signup · no caps · works offline. Plainvoice, the honest invoice app — $0, forever.</p>
+      <span class="btn btn-primary btn-sm">Open the editor →</span>
+    </a>
   </main>
 
   <footer class="site">
-    <div class="blog-foot foot-in">
-      <Logo size={26} />
-      <div class="foot-note">Unlimited free core · your data stays on your device</div>
+    <div class="blog-foot lp-foot">
+      <div class="lp-foot-brand">
+        <Logo size={26} />
+        <div class="foot-note">Unlimited free core · your data stays on your device</div>
+      </div>
+      <div class="lp-foot-links mono">
+        <a href="/">HOME</a>
+        <a href="/new">OPEN THE EDITOR</a>
+      </div>
     </div>
   </footer>
 </Layout>

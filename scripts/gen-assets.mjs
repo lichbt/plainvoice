@@ -40,8 +40,8 @@ const OG_HTML = `<!doctype html><html><head><meta charset="utf-8">
   </div>
   <div class="card">
     <div class="brand">${iconSvg}<span class="name">Plainvoice</span></div>
-    <h1>Invoicing that's <em>actually free.</em></h1>
-    <div class="sub"><b>Unlimited invoices · no signup · no paywall.</b> Your data stays on your device.</div>
+    <h1>Paperwork is not <em>a subscription.</em></h1>
+    <div class="sub"><b>Unlimited invoices · no signup · free forever.</b> Your data stays on your device.</div>
   </div>
 </body></html>`;
 

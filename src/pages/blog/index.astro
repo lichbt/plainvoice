@@ -8,48 +8,73 @@ import Logo from "../../components/Logo.astro";
 const posts = (await getCollection("blog", ({ data }) => import.meta.env.PROD ? !data.draft : true))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
-const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+const lead = posts[0];
+const rest = posts.slice(1);
 ---
 <Layout
   title="Blog — Plainvoice"
   description="Notes on invoicing, freelancing across borders, and building a genuinely free invoice app."
 >
   <SiteHeader />
-  <main class="blog-wrap">
-    <header class="blog-head">
-      <div class="sec-eyebrow">The Plainvoice blog</div>
-      <h1 class="blog-h1">Notes on invoicing &amp; freelancing</h1>
-      <p class="blog-lead">Product updates, freelancing tips, and the thinking behind a genuinely free invoice app.</p>
+  <main class="gz-wrap">
+    <!-- broadsheet masthead -->
+    <header class="gz-masthead">
+      <div class="gz-topline mono"><span>Est. 2026 · Vol. I</span><span>Price: $0.00 — always</span></div>
+      <h1 class="gz-title">The Plainvoice Gazette</h1>
+      <div class="gz-dateline mono">
+        <span>Notes on invoicing &amp; honest software</span>
+        <span>{posts.length} {posts.length === 1 ? "entry" : "entries"} to date</span>
+      </div>
     </header>
 
     {posts.length === 0 ? (
-      <p class="blog-empty">No posts yet — check back soon.</p>
+      <p class="blog-empty" style="text-align:center; padding:3rem 0">Nothing on the presses yet — check back soon.</p>
     ) : (
-      <ul class="post-list">
-        {posts.map((post, i) => (
-          <li class={`post-row${i === 0 ? " featured" : ""}`}>
-            <a href={`/blog/${post.id}`}>
-              <div class="post-meta">
-                <time datetime={post.data.pubDate.toISOString()}>{fmt(post.data.pubDate)}</time>
-                {post.data.draft && <span class="post-draft">Draft</span>}
-              </div>
-              <h2>{post.data.title}</h2>
-              <p>{post.data.description}</p>
-              {post.data.tags.length > 0 && (
-                <div class="post-tags">{post.data.tags.map((t) => <span class="pill">{t}</span>)}</div>
-              )}
-              <span class="post-more">Read <span aria-hidden="true">→</span></span>
-            </a>
-          </li>
-        ))}
-      </ul>
+      <>
+        <!-- the lead story -->
+        <article class="gz-feature">
+          <a href={`/blog/${lead.id}`}>
+            <div class="gz-kicker mono">The lead story · {fmt(lead.data.pubDate)}{lead.data.draft ? " · draft" : ""}</div>
+            <h2>{lead.data.title}</h2>
+            <p class="gz-lede">{lead.data.description}</p>
+            <span class="gz-cont mono">Continue reading →</span>
+          </a>
+        </article>
+
+        <!-- the rest of the front page: ruled columns + the house ad -->
+        <div class="gz-cols">
+          {rest.map((post) => (
+            <article class="gz-story">
+              <a href={`/blog/${post.id}`}>
+                <div class="gz-kicker mono">{fmt(post.data.pubDate)}{post.data.draft ? " · draft" : ""}</div>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+                <span class="gz-cont mono">Read →</span>
+              </a>
+            </article>
+          ))}
+          <a class="gz-ad" href="/new">
+            <div class="gz-ad-lab mono">Advertisement</div>
+            <div class="gz-ad-h">Send an invoice in two&nbsp;minutes.</div>
+            <p>No signup · no caps · works offline. Plainvoice, the honest invoice app — $0, forever.</p>
+            <span class="btn btn-primary btn-sm">Open the editor →</span>
+          </a>
+        </div>
+      </>
     )}
   </main>
 
   <footer class="site">
-    <div class="blog-foot foot-in">
-      <Logo size={26} />
-      <div class="foot-note">Unlimited free core · your data stays on your device</div>
+    <div class="blog-foot lp-foot">
+      <div class="lp-foot-brand">
+        <Logo size={26} />
+        <div class="foot-note">Unlimited free core · your data stays on your device</div>
+      </div>
+      <div class="lp-foot-links mono">
+        <a href="/">HOME</a>
+        <a href="/new">OPEN THE EDITOR</a>
+      </div>
     </div>
   </footer>
 </Layout>
