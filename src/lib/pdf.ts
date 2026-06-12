@@ -119,8 +119,9 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
   };
   dLabel(L.issued, date(data.issueDate), billTop - 14);
   if (data.dueDate) dLabel(L.due, date(data.dueDate), billTop - 28);
+  if (data.poNumber) dLabel(L.po, t(data.poNumber), billTop - (data.dueDate ? 42 : 28));
 
-  y = Math.min(by, billTop - 34) - 16;
+  y = Math.min(by, billTop - (data.poNumber ? 48 : 34)) - 16;
 
   // Pagination: long invoices continue on extra pages — the table header is
   // repeated, and totals/notes flow to wherever the lines end.
@@ -161,6 +162,7 @@ export async function buildInvoicePdf(data: PreviewData): Promise<Uint8Array> {
   totalRow(L.subtotal, money(data.subtotal));
   if (data.discount > 0) totalRow(L.discount, `-${money(data.discount)}`);
   if (data.taxTotal > 0) totalRow(L.tax, money(data.taxTotal));
+  if (data.shipping && data.shipping > 0) totalRow(L.shipping, money(data.shipping));
   // grand-total rule — confined to the totals column, with space above and below
   // so it never strikes through the (taller) Total text.
   y -= 6;

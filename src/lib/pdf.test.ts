@@ -43,6 +43,12 @@ describe("buildInvoicePdf pagination", () => {
     expect(doc.getPageCount()).toBeGreaterThanOrEqual(2);
   });
 
+  it("renders PO number and shipping without error", async () => {
+    const bytes = await buildInvoicePdf(makeData(3, { poNumber: "PO-4521", shipping: 25, total: 325 }));
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBe(1);
+  });
+
   it("survives very long notes and terms", async () => {
     const para = "Payment is appreciated within the stated terms. ".repeat(60);
     const bytes = await buildInvoicePdf(makeData(40, { notes: para, terms: para }));

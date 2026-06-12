@@ -110,7 +110,34 @@ describe("computeTotals", () => {
 
   it("empty invoice is all zeros", () => {
     const t = computeTotals({ currency: "USD", lines: [] });
-    expect(t).toMatchObject({ subtotal: 0, taxTotal: 0, discount: 0, total: 0 });
+    expect(t).toMatchObject({ subtotal: 0, taxTotal: 0, discount: 0, shipping: 0, total: 0 });
+  });
+
+  it("shipping is added after tax, untaxed and undiscounted", () => {
+    const t = computeTotals({
+      currency: "USD",
+      discount: 50,
+      shipping: 25,
+      lines: [{ qty: 1, rate: 100, taxRate: 10 }],
+    });
+    // tax on the post-discount base only: (100 − 50) × 10% = 5 — shipping excluded
+    expect(t.subtotal).toBe(100);
+    expect(t.discount).toBe(50);
+    expect(t.taxTotal).toBe(5);
+    expect(t.shipping).toBe(25);
+    expect(t.total).toBe(80); // 100 − 50 + 5 + 25
+  });
+
+  it("negative shipping is clamped to zero", () => {
+    const t = computeTotals({ currency: "USD", shipping: -10, lines: [{ qty: 1, rate: 100, taxRate: 0 }] });
+    expect(t.shipping).toBe(0);
+    expect(t.total).toBe(100);
+  });
+
+  it("shipping rounds to currency precision (zero-decimal)", () => {
+    const t = computeTotals({ currency: "JPY", shipping: 499.6, lines: [{ qty: 1, rate: 1000, taxRate: 0 }] });
+    expect(t.shipping).toBe(500);
+    expect(t.total).toBe(1500);
   });
 });
 

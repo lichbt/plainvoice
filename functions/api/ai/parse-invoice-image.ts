@@ -47,10 +47,13 @@ const SYSTEM = [
   "You read a photo of an invoice or receipt and extract its billable line items.",
   "Reply with ONLY a JSON object, no prose, no markdown fences, of this exact shape:",
   '{"currency": string optional, "clientName": string optional, "notes": string optional,',
+  '"poNumber": string optional, "shipping": number optional,',
   '"lines": [{"description": string, "qty": number, "rate": number}]}',
   "rate is the PER-UNIT price, never the line total. If a line shows only a total for",
-  "several units, set qty=1 and rate=that amount. Ignore subtotals, tax, totals,",
-  "balances, headers and addresses — line items only. Do not invent items or compute sums.",
+  "several units, set qty=1 and rate=that amount. A PO / purchase-order reference goes",
+  "in poNumber. A shipping/delivery charge goes in shipping, NOT in lines. Ignore",
+  "subtotals, tax, totals, balances, headers and addresses — line items only.",
+  "Do not invent items or compute sums.",
 ].join(" ");
 
 function json(body: unknown, status = 200): Response {

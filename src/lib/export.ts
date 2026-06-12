@@ -30,9 +30,11 @@ export async function exportInvoicesCsv(): Promise<number> {
       currency: inv.currency,
       issueDate: inv.issueDate,
       dueDate: inv.dueDate ?? "",
+      poNumber: inv.poNumber ?? "",
       subtotal: inv.subtotal,
       tax: inv.taxTotal,
       discount: inv.discount,
+      shipping: inv.shipping ?? 0,
       total: inv.total,
       paidAt: inv.paidAt ?? "",
     }));

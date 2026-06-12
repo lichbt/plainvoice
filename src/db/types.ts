@@ -56,10 +56,12 @@ export interface Invoice {
   status: InvoiceStatus;
   issueDate: string; // ISO date (YYYY-MM-DD)
   dueDate?: string;
+  poNumber?: string; // client's purchase-order reference (accounts-payable matching)
   currency: string;
   subtotal: number;
   taxTotal: number;
   discount: number; // absolute amount in currency
+  shipping?: number; // flat shipping/delivery cost (absolute, added after tax)
   total: number;
   notes?: string;
   terms?: string;

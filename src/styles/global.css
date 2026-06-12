@@ -440,8 +440,9 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
   border-bottom:1px dashed transparent; border-radius:6px 6px 0 0; padding:0 .1rem}
 .sheet .sh-no:hover{border-bottom-color:var(--line-strong)}
 .sheet .sh-no:focus{outline:none; border-bottom-color:var(--accent); background:var(--accent-wash)}
-.sh-meta{display:flex; gap:1.1rem; align-items:flex-end}
+.sh-meta{display:flex; gap:1.1rem; align-items:flex-end; flex-wrap:wrap; justify-content:flex-end}
 .sh-m{width:8.6rem}
+.sh-po{width:7.4rem}
 .sh-ccy{width:6.2rem}
 /* address blocks */
 .sh-parties{display:grid; grid-template-columns:1fr 1fr; gap:2.4rem; margin-bottom:1.5rem}

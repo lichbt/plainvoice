@@ -69,8 +69,10 @@ export interface InvoiceDraft {
   status?: Invoice["status"];
   issueDate: string;
   dueDate?: string;
+  poNumber?: string;
   currency: string;
   discount?: number;
+  shipping?: number;
   notes?: string;
   terms?: string;
   template?: string;
@@ -99,6 +101,7 @@ export const invoices = {
     const totals = computeTotals({
       currency: draft.currency,
       discount: draft.discount,
+      shipping: draft.shipping,
       lines: draft.lines,
     });
 
@@ -112,10 +115,12 @@ export const invoices = {
       status: draft.status ?? existing?.status ?? "draft",
       issueDate: draft.issueDate,
       dueDate: draft.dueDate,
+      poNumber: draft.poNumber,
       currency: draft.currency,
       subtotal: totals.subtotal,
       taxTotal: totals.taxTotal,
       discount: totals.discount,
+      shipping: totals.shipping,
       total: totals.total,
       notes: draft.notes,
       terms: draft.terms,
@@ -206,8 +211,10 @@ export const invoices = {
       status: "draft",
       issueDate: today(),
       dueDate: undefined,
+      poNumber: est.poNumber,
       currency: est.currency,
       discount: est.discount,
+      shipping: est.shipping,
       notes: est.notes,
       terms: est.terms,
       template: est.template,
