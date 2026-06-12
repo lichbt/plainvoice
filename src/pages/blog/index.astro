@@ -8,42 +8,60 @@ import Logo from "../../components/Logo.astro";
 const posts = (await getCollection("blog", ({ data }) => import.meta.env.PROD ? !data.draft : true))
   .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
-const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-// Ledger numbering: oldest post is ENTRY № 01.
-const entryNo = (i: number) => String(posts.length - i).padStart(2, "0");
+const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+const lead = posts[0];
+const rest = posts.slice(1);
 ---
 <Layout
   title="Blog — Plainvoice"
   description="Notes on invoicing, freelancing across borders, and building a genuinely free invoice app."
 >
   <SiteHeader />
-  <main class="blog-wrap">
-    <header class="bl-head">
-      <div class="bl-kicker mono">The Plainvoice ledger</div>
-      <h1 class="bl-h1">Notes on invoicing<br />&amp; honest software.</h1>
-      <p class="bl-lead">Product updates, cross-border freelancing tips, and the thinking behind a genuinely free invoice app.</p>
+  <main class="gz-wrap">
+    <!-- broadsheet masthead -->
+    <header class="gz-masthead">
+      <div class="gz-topline mono"><span>Est. 2026 · Vol. I</span><span>Price: $0.00 — always</span></div>
+      <h1 class="gz-title">The Plainvoice Gazette</h1>
+      <div class="gz-dateline mono">
+        <span>Notes on invoicing &amp; honest software</span>
+        <span>{posts.length} {posts.length === 1 ? "entry" : "entries"} to date</span>
+      </div>
     </header>
 
     {posts.length === 0 ? (
-      <p class="blog-empty">No entries yet — check back soon.</p>
+      <p class="blog-empty" style="text-align:center; padding:3rem 0">Nothing on the presses yet — check back soon.</p>
     ) : (
-      <ul class="bl-list">
-        {posts.map((post, i) => (
-          <li class={`bl-row${i === 0 ? " featured" : ""}`}>
-            <a href={`/blog/${post.id}`}>
-              <div class="bl-meta mono">
-                <span class="bl-no">Entry № {entryNo(i)}</span>
-                <span class="bl-dots"></span>
-                <time datetime={post.data.pubDate.toISOString()}>{fmt(post.data.pubDate)}</time>
-                {post.data.draft && <span class="post-draft">Draft</span>}
-              </div>
-              <h2>{post.data.title}</h2>
-              <p>{post.data.description}</p>
-              <span class="bl-read mono">Read the entry →</span>
-            </a>
-          </li>
-        ))}
-      </ul>
+      <>
+        <!-- the lead story -->
+        <article class="gz-feature">
+          <a href={`/blog/${lead.id}`}>
+            <div class="gz-kicker mono">The lead story · {fmt(lead.data.pubDate)}{lead.data.draft ? " · draft" : ""}</div>
+            <h2>{lead.data.title}</h2>
+            <p class="gz-lede">{lead.data.description}</p>
+            <span class="gz-cont mono">Continue reading →</span>
+          </a>
+        </article>
+
+        <!-- the rest of the front page: ruled columns + the house ad -->
+        <div class="gz-cols">
+          {rest.map((post) => (
+            <article class="gz-story">
+              <a href={`/blog/${post.id}`}>
+                <div class="gz-kicker mono">{fmt(post.data.pubDate)}{post.data.draft ? " · draft" : ""}</div>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+                <span class="gz-cont mono">Read →</span>
+              </a>
+            </article>
+          ))}
+          <a class="gz-ad" href="/new">
+            <div class="gz-ad-lab mono">Advertisement</div>
+            <div class="gz-ad-h">Send an invoice in two&nbsp;minutes.</div>
+            <p>No signup · no caps · works offline. Plainvoice, the honest invoice app — $0, forever.</p>
+            <span class="btn btn-primary btn-sm">Open the editor →</span>
+          </a>
+        </div>
+      </>
     )}
   </main>
 
