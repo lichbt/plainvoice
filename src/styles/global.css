@@ -350,9 +350,11 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 @media(max-width:940px){.editor{grid-template-columns:1fr}}
 .preview{max-width:100%}
 .panel{background:var(--paper-2); border:1px solid var(--line); border-radius:var(--r); padding:1.4rem}
-.panel h3{font-family:var(--display); font-size:1.05rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center}
+/* ledger-style panel headers — mono, tracked, numbered in the markup */
+.panel h3{font-family:var(--mono); font-size:.68rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:1.1rem; display:flex; justify-content:space-between; align-items:center}
 .fld{margin-bottom:.9rem}
-.fld label{display:block; font-size:.74rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); margin-bottom:.3rem}
+.fld label{display:block; font-family:var(--mono); font-size:.62rem; font-weight:600; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-faint); margin-bottom:.35rem}
 .fld input, .fld textarea, .fld select{width:100%; min-width:0; font-family:inherit; font-size:.92rem; color:var(--ink);
   background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm); padding:.6rem .7rem; transition:border-color .2s, box-shadow .2s}
 .fld input:focus, .fld textarea:focus, .fld select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
@@ -376,7 +378,7 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .row2{display:grid; grid-template-columns:1fr 1fr; gap:.8rem}
 .row2>*{min-width:0} /* let date/number inputs shrink instead of forcing overflow */
 .li-head, .li{display:grid; grid-template-columns:1fr 56px 84px 84px 48px; gap:.5rem; align-items:center}
-.li-head{font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); padding:0 0 .4rem; font-weight:600}
+.li-head{font-family:var(--mono); font-size:.6rem; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-faint); padding:0 0 .4rem; font-weight:600}
 .li{margin-bottom:.5rem}
 .li input{font-size:.88rem; padding:.45rem .5rem; width:100%; font-family:inherit; color:var(--ink); background:var(--paper-3); border:1px solid var(--line); border-radius:var(--r-sm)}
 .li-field{min-width:0}
@@ -440,9 +442,12 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .fld-link{font-size:.78rem; font-weight:600; color:var(--accent); background:none; border:none; cursor:pointer; padding:0}
 .fld-link:hover{text-decoration:underline}
 .add-saved:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-wash)}
-.totals{margin-top:1.1rem; padding-top:1rem; border-top:1px solid var(--line)}
-.tot-row{display:flex; justify-content:space-between; font-size:.9rem; padding:.28rem 0; color:var(--ink-soft)}
-.tot-row.grand{margin-top:.5rem; padding-top:.7rem; border-top:1px solid var(--line-strong); color:var(--ink)}
+/* totals as a till receipt — mono labels, dotted rules, strong TOTAL */
+.totals{margin-top:1.1rem; padding-top:.6rem; border-top:1px dashed var(--line-strong)}
+.tot-row{display:flex; justify-content:space-between; align-items:baseline; font-size:.9rem; padding:.4rem 0; color:var(--ink-soft); border-bottom:1px dotted var(--line)}
+.tot-row>span:first-child{font-family:var(--mono); font-size:.64rem; font-weight:600; letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint)}
+.tot-row.grand{margin-top:.55rem; padding-top:.85rem; border-top:2px solid var(--ink); border-bottom:none; color:var(--ink)}
+.tot-row.grand>span:first-child{color:var(--ink); font-weight:700}
 .tot-row.grand .v{font-family:var(--display); font-size:1.45rem; font-weight:600}
 .record-pay{margin-top:.9rem; width:100%; font-family:inherit; font-size:.84rem; font-weight:600; color:var(--accent);
   background:var(--paper-3); border:1px dashed var(--line); border-radius:var(--r-sm); padding:.55rem; cursor:pointer; transition:border-color .15s, background .15s}
@@ -468,7 +473,7 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .preview-wrap{position:sticky; top:90px}
 /* template / colour picker beneath the invoice sheet, bottom-left */
 .preview-theme{display:flex; align-items:center; gap:.7rem; margin-top:1rem}
-.preview-theme-lab{font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint)}
+.preview-theme-lab{font-family:var(--mono); font-size:.62rem; font-weight:600; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-faint)}
 /* auto-translate language picker, sits under the template picker */
 .preview-lang{display:flex; align-items:center; gap:.6rem; margin-top:.7rem; flex-wrap:wrap}
 .preview-lang select{font:inherit; font-size:.85rem; padding:.3rem .5rem; border:1px solid var(--line); border-radius:8px; background:var(--paper-2); color:var(--ink)}

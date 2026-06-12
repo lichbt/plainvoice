@@ -486,7 +486,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
             </div>
           )}
           <div className="panel">
-            <h3>Details</h3>
+            <h3>№ 01 — Details</h3>
             <div className="row2">
               <div className="fld"><label>Invoice #</label><input value={number} onChange={(e) => setNumber(e.target.value)} /></div>
               <div className="fld"><label>Currency</label>
@@ -527,7 +527,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
 
           <div className="panel" style={{ marginTop: "1.2rem" }}>
             <h3>
-              <span>Line items <span style={{ fontSize: ".74rem", fontWeight: 400, color: "var(--ink-faint)" }}>qty × rate</span></span>
+              <span>№ 02 — Line items <span style={{ fontWeight: 400, color: "var(--ink-faint)" }}>· qty × rate</span></span>
               <button className="add-li" style={{ margin: 0 }} onClick={() => setShowItems(true)}>Saved items{itemList.length ? ` (${itemList.length})` : ""}</button>
             </h3>
             <AiDraftBar
