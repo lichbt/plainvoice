@@ -22,7 +22,7 @@ import type { OcrLine } from "../lib/ocr";
 const lazyExportPdf = async (data: import("./InvoicePreview").PreviewData) =>
   (await import("../lib/pdf")).exportInvoicePdf(data);
 import { ACCENTS, DEFAULT_TEMPLATE } from "../lib/templates";
-import { DONATE_URL } from "../lib/links";
+import { openTipWindow } from "../lib/links";
 import { AiDraftBar } from "./AiDraftBar";
 import type { AiInvoiceDraft } from "../lib/aiInvoice";
 import { useEscape } from "../lib/useEscape";
@@ -715,7 +715,7 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       {showDonate && (
         <div className="donate-bar" role="status">
           <span>Sent! 🎉 Plainvoice is free and always will be — tip if it helped. Totally optional.</span>
-          <a className="btn btn-primary btn-sm" href={DONATE_URL} target="_blank" rel="noopener" onClick={() => setShowDonate(false)}>Leave a tip</a>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => { openTipWindow(); setShowDonate(false); }}>Leave a tip</button>
           <button className="donate-x" aria-label="Dismiss" onClick={() => setShowDonate(false)}>×</button>
         </div>
       )}
