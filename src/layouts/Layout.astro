@@ -84,6 +84,19 @@ const jsonLd = ogType === "article"
     <meta name="theme-color" content="#1E5B41" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    {/* Google Analytics (GA4) — production only, so dev sessions don't pollute the data */}
+    {import.meta.env.PROD && (
+      <>
+        <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-1MZ3QYLWNW"></script>
+        <script is:inline>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag("js", new Date());
+          gtag("config", "G-1MZ3QYLWNW");
+        </script>
+      </>
+    )}
   </head>
   <body>
     <slot />
