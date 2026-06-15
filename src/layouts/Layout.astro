@@ -51,7 +51,10 @@ const jsonLd = ogType === "article"
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <!-- display=optional: the browser uses a fallback if the web font isn't ready
+         within ~100ms and does NOT swap it in later — eliminating the font-reflow
+         layout shift (CLS). Repeat visits have the font cached and render it. -->
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=optional" rel="stylesheet" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="google-site-verification" content="e8YpxlBQla7rUl-b32LTszya25i4qJlRO6VtFKrrmfs" />
@@ -85,17 +88,38 @@ const jsonLd = ogType === "article"
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
-    {/* Google Analytics (GA4) — production only, so dev sessions don't pollute the data */}
+    {/* Google Analytics (GA4) — production only. Loaded LAZILY (on idle-after-load
+        or first interaction, whichever comes first) so gtag.js doesn't execute in
+        the critical window and inflate Total Blocking Time. Still fires for real
+        visitors; just kept off the page-load main thread. */}
     {import.meta.env.PROD && (
-      <>
-        <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-1MZ3QYLWNW"></script>
-        <script is:inline>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag("js", new Date());
-          gtag("config", "G-1MZ3QYLWNW");
-        </script>
-      </>
+      <script is:inline define:vars={{ GA_ID: "G-1MZ3QYLWNW" }}>
+        {`
+        (function () {
+          var started = false;
+          function loadGA() {
+            if (started) return; started = true;
+            var s = document.createElement("script");
+            s.async = true;
+            s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
+            document.head.appendChild(s);
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { dataLayer.push(arguments); };
+            gtag("js", new Date());
+            gtag("config", GA_ID);
+          }
+          var idle = function () {
+            ("requestIdleCallback" in window)
+              ? requestIdleCallback(loadGA, { timeout: 3000 })
+              : setTimeout(loadGA, 2000);
+          };
+          (document.readyState === "complete") ? idle() : addEventListener("load", idle, { once: true });
+          ["scroll", "pointerdown", "keydown", "touchstart"].forEach(function (ev) {
+            addEventListener(ev, loadGA, { once: true, passive: true });
+          });
+        })();
+        `}
+      </script>
     )}
   </head>
   <body>
