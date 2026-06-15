@@ -1,7 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Logo from "../components/Logo.astro";
-import { DONATE_URL } from "../lib/links";
+import { DONATE_URL, CONTACT_MAILTO } from "../lib/links";
 
 // FAQ — drives both the visible section AND the FAQPage schema (must match).
 const faqs = [
@@ -389,6 +389,7 @@ const receiptRows = [
       <div class="lp-foot-links mono">
         <a href="/blog">BLOG</a>
         <a href="#promise">THE PROMISE</a>
+        <a href={CONTACT_MAILTO}>CONTACT</a>
         <a href={DONATE_URL} target="_blank" rel="noopener">LEAVE A TIP</a>
       </div>
     </div>

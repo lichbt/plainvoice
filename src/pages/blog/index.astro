@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import SiteHeader from "../../components/SiteHeader.astro";
 import Logo from "../../components/Logo.astro";
+import { CONTACT_MAILTO } from "../../lib/links";
 
 // Drafts show in dev, hide in production.
 const posts = (await getCollection("blog", ({ data }) => import.meta.env.PROD ? !data.draft : true))
@@ -74,6 +75,7 @@ const rest = posts.slice(1);
       <div class="lp-foot-links mono">
         <a href="/">HOME</a>
         <a href="/new">OPEN THE EDITOR</a>
+        <a href={CONTACT_MAILTO}>CONTACT</a>
       </div>
     </div>
   </footer>
