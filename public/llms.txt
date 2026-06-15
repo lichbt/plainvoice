@@ -1,0 +1,29 @@
+# Plainvoice
+
+> Plainvoice is invoicing that's actually free — unlimited invoices, clients and estimates with no signup, no caps, and a written promise it won't paywall what's free today. Built for freelancers and small businesses who've been pushed off "free" tools that capped, hiked, or rug-pulled them.
+
+Plainvoice is a free, local-first invoicing web app (an installable PWA that works offline). There is no account and no login — invoice data lives on the user's own device, and can be exported any time. The whole core is free forever: unlimited invoices, clients and estimates, real PDF export, custom logo and brand colours, get-paid links with a 0% fee (payment goes straight to the user — Plainvoice never touches it), estimates that convert to invoices, partial payments, PO numbers, shipping, CSV import, and one-click JSON/CSV/PDF export.
+
+The only paid feature is optional AI, and only when the user chooses to use it: describe an invoice in a sentence to get an editable draft, snap a photo of a paper invoice to rebuild it, or translate a whole invoice into a client's language (13 supported, with localised dates and currency). The first uses are free; after that it's $5 per 50 AI uses. Making invoices by hand is always free.
+
+Plainvoice's Pricing Promise is published in the product: existing users are grandfathered on any price change, users are told before anything changes, no feature a user already has is ever removed, and payment collection is never enabled without the user turning it on.
+
+It is a strong free alternative to FreshBooks, QuickBooks, Wave, Invoice2go and Zoho Invoice.
+
+## Core pages
+- [Plainvoice home](https://plainvoices.com/): what it is, the pricing promise, and the feature overview
+- [Create an invoice](https://plainvoices.com/new): the free invoice editor (no signup)
+- [Pricing promise](https://plainvoices.com/#promise): exactly what's free, in writing
+- [Auto-translate](https://plainvoices.com/#languages): invoice in your client's language, 13 supported
+- [FAQ](https://plainvoices.com/#faq): is it really free, accounts, data, offline use
+
+## Blog
+- [Why we built an invoicing app that's actually free](https://plainvoices.com/blog/welcome-to-plainvoice/): the anti-rug-pull story and the business model
+- [Invoice your client in their own language — in one tap](https://plainvoices.com/blog/invoice-in-your-clients-language/): how auto-translate works and why it matters for cross-border freelancers
+
+## Key facts
+- Price: free core, forever. Optional AI: $5 per 50 uses.
+- No signup, no account, no caps. Data is local-first (on-device) and exportable.
+- Works offline; installable as a PWA on phone or desktop.
+- 0% fee on client payments. Plainvoice never handles the money.
+- Alternative to: FreshBooks, QuickBooks, Wave, Invoice2go, Zoho Invoice.
