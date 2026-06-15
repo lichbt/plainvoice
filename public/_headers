@@ -5,6 +5,10 @@
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Self-hosted fonts — gstatic version hash is in the filename, so cache forever.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # The service worker MUST always revalidate, or users never get new versions
 # (and the cache-version bumps that ship every deploy would stop working).
 /sw.js

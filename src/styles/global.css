@@ -1,5 +1,7 @@
-/* Brand fonts load via <link> in Layout.astro (preconnect + non-blocking),
-   NOT a CSS @import — an @import here blocks first paint on the font CSS. */
+/* Self-hosted brand fonts (woff2 in /public/fonts). No third-party Google Fonts
+   request → removes the render-blocking 750ms hop. Critical latin weights are
+   preloaded in Layout.astro so the real font is ready at first paint. */
+@import "./fonts.css";
 @import "tailwindcss";
 
 /* ============================================================

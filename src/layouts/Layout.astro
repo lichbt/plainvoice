@@ -49,12 +49,11 @@ const jsonLd = ogType === "article"
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- display=optional: the browser uses a fallback if the web font isn't ready
-         within ~100ms and does NOT swap it in later — eliminating the font-reflow
-         layout shift (CLS). Repeat visits have the font cached and render it. -->
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=optional" rel="stylesheet" />
+    <!-- Self-hosted fonts (see src/styles/fonts.css). Preload the two most-visible
+         latin faces so they're ready at first paint — no third-party request, no
+         render-blocking, no swap reflow. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/ieVn2YZDLWuGJpnzaiwFXS9tYtpd59A.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeA.woff2" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="google-site-verification" content="e8YpxlBQla7rUl-b32LTszya25i4qJlRO6VtFKrrmfs" />
