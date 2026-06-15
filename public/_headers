@@ -1,0 +1,24 @@
+# Cloudflare Pages cache policy. Order matters: first match wins per header.
+#
+# Content-hashed build assets (filename changes when content changes) → cache
+# hard for a year. This is the PageSpeed "efficient cache policy" win.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The service worker MUST always revalidate, or users never get new versions
+# (and the cache-version bumps that ship every deploy would stop working).
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Manifest + non-hashed icons change in place on a redesign — keep them short
+# so an update is picked up within a day, not cached for a year.
+/manifest.webmanifest
+  Cache-Control: public, max-age=3600
+/favicon.svg
+  Cache-Control: public, max-age=86400
+/icon.svg
+  Cache-Control: public, max-age=86400
+/icon-*.png
+  Cache-Control: public, max-age=86400
+/og.png
+  Cache-Control: public, max-age=86400
