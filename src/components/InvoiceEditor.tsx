@@ -156,17 +156,17 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
       // Flow 1 smart defaults: Net 14 due date, currency from business or locale
       if (initialDocType === "invoice") setDueDate(addDays(today(), 14));
       setCurrency(b?.defaultCurrency ?? localeCurrency());
+      // Decide the quickstart card BEFORE first paint, so it's part of the
+      // editor's initial render rather than inserting a beat later (which shifts
+      // everything below it → CLS). very first visit with an empty book only.
+      let qs = false;
+      try { qs = !localStorage.getItem("pv-quickstart-done") && (await db.invoices.count()) === 0; } catch { /* private mode */ }
+      setShowQuickstart(qs);
       setLoaded(true);
       // photo-import entry point from the landing page (?photo=1)
       if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("photo")) {
         setShowPhoto(true);
       }
-      // very first visit with an empty book → show the quickstart card once
-      try {
-        if (!localStorage.getItem("pv-quickstart-done") && (await db.invoices.count()) === 0) {
-          setShowQuickstart(true);
-        }
-      } catch { /* private mode */ }
     })();
   }, [initialId]);
 
