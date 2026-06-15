@@ -1,8 +1,11 @@
 // Plainvoice service worker — hand-rolled (vite-plugin-pwa doesn't yet support Astro 6).
 // Strategy: runtime caching of same-origin GET requests so the app works offline after
 // the first visit. The data itself is local-first (IndexedDB) and never touches the SW.
-const CACHE = "plainvoice-v9";
-const APP_SHELL = ["/new", "/app", "/", "/icon.svg", "/manifest.webmanifest"];
+const CACHE = "plainvoice-v11";
+// NOTE: Cloudflare Pages serves these routes with a trailing slash (/new 308→
+// /new/). Precaching the slash form avoids caching a redirect (which fails) and
+// avoids a redirect hop on launch.
+const APP_SHELL = ["/", "/new/", "/app/", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -24,12 +27,18 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // never cache cross-origin (fonts CDN, etc.)
 
-  // Navigations: network-first, fall back to cached shell when offline.
+  // Navigations: cache-first (stale-while-revalidate) so an installed PWA opens
+  // INSTANTLY from the cached app shell, then refreshes it in the background for
+  // next launch. Falls back to the network (then the /new shell) when there's no
+  // cached copy. Page data lives in IndexedDB, so a one-launch-stale shell is safe.
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req)
-        .then((res) => { cachePut(req, res.clone()); return res; })
-        .catch(() => caches.match(req).then((m) => m || caches.match("/new"))),
+      caches.match(req).then((cached) => {
+        const network = fetch(req)
+          .then((res) => { cachePut(req, res.clone()); return res; })
+          .catch(() => cached || caches.match("/new/"));
+        return cached || network;
+      }),
     );
     return;
   }
