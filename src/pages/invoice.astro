@@ -1,8 +1,10 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import InvoiceEditor from "../components/InvoiceEditor.tsx";
+import EditorBoot from "../components/EditorBoot.astro";
 ---
 <Layout title="Edit invoice — Plainvoice">
   {/* id is read from ?id= on the client so the page stays fully static */}
+  <EditorBoot />
   <InvoiceEditor client:only="react" />
 </Layout>

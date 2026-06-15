@@ -1,0 +1,55 @@
+---
+// Static "boot skeleton" for the editor pages. The editor is a client-only
+// React island, so without this the page is blank until React mounts (~3s on
+// throttled mobile) — killing FCP/LCP. This paints instantly as static HTML and
+// is removed by InvoiceEditor the moment the real editor is ready.
+---
+<div id="editor-boot" class="editor-boot" aria-hidden="true">
+  <div class="app-bar">
+    <div class="app-bar-in">
+      <div class="left"><span class="back">← All invoices</span></div>
+      <div class="app-actions">
+        <span class="sk sk-btn"></span>
+        <span class="sk sk-btn sk-btn-solid"></span>
+      </div>
+    </div>
+  </div>
+  <div class="desk">
+    <div class="desk-main">
+      <div class="sheet">
+        <div class="sk sk-title"></div>
+        <div class="sk sk-rule"></div>
+        <div class="sk-grid">
+          <div class="sk sk-line"></div><div class="sk sk-line"></div>
+          <div class="sk sk-line"></div><div class="sk sk-line"></div>
+        </div>
+        <div class="sk sk-bar"></div>
+        <div class="sk sk-line" style="width:72%"></div>
+        <div class="sk sk-line" style="width:60%"></div>
+        <div class="sk sk-line" style="width:66%"></div>
+      </div>
+    </div>
+    <aside class="desk-rail"><div class="sk sk-proof"></div></aside>
+  </div>
+</div>
+
+<style>
+  .editor-boot { animation: boot-fade .2s ease both; }
+  .sk { display: block; background: var(--paper-2); border-radius: 8px; position: relative; overflow: hidden; }
+  .sk::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ink) 5%, transparent), transparent);
+    transform: translateX(-100%); animation: sk-shimmer 1.3s infinite;
+  }
+  .sk-btn { width: 96px; height: 34px; border-radius: 999px; }
+  .sk-btn-solid { background: color-mix(in srgb, var(--accent) 22%, var(--paper-2)); }
+  .sk-title { width: 46%; height: 38px; margin-bottom: 1rem; }
+  .sk-rule { width: 100%; height: 2px; border-radius: 0; margin-bottom: 1.6rem; background: var(--line); }
+  .sk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem 2.4rem; margin-bottom: 1.8rem; }
+  .sk-line { height: 14px; }
+  .sk-bar { width: 100%; height: 64px; border-radius: 12px; margin: 1.4rem 0; }
+  .sk-proof { width: 100%; aspect-ratio: 3/4; border-radius: 10px; }
+  @keyframes sk-shimmer { 100% { transform: translateX(100%); } }
+  @keyframes boot-fade { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .sk::after { animation: none; } }
+</style>

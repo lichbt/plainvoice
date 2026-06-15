@@ -96,6 +96,10 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const savedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
+  // remove the static boot skeleton once the real editor is ready (seamless swap)
+  useEffect(() => {
+    if (loaded) document.getElementById("editor-boot")?.remove();
+  }, [loaded]);
   // rail preview is a scaled proof copy — click opens the full-size sheet
   const [showPreviewFull, setShowPreviewFull] = useState(false);
   useEscape(() => setShowPreviewFull(false), showPreviewFull);
@@ -447,7 +451,9 @@ export default function InvoiceEditor({ invoiceId }: { invoiceId?: string }) {
     if (businessId === deletedId) setBusinessId((await businesses.all())[0]?.id);
   }
 
-  if (!loaded) return <div style={{ padding: "3rem", color: "var(--ink-faint)" }}>Loading…</div>;
+  // While loading, render nothing — the static EditorBoot skeleton (in the page
+  // HTML) stays visible, so there's no blank flash and no "Loading…" swap.
+  if (!loaded) return null;
 
   return (
     <>
