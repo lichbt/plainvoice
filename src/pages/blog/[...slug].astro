@@ -16,6 +16,41 @@ const { title, description, pubDate, updatedDate, tags, author } = post.data;
 const fmt = (d: Date) => d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 const section = tags[0] ?? "Feature";
 
+// FAQPage schema — parsed from a "## Frequently Asked Questions" section in the
+// post body (### = question, following text = answer), so the structured data
+// always matches the visible content and any future post with an FAQ gets it.
+function stripMd(s: string): string {
+  return s
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1") // [text](url) -> text
+    .replace(/[*_`]/g, "")                    // bold/italic/code marks
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function extractFaqs(md: string): { q: string; a: string }[] {
+  const sec = md.match(/##\s+Frequently Asked Questions\s*([\s\S]*?)(?=\n##\s|$)/i);
+  if (!sec) return [];
+  const out: { q: string; a: string }[] = [];
+  const re = /###\s+(.+?)\n([\s\S]*?)(?=\n###\s|$)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(sec[1])) !== null) {
+    const q = stripMd(m[1]); const a = stripMd(m[2]);
+    if (q && a) out.push({ q, a });
+  }
+  return out;
+}
+const faqs = extractFaqs(post.body ?? "");
+const faqLd = faqs.length
+  ? {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqs.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    }
+  : null;
+
 // Other recent stories (newest first, excluding this one).
 const recent = (await getCollection("blog", ({ data }) => import.meta.env.PROD ? !data.draft : true))
   .filter((p) => p.id !== post.id)
@@ -47,6 +82,7 @@ const recent = (await getCollection("blog", ({ data }) => import.meta.env.PROD ?
         <Content />
       </div>
     </article>
+    {faqLd && <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />}
 
     {recent.length > 0 && (
       <section class="gz-more">
