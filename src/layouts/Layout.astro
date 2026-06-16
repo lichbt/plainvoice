@@ -92,20 +92,19 @@ const jsonLd = ogType === "article"
         the critical window and inflate Total Blocking Time. Still fires for real
         visitors; just kept off the page-load main thread. */}
     {import.meta.env.PROD && (
-      <script is:inline define:vars={{ GA_ID: "G-1MZ3QYLWNW" }}>
-        {`
+      <script is:inline set:html={`
         (function () {
           var started = false;
           function loadGA() {
             if (started) return; started = true;
             var s = document.createElement("script");
             s.async = true;
-            s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
+            s.src = "https://www.googletagmanager.com/gtag/js?id=G-1MZ3QYLWNW";
             document.head.appendChild(s);
             window.dataLayer = window.dataLayer || [];
             window.gtag = function () { dataLayer.push(arguments); };
             gtag("js", new Date());
-            gtag("config", GA_ID);
+            gtag("config", "G-1MZ3QYLWNW");
           }
           var idle = function () {
             ("requestIdleCallback" in window)
@@ -117,8 +116,7 @@ const jsonLd = ogType === "article"
             addEventListener(ev, loadGA, { once: true, passive: true });
           });
         })();
-        `}
-      </script>
+      `} />
     )}
   </head>
   <body>
