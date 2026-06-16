@@ -139,7 +139,7 @@ A simple invoice template typically contains just six elements:
 
 This format is ideal for small, one-off projects — a single blog post, a logo design, a one-hour coaching session. It is also perfectly appropriate early in a client relationship when you want to appear approachable and easy to work with, rather than bureaucratic. The golden rule of invoicing: match the complexity of your document to the complexity of the engagement. A $200 invoice should not look like a corporate purchase order.
 
-Plainvoice starts with exactly this minimal structure at [plainvoices.com/new](/new/) — and you can progressively add fields (taxes, multiple line items, expense rows) as your projects grow in scope.
+Plainvoice starts with exactly this minimal structure at [plainvoices.com/new](/new/) — and you can progressively add fields (taxes, multiple line items, expense rows) as your projects grow in scope. It stays free for unlimited invoices with no signup; [here's why we built it that way](/blog/welcome-to-plainvoice/).
 
 ## Word vs. Excel vs. Google Docs vs. Online Generator: Scored Comparison
 
@@ -198,3 +198,7 @@ A quote (or estimate) is a document sent before work begins that outlines the ex
 ### How do I follow up on an unpaid invoice?
 
 Send a polite payment reminder email three days before the due date, a second reminder on the due date itself, and a firmer follow-up one week after the due date. Reference the invoice number and the exact amount owed in every message. If the invoice remains unpaid after 30 days, apply the late fee you specified in your payment terms. Online invoicing tools can automate these reminders so you never have to chase a client manually.
+
+---
+
+*Related reading: [Why we built an invoicing app that's actually free](/blog/welcome-to-plainvoice/) · [Invoice your client in their own language — in one tap](/blog/invoice-in-your-clients-language/).*

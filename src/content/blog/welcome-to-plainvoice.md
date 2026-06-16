@@ -30,4 +30,4 @@ That's the whole model. No surprises, in writing, permanently.
 
 [Create your first invoice →](/new)
 
-*More on how it works: the [pricing promise](/#promise), [invoicing in your client's language](/blog/invoice-in-your-clients-language/), and the [FAQ](/#faq).*
+*More from the blog: the [free invoice template guide for freelancers](/blog/free-invoice-template-freelancers/) and [invoicing in your client's language](/blog/invoice-in-your-clients-language/). Or read the [pricing promise](/#promise) and the [FAQ](/#faq).*

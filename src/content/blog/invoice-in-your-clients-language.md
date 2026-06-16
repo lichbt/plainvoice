@@ -36,4 +36,4 @@ wall of English. None of the big apps lead with it.
 
 [Try it on an invoice →](/new)
 
-*See the [interactive language demo](/#languages) on the homepage, or read [our pricing promise](/#promise) — the core app is free forever.*
+*More from the blog: the [free invoice template guide for freelancers](/blog/free-invoice-template-freelancers/) and [why we built an invoicing app that's actually free](/blog/welcome-to-plainvoice/). Or try the [interactive language demo](/#languages) on the homepage.*
