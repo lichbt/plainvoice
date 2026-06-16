@@ -381,6 +381,12 @@ footer.site{padding:3rem 0 4rem; border-top:1px solid var(--line); margin-top:2r
 .prose pre code{background:none; border:none; padding:0; color:inherit}
 .prose img{max-width:100%; border-radius:var(--r-sm)}
 .prose hr{border:none; border-top:1px solid var(--line); margin:2rem 0}
+/* markdown tables (e.g. the format-comparison table in long-form posts) */
+.prose table{width:100%; border-collapse:collapse; font-size:.92rem; margin:1.6rem 0; display:block; overflow-x:auto}
+.prose th,.prose td{border:1px solid var(--line); padding:.55rem .7rem; text-align:left; vertical-align:top}
+.prose thead th{background:var(--paper-2); font-weight:600; font-family:var(--sans)}
+.prose tbody tr:nth-child(even){background:color-mix(in srgb, var(--paper-2) 55%, transparent)}
+.prose td em{color:var(--ink-faint); font-style:normal; font-size:.85em; display:block; margin-top:.1rem}
 
 /* ========== APP / EDITOR ========== */
 /* subtle accent: warm-paper bar with a thin forest-green underline */
