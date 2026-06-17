@@ -201,4 +201,4 @@ Send a polite payment reminder email three days before the due date, a second re
 
 ---
 
-*Related reading: [Why we built an invoicing app that's actually free](/blog/welcome-to-plainvoice/) · [Invoice your client in their own language — in one tap](/blog/invoice-in-your-clients-language/).*
+*Related reading: [Freelance invoice template: every field you need](/blog/freelance-invoice-template-fields/) · [Why we built an invoicing app that's actually free](/blog/welcome-to-plainvoice/) · [Invoice your client in their own language](/blog/invoice-in-your-clients-language/).*
