@@ -259,7 +259,10 @@ test("blog post: 'Also in the Gazette' lists other recent posts, not itself", as
   await expect(more).toBeVisible();
   await expect(more.locator(".gz-story")).not.toHaveCount(0);
   await expect(more.locator('a[href$="/blog/welcome-to-plainvoice"]')).toHaveCount(0); // never links to itself
-  await expect(more.locator('a[href*="/blog/invoice-in-your-clients-language"]')).toBeVisible();
+  // links to other blog posts (which ones rotate as posts are added — don't hard-code one)
+  const links = await more.locator('a[href*="/blog/"]').evaluateAll((els) => els.map((e) => e.getAttribute("href") || ""));
+  expect(links.length).toBeGreaterThan(0);
+  expect(links.every((h) => !h.includes("welcome-to-plainvoice"))).toBe(true);
 });
 
 test("photo import: 'Snap a photo' in the AI card opens the photo modal", async ({ page }) => {
